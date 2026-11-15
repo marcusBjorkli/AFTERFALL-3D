@@ -1,11 +1,11 @@
-<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#14221b"><title>AFTERFALL 3D v0.5.4.1</title><style>
+<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#14221b"><title>AFTERFALL 3D v0.5.5</title><style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101b19;color:#eef4e9;font:14px system-ui,-apple-system,sans-serif;touch-action:none}canvas{display:block}#hud{position:absolute;top:env(safe-area-inset-top);left:0;right:0;display:flex;justify-content:space-between;align-items:start;padding:12px;pointer-events:none}#hud>div{background:#10231dd9;border:1px solid #ffffff24;border-radius:12px;padding:10px;pointer-events:auto}small{color:#b3c4b8}button{background:#263d35;border:1px solid #80948766;border-radius:9px;color:white;padding:10px 12px;font:inherit}#status{position:absolute;top:88px;left:12px;right:12px;pointer-events:none;text-shadow:0 1px 3px #000;font-size:13px}#cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:24px;color:#ffffffa0;pointer-events:none}#joy{position:absolute;left:22px;bottom:calc(24px + env(safe-area-inset-bottom));width:138px;height:138px;border:2px solid #ffffff5e;background:#10271c88;border-radius:50%;touch-action:none}#knob{position:absolute;left:45px;top:45px;width:44px;height:44px;border-radius:50%;background:#b8cfbcbb;pointer-events:none}#actions{position:absolute;right:18px;bottom:calc(36px + env(safe-area-inset-bottom));display:grid;gap:8px}#actions button{min-width:112px;background:#193b2fe6}#panel{position:absolute;inset:0;background:#09140edc;display:none;place-items:center;padding:22px;z-index:8}#panel.show{display:grid}#panel article{width:min(460px,100%);background:#1b2d25;padding:22px;border-radius:16px;max-height:90vh;overflow:auto}#panel button{margin:4px}#warning{color:#f8c28a}#hint{position:absolute;bottom:calc(176px + env(safe-area-inset-bottom));left:12px;right:12px;text-align:center;pointer-events:none;color:#d7e7d7;font-size:12px}#error{position:absolute;inset:0;display:none;place-items:center;padding:24px;background:#15251c;z-index:10}#error>div{max-width:440px}
-</style></head><body><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small>WEBAPP 0.5.4.1 · SEED 206414</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="joy"><div id="knob"></div></div><div id="actions"><button id="interact">🚪 Dør</button><button id="reset">↺ Start</button></div><div id="hint">Joystick ↑↓: frem/bak · ←→: roter · Separate elvemesher følger nedoverbakke · Dra høyre side: se rundt</div><div id="panel"><article><h2>AFTERFALL 3D · 0.5.4.1</h2><p>Teknisk 3D-test: dynamisk 4 × 4 km terreng, avstandsbasert LOD og separate elvemesher, og godkjent joystick/kollisjon/dør.</p><p>Verdensfrø 206414. 4096 × 4096 m logisk verden, 64 m chunks, dynamisk lasting. Globalt dreneringsnett, sammenkoblede lokale og globale elvesenterlinjer, innsjøer med utløpsterskel og hav ved kote 0. Dette er en ny hydrologisk testmodell, ikke identisk med elvenettet i 0.4-serien.</p><button id="resume">Fortsett</button><button id="spawnOutside">Test utenfor</button><button id="spawnInside">Test inne</button><button id="save">Lagre</button><button id="load">Last inn</button><p><small>Ingen endringer i v0.4.7.2 eller originalhistorien.</small></p></article></div><div id="error"><div><h2>3D-motoren kunne ikke startes</h2><p id="errText"></p><p>Spillet krever WebGL og nettverkstilgang for å hente Three.js første gang. Åpne via HTTPS på GitHub Pages.</p></div></div>
+</style></head><body><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small>WEBAPP 0.5.5 · SEED 206414</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="joy"><div id="knob"></div></div><div id="actions"><button id="interact">🚪 Dør</button><button id="reset">↺ Start</button></div><div id="hint">Joystick ↑↓: frem/bak · ←→: roter · Separate elvemesher følger nedoverbakke · Dra høyre side: se rundt</div><div id="panel"><article><h2>AFTERFALL 3D · 0.5.5</h2><p>Teknisk 3D-test: dynamisk 4 × 4 km terreng, avstandsbasert LOD og separate elvemesher, og godkjent joystick/kollisjon/dør.</p><p>Verdensfrø 206414. 4096 × 4096 m logisk verden, 64 m chunks, dynamisk lasting. Globalt dreneringsnett, sammenkoblede lokale og globale elvesenterlinjer, variabel elvebredde, terrengtilpassede innsjøbredder, hav ved kote 0 og lett shaderbasert vannanimasjon. Dette er en ny hydrologisk testmodell, ikke identisk med elvenettet i 0.4-serien.</p><button id="resume">Fortsett</button><button id="spawnOutside">Test utenfor</button><button id="spawnInside">Test inne</button><button id="save">Lagre</button><button id="load">Last inn</button><p><small>Ingen endringer i v0.4.7.2 eller originalhistorien.</small></p></article></div><div id="error"><div><h2>3D-motoren kunne ikke startes</h2><p id="errText"></p><p>Spillet krever WebGL og nettverkstilgang for å hente Three.js første gang. Åpne via HTTPS på GitHub Pages.</p></div></div>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js';
 const SEED=206414, KEY='afterfall_054',WORLD=4096;
 const $=id=>document.getElementById(id), clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
-let scene,camera,renderer,clock,building=[],wallBoxes=[],roundColliders=[],riverMeshes=[],riverPaths=[],riverSegments=[],riverBuckets=new Map(),terrainChunks=new Map(),terrainMaterial=null,waterMaterial=null,seaMaterial=null,lakeMaterial=null,p={x:288,z:301,yaw:Math.PI,seconds:0},joy={x:0,y:0},paused=false,lookPointer=null,lookLastX=0;
+let scene,camera,renderer,clock,building=[],wallBoxes=[],roundColliders=[],riverMeshes=[],riverPaths=[],riverSegments=[],riverBuckets=new Map(),terrainChunks=new Map(),terrainMaterial=null,waterMaterial=null,seaMaterial=null,lakeMaterial=null,waterTime={value:0},p={x:288,z:301,yaw:Math.PI,seconds:0},joy={x:0,y:0},paused=false,lookPointer=null,lookLastX=0;
 const hash=(x,z)=>{let n=Math.sin(x*127.1+z*311.7+SEED*.017)*43758.5453;return n-Math.floor(n)};
 function noise(x,z){let a=Math.floor(x),b=Math.floor(z),u=x-a,v=z-b;u=u*u*(3-2*u);v=v*v*(3-2*v);return (hash(a,b)*(1-u)+hash(a+1,b)*u)*(1-v)+(hash(a,b+1)*(1-u)+hash(a+1,b+1)*u)*v}
 function fbm(x,z){let sum=0,amp=.55,freq=1,total=0;for(let i=0;i<4;i++){sum+=noise(x*freq,z*freq)*amp;total+=amp;freq*=2.03;amp*=.48}return sum/total}
@@ -152,36 +152,102 @@ function rebuildRiverIndex(){riverSegments=[...globalRiverSegments];riverBuckets
  for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++){let key=x+','+z,arr=riverBuckets.get(key);if(!arr){arr=[];riverBuckets.set(key,arr)}arr.push(s)}
  }}
 
-function riverSample(x,z){let best=null,bestD=Infinity,arr=riverBuckets.get(Math.floor(x/RIVER_BUCKET)+','+Math.floor(z/RIVER_BUCKET));if(!arr)return null;for(let s of arr){let a=s.a,b=s.b,vx=b.x-a.x,vz=b.z-a.z,l2=vx*vx+vz*vz||1,t=clamp(((x-a.x)*vx+(z-a.z)*vz)/l2,0,1),d=Math.hypot(x-a.x-vx*t,z-a.z-vz*t),w=a.width+(b.width-a.width)*t;if(d<bestD){bestD=d;best={distance:d,width:w,water:a.water+(b.water-a.water)*t}}}return best}
+// Variabel bredde styres av globale koordinater og segmentets opprinnelige bredde.
+// Endepunkter får samme profil på tvers av chunks (ingen chunk-lokal tilfeldighet).
+function riverWidthAt(point){
+ const n=fbm(point.x/145+7.3,point.z/145-3.1);
+ return Math.max(1.8,point.width*(.79+.43*n));
+}
+function riverSample(x,z){let best=null,bestD=Infinity,arr=riverBuckets.get(Math.floor(x/RIVER_BUCKET)+','+Math.floor(z/RIVER_BUCKET));if(!arr)return null;for(let s of arr){let a=s.a,b=s.b,vx=b.x-a.x,vz=b.z-a.z,l2=vx*vx+vz*vz||1,t=clamp(((x-a.x)*vx+(z-a.z)*vz)/l2,0,1),d=Math.hypot(x-a.x-vx*t,z-a.z-vz*t),w=riverWidthAt(a)+(riverWidthAt(b)-riverWidthAt(a))*t;if(d<bestD){bestD=d;best={distance:d,width:w,water:a.water+(b.water-a.water)*t}}}return best}
 
-function ground(x,z){let base=elevation(x,z)-PAD_H;if(!riverSegments.length)return base;let r=riverSample(x,z);if(!r||r.distance>r.width+3.8)return base;let bed=r.water-PAD_H-1.05;let blend=clamp((r.width+3.8-r.distance)/3.8,0,1);blend=blend*blend*(3-2*blend);return Math.min(base,base*(1-blend)+bed*blend)}
+function ground(x,z){
+ let base=elevation(x,z)-PAD_H;
+ if(!riverSegments.length)return base;
+ let r=riverSample(x,z);if(!r)return base;
+ // Kanalprofil: grunn elvebunn, slakere bredder, jevn overgangen til eksisterende terreng.
+ const half=r.width*.78,bank=Math.max(3.5,r.width*.72),d=r.distance;
+ if(d>=half+bank)return base;
+ let bed=r.water-PAD_H-(.55+Math.min(1.35,r.width*.115));
+ let lateral=clamp(d/Math.max(.1,half),0,1);
+ let channel=bed+.28*lateral*lateral;
+ if(d<=half)return Math.min(base,channel);
+ let t=(d-half)/bank;t=t*t*(3-2*t);
+ return Math.min(base,channel*(1-t)+base*t);
+}
 // Polygonklipping (Sutherland–Hodgman) av HELE elvebåndet, ikke bare senterlinjen.
 function clipPoly(poly,x0,z0,x1,z1){for(let axis of ['x','z'])for(let side of [0,1]){
  let edge=axis==='x'?(side===0?x0:x1):(side===0?z0:z1),inside=p=>side===0?p[axis]>=edge-1e-7:p[axis]<=edge+1e-7,out=[];
  for(let i=0;i<poly.length;i++){let a=poly[i],b=poly[(i+1)%poly.length],ia=inside(a),ib=inside(b);
  if(ia!==ib){let t=clamp((edge-a[axis])/((b[axis]-a[axis])||1e-20),0,1);out.push({x:a.x+(b.x-a.x)*t,z:a.z+(b.z-a.z)*t,y:a.y+(b.y-a.y)*t})}
  if(ib)out.push(b)}poly=out;if(poly.length<3)return []}return poly}
-function buildChunkRivers(cx,cz){let x0=cx*64,z0=cz*64,x1=x0+64,z1=z0+64,verts=[],idx=[];
- // Romlig indeks: ikke skann hele elvenettet for hver chunk.
- let relevant=new Set();for(let bz=Math.floor((z0-16)/RIVER_BUCKET);bz<=Math.floor((z1+16)/RIVER_BUCKET);bz++)for(let bx=Math.floor((x0-16)/RIVER_BUCKET);bx<=Math.floor((x1+16)/RIVER_BUCKET);bx++)for(let s of riverBuckets.get(bx+','+bz)||[])relevant.add(s);
- for(let s of relevant){let a=s.a,b=s.b,dx=b.x-a.x,dz=b.z-a.z,len=Math.hypot(dx,dz);if(len<.001)continue;
- let nx=-dz/len,nz=dx/len,wa=a.width*.76,wb=b.width*.76;
- let polygon=[{x:a.x+nx*wa,z:a.z+nz*wa,y:a.water},{x:a.x-nx*wa,z:a.z-nz*wa,y:a.water},{x:b.x-nx*wb,z:b.z-nz*wb,y:b.water},{x:b.x+nx*wb,z:b.z+nz*wb,y:b.water}];
- let cut=clipPoly(polygon,x0,z0,x1,z1);if(cut.length<3)continue;
- let base=verts.length/3;for(let p of cut)verts.push(p.x-PAD_X,p.y-PAD_H+.035,p.z-PAD_Z);
- for(let i=1;i<cut.length-1;i++)idx.push(base,base+i,base+i+1);
+// Hele elvebåndet klippes mot chunkgrensene. Underinndeling gir jevn bredde
+// og mindre synlige rette vannkanter, uten å endre de globale senterlinjene.
+function buildChunkRivers(cx,cz){
+ const x0=cx*64,z0=cz*64,x1=x0+64,z1=z0+64,verts=[],idx=[];
+ let relevant=new Set();
+ for(let bz=Math.floor((z0-16)/RIVER_BUCKET);bz<=Math.floor((z1+16)/RIVER_BUCKET);bz++)
+ for(let bx=Math.floor((x0-16)/RIVER_BUCKET);bx<=Math.floor((x1+16)/RIVER_BUCKET);bx++)
+ for(let s of riverBuckets.get(bx+','+bz)||[])relevant.add(s);
+ for(let s of relevant){
+  const a=s.a,b=s.b,dx=b.x-a.x,dz=b.z-a.z,len=Math.hypot(dx,dz);
+  if(len<.001)continue;
+  const nx=-dz/len,nz=dx/len,parts=Math.max(1,Math.ceil(len/6));
+  function edge(t,side){
+   const x=a.x+dx*t,z=a.z+dz*t;
+   const w=(riverWidthAt(a)*(1-t)+riverWidthAt(b)*t)*.77;
+   return {x:x+side*nx*w,z:z+side*nz*w,y:a.water+(b.water-a.water)*t};
+  }
+  for(let k=0;k<parts;k++){
+   const t0=k/parts,t1=(k+1)/parts;
+   let poly=[edge(t0,1),edge(t0,-1),edge(t1,-1),edge(t1,1)];
+   let cut=clipPoly(poly,x0,z0,x1,z1);if(cut.length<3)continue;
+   let base=verts.length/3;
+   for(let v of cut)verts.push(v.x-PAD_X,v.y-PAD_H+.045,v.z-PAD_Z);
+   for(let i=1;i<cut.length-1;i++)idx.push(base,base+i,base+i+1);
+  }
  }
- if(!idx.length)return null;let geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));geo.setIndex(idx);geo.computeVertexNormals();let mesh=new THREE.Mesh(geo,waterMaterial);mesh.renderOrder=2;scene.add(mesh);return mesh}
-// Innsjø- og havmesher har vannrett overflate. Samme globale maske og nivå brukes
-// uavhengig av LOD; 8 m rutenett per chunk, med konsistente kantpunkter.
-function buildChunkStillWater(cx,cz){let x0=cx*64,z0=cz*64,sea=[],lakes=[],seaIdx=[],lakeIdx=[],STEP=8;
- for(let j=0;j<8;j++)for(let i=0;i<8;i++){let x=x0+i*STEP,z=z0+j*STEP,mid=waterBodyAt(x+STEP/2,z+STEP/2);if(!mid)continue;
- // Skip dersom cellens senter ligger over vannflaten. Vannflater er uavhengige av terrengmesh.
- let arr=mid.kind==='sea'?sea:lakes,ind=mid.kind==='sea'?seaIdx:lakeIdx,base=arr.length/3,y=mid.level-PAD_H+.045;
- arr.push(x-PAD_X,y,z-PAD_Z,x+STEP-PAD_X,y,z-PAD_Z,x+STEP-PAD_X,y,z+STEP-PAD_Z,x-PAD_X,y,z+STEP-PAD_Z);
- ind.push(base,base+1,base+2,base,base+2,base+3)}
- let meshes=[];for(let [vertices,indices,material] of [[sea,seaIdx,seaMaterial],[lakes,lakeIdx,lakeMaterial]]){if(!indices.length)continue;
- let geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geo.setIndex(indices);geo.computeVertexNormals();let mesh=new THREE.Mesh(geo,material);mesh.renderOrder=3;scene.add(mesh);meshes.push(mesh)}return meshes}
+ if(!idx.length)return null;
+ let geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));geo.setIndex(idx);geo.computeVertexNormals();
+ let mesh=new THREE.Mesh(geo,waterMaterial);mesh.renderOrder=2;scene.add(mesh);return mesh;
+}
+// Klipp et triangel mot vannstandskoten. Alle høyder samples fra den samme
+// deterministiske høydefunksjonen, slik at kantpunkter er like i nabochunks.
+function clipWaterTriangle(triangle,level){
+ let out=[];
+ for(let i=0;i<3;i++){
+  let a=triangle[i],b=triangle[(i+1)%3],ia=a.h<=level,ib=b.h<=level;
+  if(ia!==ib){let t=clamp((level-a.h)/((b.h-a.h)||1e-12),0,1);out.push({x:a.x+(b.x-a.x)*t,z:a.z+(b.z-a.z)*t,h:level})}
+  if(ib)out.push(b);
+ }
+ return out;
+}
+// Hav og innsjø er separate, horisontale mesher. Strandlinjen klippes
+// mot terrengkotene i stedet for å fylle hele 8 m rasterkvadrater.
+function buildChunkStillWater(cx,cz){
+ const x0=cx*64,z0=cz*64,STEP=4,sea=[],lakes=[],seaIdx=[],lakeIdx=[];
+ for(let j=0;j<64/STEP;j++)for(let i=0;i<64/STEP;i++){
+  let x=x0+i*STEP,z=z0+j*STEP;
+  let mid=waterBodyAt(x+STEP*.5,z+STEP*.5);
+  if(!mid)continue;
+  let level=mid.level;
+  let a={x,z,h:elevation(x,z)},b={x:x+STEP,z,h:elevation(x+STEP,z)},
+      c={x:x+STEP,z:z+STEP,h:elevation(x+STEP,z+STEP)},d={x,z:z+STEP,h:elevation(x,z+STEP)};
+  let arr=mid.kind==='sea'?sea:lakes,ind=mid.kind==='sea'?seaIdx:lakeIdx;
+  for(let tri of [[a,b,c],[a,c,d]]){
+   let clipped=clipWaterTriangle(tri,level);if(clipped.length<3)continue;
+   let base=arr.length/3,y=level-PAD_H+.055;
+   for(let pt of clipped)arr.push(pt.x-PAD_X,y,pt.z-PAD_Z);
+   for(let k=1;k<clipped.length-1;k++)ind.push(base,base+k,base+k+1);
+  }
+ }
+ let meshes=[];
+ for(let [vertices,indices,material] of [[sea,seaIdx,seaMaterial],[lakes,lakeIdx,lakeMaterial]]){
+  if(!indices.length)continue;
+  let geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geo.setIndex(indices);geo.computeVertexNormals();
+  let mesh=new THREE.Mesh(geo,material);mesh.renderOrder=3;scene.add(mesh);meshes.push(mesh);
+ }
+ return meshes;
+}
 function chunkKey(cx,cz){return cx+','+cz}
 function createTerrainChunk(cx,cz,lod){let SEG=lod===0?48:lod===1?24:12,verts=[],colors=[],indices=[],c=new THREE.Color(),ox=cx*64,oz=cz*64;
  for(let j=0;j<=SEG;j++)for(let i=0;i<=SEG;i++){let x=ox+i*64/SEG,z=oz+j*64/SEG,y=ground(x,z);verts.push(x-PAD_X,y,z-PAD_Z);let n=noise(x/35,z/35);c.set(y>23?0x8e8d7c:y>8?0x697e5b:0x536f50);c.offsetHSL(0,0,(n-.5)*.1);colors.push(c.r,c.g,c.b)}
@@ -197,6 +263,23 @@ function updateChunks(force=false){let px=clamp(Math.floor(p.x/CHUNK),0,63),pz=c
  for(let [key,want] of desired){let old=terrainChunks.get(key);if(old&&old.lod===want.lod)continue;if(old){disposeChunk(old);terrainChunks.delete(key)}terrainChunks.set(key,createTerrainChunk(want.cx,want.cz,want.lod))}
 }
 
+// Liten GPU-basert fargeanimasjon, uten CPU-oppdatering av vanngeometri.
+// Verdenskoordinater gir kontinuerlige bølgemønstre på tvers av chunkgrenser.
+function animateWaterMaterial(material,speed,amplitude){
+ material.onBeforeCompile=shader=>{
+  shader.uniforms.uWaterTime=waterTime;
+  shader.vertexShader='varying vec3 vWaterWorld;\n'+shader.vertexShader;
+  shader.vertexShader=shader.vertexShader.replace('#include <worldpos_vertex>',
+   '#include <worldpos_vertex>\n vWaterWorld=(modelMatrix*vec4(transformed,1.0)).xyz;');
+  shader.fragmentShader='varying vec3 vWaterWorld;\nuniform float uWaterTime;\n'+shader.fragmentShader;
+  shader.fragmentShader=shader.fragmentShader.replace('#include <dithering_fragment>',
+   `float ripple=sin(vWaterWorld.x*0.31+vWaterWorld.z*0.19-uWaterTime*${speed.toFixed(2)})*0.5+0.5;\n`+
+   `ripple+=0.5*sin(vWaterWorld.z*0.43-vWaterWorld.x*0.13+uWaterTime*${(speed*.73).toFixed(2)});\n`+
+   `gl_FragColor.rgb*=1.0+${amplitude.toFixed(3)}*ripple;\n#include <dithering_fragment>`);
+ };
+ material.customProgramCacheKey=()=>`afterfall-water-${speed}-${amplitude}`;
+ return material;
+}
 function mat(color,extra={}){return new THREE.MeshStandardMaterial({color,roughness:.94,...extra})}
 const materials={wall:mat(0xaaa89b),roof:mat(0x48514c),floor:mat(0x64655e),road:mat(0x555957),door:mat(0x7d9a7c),glass:mat(0x334c50,{metalness:.25}),wood:mat(0x695849),rust:mat(0x795343),ground:mat(0x647f57),water:mat(0x387f9d)};
 function cube(x,y,z,w,h,d,m,collide=false){let obj=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);obj.position.set(x,y,z);obj.castShadow=true;obj.receiveShadow=true;scene.add(obj);if(collide)wallBoxes.push({minX:x-w/2,maxX:x+w/2,minZ:z-d/2,maxZ:z+d/2,minY:y-h/2,maxY:y+h/2});return obj}
@@ -205,9 +288,9 @@ function buildWorld(){scene=new THREE.Scene();scene.background=new THREE.Color(0
 // Global hydrologi og lokal hydrologi bruker samme høydedata.
 buildHydrology();buildGlobalHydrology();rebuildRiverIndex();
 terrainMaterial=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,side:THREE.DoubleSide});
-waterMaterial=new THREE.MeshStandardMaterial({color:0x367b99,roughness:.22,metalness:.06,transparent:true,opacity:.87,side:THREE.DoubleSide,depthWrite:false});
-seaMaterial=new THREE.MeshStandardMaterial({color:0x246c91,roughness:.3,transparent:true,opacity:.91,side:THREE.DoubleSide,depthWrite:false});
-lakeMaterial=new THREE.MeshStandardMaterial({color:0x3687a3,roughness:.26,transparent:true,opacity:.91,side:THREE.DoubleSide,depthWrite:false});
+waterMaterial=animateWaterMaterial(new THREE.MeshStandardMaterial({color:0x367b99,roughness:.22,metalness:.06,transparent:true,opacity:.87,side:THREE.DoubleSide,depthWrite:false}),1.55,.085);
+seaMaterial=animateWaterMaterial(new THREE.MeshStandardMaterial({color:0x246c91,roughness:.3,transparent:true,opacity:.91,side:THREE.DoubleSide,depthWrite:false}),.48,.045);
+lakeMaterial=animateWaterMaterial(new THREE.MeshStandardMaterial({color:0x3687a3,roughness:.26,transparent:true,opacity:.91,side:THREE.DoubleSide,depthWrite:false}),.28,.035);
 updateChunks(true);
 // Building: x = +/-8, z = +/-6; front door in south wall at z=+6, opening width 2.6 m.
 cube(0,.08,0,16,.16,12,materials.floor);cube(-8,2,0,.45,4,12,materials.wall,true);cube(8,2,0,.45,4,12,materials.wall,true);cube(0,2,-6,16,4,.45,materials.wall,true);
@@ -227,10 +310,10 @@ function collides(x,z){let radius=.34,foot=ground(x+PAD_X,z+PAD_Z)+.12,head=foot
 function setPlayer(x,z,yaw){p.x=x;p.z=z;p.yaw=yaw;updateCamera()}
 function updateCamera(){camera.position.set(p.x-PAD_X,ground(p.x,p.z)+1.72,p.z-PAD_Z);camera.rotation.set(0,p.yaw,0,'YXZ')}
 function move(dx,dz){let nx=clamp(p.x+dx,1,WORLD-1),nz=clamp(p.z+dz,1,WORLD-1);if(!collides(nx-PAD_X,p.z-PAD_Z))p.x=nx;if(!collides(p.x-PAD_X,nz-PAD_Z))p.z=nz}
-function save(){localStorage.setItem(KEY,JSON.stringify({version:541,seed:SEED,...p}));$('status').textContent='Lagret lokalt · v0.5.4.1'}
-function load(){try{let v=JSON.parse(localStorage.getItem(KEY));if(v&&(v.version===541||v.version===54||v.version===53)&&v.seed===SEED&&[v.x,v.z,v.yaw].every(Number.isFinite)&&v.x>0&&v.x<WORLD&&v.z>0&&v.z<WORLD){setPlayer(v.x,v.z,v.yaw);return true}}catch(e){}return false}
+function save(){localStorage.setItem(KEY,JSON.stringify({version:55,seed:SEED,...p}));$('status').textContent='Lagret lokalt · v0.5.5'}
+function load(){try{let v=JSON.parse(localStorage.getItem(KEY));if(v&&(v.version===55||v.version===541||v.version===54||v.version===53)&&v.seed===SEED&&[v.x,v.z,v.yaw].every(Number.isFinite)&&v.x>0&&v.x<WORLD&&v.z>0&&v.z<WORLD){setPlayer(v.x,v.z,v.yaw);return true}}catch(e){}return false}
 function init(){renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.insertBefore(renderer.domElement,document.body.firstChild);camera=new THREE.PerspectiveCamera(73,innerWidth/innerHeight,.08,260);camera.rotation.order='YXZ';clock=new THREE.Clock();buildWorld();load();updateCamera();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});$('status').textContent='4 × 4 km · dynamiske terrengchunks, elver, innsjøer og hav aktive · Gå gjennom den grønne døråpningen';animate()}
-function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05);if(!paused){let speed=3.5,turnSpeed=2.1,forward=-joy.y,turn=joy.x;p.yaw-=turn*turnSpeed*dt;let fx=-Math.sin(p.yaw),fz=-Math.cos(p.yaw);move(fx*forward*speed*dt,fz*forward*speed*dt);p.seconds+=dt;updateCamera();if((Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4)))updateChunks()}renderer.render(scene,camera);let inside=Math.abs(p.x-PAD_X)<7.7&&Math.abs(p.z-PAD_Z)<5.7;$('status').textContent=`${inside?'INNE I SERVICESTASJONEN':'UTENDØRS'} · X ${p.x.toFixed(1)} · Z ${p.z.toFixed(1)} · ${terrainChunks.size} chunks · ${Math.round(1/Math.max(dt,.01))} FPS`}
+function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05);if(!paused){let speed=3.5,turnSpeed=2.1,forward=-joy.y,turn=joy.x;p.yaw-=turn*turnSpeed*dt;let fx=-Math.sin(p.yaw),fz=-Math.cos(p.yaw);move(fx*forward*speed*dt,fz*forward*speed*dt);p.seconds+=dt;updateCamera();if((Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4)))updateChunks()}waterTime.value+=dt;renderer.render(scene,camera);let inside=Math.abs(p.x-PAD_X)<7.7&&Math.abs(p.z-PAD_Z)<5.7;$('status').textContent=`${inside?'INNE I SERVICESTASJONEN':'UTENDØRS'} · X ${p.x.toFixed(1)} · Z ${p.z.toFixed(1)} · ${terrainChunks.size} chunks · ${Math.round(1/Math.max(dt,.01))} FPS`}
 const joyEl=$('joy'),knob=$('knob');function joyMove(e){let r=joyEl.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,len=Math.max(1,Math.hypot(dx,dy)),v=Math.min(1,len/48);joy.x=dx/len*v;joy.y=dy/len*v;knob.style.transform=`translate(${joy.x*44}px,${joy.y*44}px)`}
 joyEl.addEventListener('pointerdown',e=>{e.preventDefault();joyEl.setPointerCapture(e.pointerId);joyMove(e)});joyEl.addEventListener('pointermove',e=>{if(joyEl.hasPointerCapture(e.pointerId))joyMove(e)});function joyEnd(){joy.x=joy.y=0;knob.style.transform='translate(0,0)'}joyEl.addEventListener('pointerup',joyEnd);joyEl.addEventListener('pointercancel',joyEnd);
 document.addEventListener('pointerdown',e=>{if(e.target.closest('button,#joy,#panel'))return;if(e.clientX<innerWidth*.35)return;lookPointer=e.pointerId;lookLastX=e.clientX});document.addEventListener('pointermove',e=>{if(e.pointerId===lookPointer&&!paused){p.yaw-=(e.clientX-lookLastX)*.005;lookLastX=e.clientX}});document.addEventListener('pointerup',e=>{if(e.pointerId===lookPointer)lookPointer=null});
