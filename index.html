@@ -1,4 +1,4 @@
-<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#14221b"><title>AFTERFALL 3D v0.6.3.4</title><style>
+<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#14221b"><title>AFTERFALL 3D v0.6.3.5</title><style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101b19;color:#eef4e9;font:14px system-ui,-apple-system,sans-serif;touch-action:none}canvas{display:block}#hud{position:absolute;top:env(safe-area-inset-top);left:0;right:0;display:flex;justify-content:space-between;align-items:start;padding:12px;pointer-events:none}#hud>div{background:#10231dd9;border:1px solid #ffffff24;border-radius:12px;padding:10px;pointer-events:auto}small{color:#b3c4b8}button{background:#263d35;border:1px solid #80948766;border-radius:9px;color:white;padding:10px 12px;font:inherit}#status{position:absolute;top:88px;left:12px;right:12px;pointer-events:none;text-shadow:0 1px 3px #000;font-size:13px}#cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:24px;color:#ffffffa0;pointer-events:none}#joy{position:absolute;left:22px;bottom:calc(24px + env(safe-area-inset-bottom));width:138px;height:138px;border:2px solid #ffffff5e;background:#10271c88;border-radius:50%;touch-action:none}#knob{position:absolute;left:45px;top:45px;width:44px;height:44px;border-radius:50%;background:#b8cfbcbb;pointer-events:none}#actions{position:absolute;right:18px;bottom:calc(36px + env(safe-area-inset-bottom));display:grid;gap:8px}#actions button{min-width:112px;background:#193b2fe6}#panel{position:absolute;inset:0;background:#09140edc;display:none;place-items:center;padding:22px;z-index:8}#panel.show{display:grid}#panel article{width:min(460px,100%);background:#1b2d25;padding:22px;border-radius:16px;max-height:90vh;overflow:auto}#panel button{margin:4px}#warning{color:#f8c28a}#hint{position:absolute;bottom:calc(176px + env(safe-area-inset-bottom));left:12px;right:12px;text-align:center;pointer-events:none;color:#d7e7d7;font-size:12px}#error{position:absolute;inset:0;display:none;place-items:center;padding:24px;background:#15251c;z-index:10}#error>div{max-width:440px}
 #weatherHud{position:absolute;left:12px;top:calc(env(safe-area-inset-top) + 122px);z-index:4;background:#10231dc9;border:1px solid #ffffff22;border-radius:9px;padding:6px 9px;font-size:11px;pointer-events:none}#diagPanel{position:absolute;z-index:7;top:118px;right:8px;width:min(330px,calc(100vw - 16px));max-height:calc(100dvh - 175px);overflow:auto;background:#0c211de8;border:1px solid #9cc4b666;border-radius:12px;padding:11px;display:none;font-size:12px;line-height:1.35;box-shadow:0 5px 18px #0006}
 #diagPanel.show{display:block}#diagPanel label{display:flex;align-items:center;gap:7px;margin:7px 0}#diagPanel input{accent-color:#9cdeca}#diagPanel button{padding:7px;margin:3px}#diagStats{white-space:pre-wrap;font:11px/1.45 ui-monospace,monospace;background:#0005;padding:8px;border-radius:6px;max-height:210px;overflow:auto}#diagLegend{font-size:11px;color:#cde4dc}#diagToggle{position:absolute;z-index:9;top:calc(env(safe-area-inset-top) + 82px);right:12px;padding:7px 10px;background:#1c3d35f5;font-size:12px;box-shadow:0 2px 9px #0008}
@@ -40,7 +40,7 @@
 #sawCard h2{margin:0 0 12px;font-size:21px}#sawCard label{display:block;margin:10px 0 5px}#sawCard select,#sawCard input{width:100%;padding:10px;box-sizing:border-box;font-size:16px;color:#f4f5e9;background:#28463b;border:1px solid #779187;border-radius:8px}
 #sawCard button{margin-top:10px;padding:10px 14px}#sawInfo{font-size:13px;white-space:pre-line;line-height:1.5;margin:12px 0}#sawClose{float:right}
 
-/* v0.6.3.4: shared mobile-safe modal layer for stockpiles and diagnostics. */
+/* v0.6.3.5: shared mobile-safe modal layer for stockpiles and diagnostics. */
 .af-modal-overlay{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;padding:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));background:#07140fbd;overscroll-behavior:contain;touch-action:pan-y}
 .af-modal-overlay.show{display:flex}
 #pileControls,#diagPanel{position:relative;inset:auto;top:auto;right:auto;bottom:auto;left:auto;z-index:auto;display:block;width:min(420px,100%);max-width:100%;max-height:min(76dvh,700px);overflow:auto;background:#19372ff5;border:1px solid #83a494;border-radius:16px;padding:16px;box-shadow:0 14px 45px #0009;touch-action:pan-y}
@@ -53,7 +53,7 @@
 @media(max-width:430px){#pileControls,#diagPanel{width:100%;max-width:380px;max-height:75dvh}#pileToggle{right:8px}}
 body.af-modal-active #earthTools,body.af-modal-active #useTool,body.af-modal-active #inventoryToggle,body.af-modal-active #actions,body.af-modal-active #toolHud,body.af-modal-active #joy,body.af-modal-active #pileToggle,body.af-modal-active #diagToggle{pointer-events:none}
 
-/* v0.6.3.4: requested mobile HUD. Door/start handlers retained but controls hidden. */
+/* v0.6.3.5: requested mobile HUD. Door/start handlers retained but controls hidden. */
 #actions{display:none!important}
 #inventoryToggle{position:fixed;top:calc(env(safe-area-inset-top) + 124px);right:12px;bottom:auto!important;z-index:9;padding:8px 11px;background:#1c3d35f5;box-shadow:0 2px 9px #0008}
 #diagIndicator{top:calc(env(safe-area-inset-top) + 176px)}
@@ -73,7 +73,7 @@ body.af-modal-active #earthTools,body.af-modal-active #useTool,body.af-modal-act
 #diagOverlay{background:#07140fbd;pointer-events:auto}
 @media(max-height:680px){#useTool{bottom:calc(270px + env(safe-area-inset-bottom))}#earthTools{bottom:calc(326px + env(safe-area-inset-bottom))}#pileToggle{bottom:calc(215px + env(safe-area-inset-bottom))}}
 
-/* v0.6.3.4 planeringsprosjekter: kompakt mobilpanel */
+/* v0.6.3.5 planeringsprosjekter: kompakt mobilpanel */
 #gradeToggle{position:fixed;top:83px;left:10px;z-index:26;background:#183b35;color:white;border:1px solid #8fb9a4;border-radius:9px;padding:9px;font-weight:700}
 #gradeOverlay{display:none;position:fixed;inset:0;z-index:90;background:#08130dcc;align-items:center;justify-content:center;padding:12px}
 #gradeOverlay.show{display:flex}
@@ -83,7 +83,7 @@ body.af-modal-active #earthTools,body.af-modal-active #useTool,body.af-modal-act
 #gradePanel input{width:110px;color:#14241b;background:#fff}
 #gradeHeights,#gradeStats,#gradeDelta{white-space:pre-line;line-height:1.45;background:#0b211a;padding:9px;border-radius:7px;margin-top:8px;font-variant-numeric:tabular-nums}#gradeStats{background:#223c32}#gradeDelta{background:#24382e}#gradeInfo{white-space:pre-line;line-height:1.5;background:#0b211a;padding:10px;border-radius:7px;margin-top:10px}
 
-/* v0.6.3.4: Restore compact right-aligned shovel controls. */
+/* v0.6.3.5: Restore compact right-aligned shovel controls. */
 #earthTools{width:190px!important;max-width:calc(100vw - 24px)!important;min-width:0!important;left:auto!important;right:12px!important;box-sizing:border-box}
 #earthTools select{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
 #earthAvailability{font-size:10px!important;white-space:normal;overflow-wrap:anywhere}
@@ -92,7 +92,7 @@ body.af-modal-active #earthTools,body.af-modal-active #useTool,body.af-modal-act
 #gradeLive strong{font-size:13px;color:#c9f6dd}
 #gradeLive.done{border-color:#64e6a2}
 @media(max-width:430px){#gradeLive{max-width:56vw;font-size:11px}}
-</style></head><body><button id="gradeToggle" type="button">📐 Planering</button><div id="gradeOverlay" role="presentation"><section id="gradePanel" role="dialog" aria-modal="true" aria-label="Terrengplanering"><h2>📐 Planering · v0.6.3.4</h2><p>Sikt på bakken og velg to motsatte hjørner. Maks 20 × 20 m. Planeringen utføres med spaden; masser går via eksisterende inventar og lager.</p><button id="gradeFirst">1. Sett hjørne A</button><button id="gradeSecond">2. Sett hjørne B</button><div id="gradeHeights" aria-live="polite">Måler terrengkoter …</div><div id="gradeStats" aria-live="polite">Marker hjørne A og B for å beregne områdets koteverdier.</div><button id="gradeSuggest" type="button" disabled>Bruk foreslått kote</button><p><label for="gradeLevel">Prosjektert kote (m): </label><input id="gradeLevel" type="number" step="0.01" inputmode="decimal"></p><button id="gradeCreate">Opprett / oppdater prosjekt</button><button id="gradeDelete">Slett prosjekt</button><div id="gradeDelta" aria-live="polite"></div><div id="gradeInfo" aria-live="polite">Ingen prosjekt.</div><button id="gradeClose">Lukk ✕</button></section></div><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small>WEBAPP 0.6.3.4 · SEED 206414</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="gradeLive" role="status" aria-live="off" hidden></div><div id="weatherHud">☀ 12:00 · Klart</div><div id="joy"><div id="knob"></div></div><div id="actions" hidden aria-hidden="true"><button id="interact" tabindex="-1">🚪 Dør</button><button id="reset" tabindex="-1">↺ Start</button></div><div id="earthTools"><button id="earthDig" class="active">Grav</button><button id="earthFill">Fyll</button><select id="earthMat"><option value="soil">Jord</option><option value="sand">Sand</option><option value="gravel">Grus</option><option value="clay">Leire</option></select><div id="earthAvailability" aria-live="polite" style="font-size:11px;line-height:1.3;color:#c9e3d6;margin-top:5px"></div></div><button id="pileToggle" type="button" aria-controls="pileControls" aria-expanded="false">📦 Lager</button><div id="pileOverlay" class="af-modal-overlay" role="presentation"><div id="pileControls" role="dialog" aria-modal="true" aria-label="Masselager"><button id="pileClose" type="button">Lukk ✕</button><select id="pileMaterial"><option value="soil">Jord</option><option value="sand">Sand</option><option value="gravel">Grus</option><option value="clay">Leire</option><option value="stone">Stein</option><option value="coal">Kull</option><option value="iron_ore">Jernmalm</option><option value="copper_ore">Kobbermalm</option><option value="silver_ore">Sølvmalm</option><option value="gold_ore">Gullmalm</option><option value="titanium_ore">Titanmalm</option><option value="diamond">Diamant</option><option value="sticks">Pinner</option><option value="logs">Tømmer</option><option value="planks">Planker</option><option value="battens">Lekter</option><option value="firewood">Ved</option><option value="sawdust">Sagflis</option></select><div><button id="pileTake">Ta</button><button id="pileDrop">Legg fra</button></div><button id="pileMove">Flytt haug</button></div></div><div id="loadHud">Last: 0 / 30 kg</div><div id="sawOverlay" role="dialog" aria-modal="true" aria-label="Trebearbeiding"><div id="sawCard"><button id="sawClose">Lukk ✕</button><h2>🪚 Trebearbeiding</h2><label for="sawRecipe">Produkt</label><select id="sawRecipe"><option value="planks">Tømmer → planker</option><option value="firewood">Tømmer → ved</option><option value="battens">Planke → lekter</option></select><label for="sawCount">Antall råenheter (1–10)</label><input id="sawCount" type="number" min="1" max="10" value="1" inputmode="numeric"><div id="sawInfo"></div><button id="sawCraft">🪚 Sag materialer</button><button id="sawStation">🪵 Plasser sagbukk (4 pinner)</button></div></div><div id="toolHud" aria-label="Verktøylinje"><button data-tool="shovel" title="Spade">🪏<span>Spade</span></button><button data-tool="pickaxe" title="Hakke">⛏️<span>Hakke</span></button><button data-tool="axe" title="Øks">🪓<span>Øks</span></button><button data-tool="saw" title="Sag">🪚<span>Sag</span></button><button data-tool="hammer" title="Hammer">🔨<span>Hammer</span></button></div><button id="inventoryToggle">🎒 Inventar</button><button id="useTool">Bruk verktøy</button><div id="toolToast" role="status"></div><div id="inventoryPanel"><article><header><h2>🎒 Inventar</h2><button id="inventoryClose">Lukk ✕</button></header><p class="inventory-summary" id="inventorySummary"></p><p id="inventoryToolInfo"></p><table><thead><tr><th>Ressurs</th><th>Antall</th><th>Masse</th><th>Volum</th></tr></thead><tbody id="inventoryRows"></tbody></table><p><small>Masselagre, bærekapasitet, graving, oppfylling og bergbryting er aktivert. Saging og trebearbeiding er aktivert. Bygging kommer senere. Inventaret og verktøyvalget lagres lokalt.</small></p></article></div><div id="hint">Joystick ↑↓: frem/bak · ←→: roter · Separate elvemesher følger nedoverbakke · Dra høyre side: se rundt og opp/ned</div><div id="panel"><article><h2>AFTERFALL 3D · 0.6.3.4</h2><p>Trebearbeiding, sagbukk og materiallagre: dynamisk 4 × 4 km terreng, avstandsbasert LOD og separate elvemesher, og godkjent joystick/kollisjon/dør.</p><p>Verdensfrø 206414. 4096 × 4096 m logisk verden, 64 m chunks, dynamisk lasting. Globalt dreneringsnett, sammenkoblede lokale og globale elvesenterlinjer, variabel elvebredde, finere strandlinjer med terrengtilpasset klipping, hav ved kote 0 og lett shaderbasert vannanimasjon. Dette er en ny hydrologisk testmodell, ikke identisk med elvenettet i 0.4-serien.</p><button id="resume">Fortsett</button><button id="spawnOutside">Test utenfor</button><button id="spawnInside">Test inne</button><button id="save">Lagre</button><button id="load">Last inn</button><p><small>Ingen endringer i v0.4.7.2 eller originalhistorien.</small></p></article></div><button id="diagToggle" type="button" aria-label="Åpne eller lukk diagnosemeny">🔬 Diagnose</button><div id="diagIndicator" aria-live="polite"></div><div id="diagOverlay" class="af-modal-overlay" role="presentation"><aside id="diagPanel" role="dialog" aria-modal="true" aria-label="Vanngeometri-diagnostikk"><b>v0.6.3.4 · vannmesher</b><div id="diagLegend">🟠 Elv · 🔵 Innsjø · 🟣 Hav · 🟡 Terreng/vann-snitt · 🔴 Mulig manglende vanndekning · 🟪 Overlapp</div>
+</style></head><body><button id="gradeToggle" type="button">📐 Planering</button><div id="gradeOverlay" role="presentation"><section id="gradePanel" role="dialog" aria-modal="true" aria-label="Terrengplanering"><h2>📐 Planering · v0.6.3.5</h2><p>Sikt på bakken og velg to motsatte hjørner. Maks 20 × 20 m. Innenfor planeringsområdet arbeider spaden presist med én terrengnode per tak (inntil 5 L). Masser går via eksisterende inventar og lager.</p><button id="gradeFirst">1. Sett hjørne A</button><button id="gradeSecond">2. Sett hjørne B</button><div id="gradeHeights" aria-live="polite">Måler terrengkoter …</div><div id="gradeStats" aria-live="polite">Marker hjørne A og B for å beregne områdets koteverdier.</div><button id="gradeSuggest" type="button" disabled>Bruk foreslått kote</button><p><label for="gradeLevel">Prosjektert kote (m): </label><input id="gradeLevel" type="number" step="0.01" inputmode="decimal"></p><button id="gradeCreate">Opprett / oppdater prosjekt</button><button id="gradeDelete">Slett prosjekt</button><div id="gradeDelta" aria-live="polite"></div><div id="gradeInfo" aria-live="polite">Ingen prosjekt.</div><button id="gradeClose">Lukk ✕</button></section></div><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small>WEBAPP 0.6.3.5 · SEED 206414</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="gradeLive" role="status" aria-live="off" hidden></div><div id="weatherHud">☀ 12:00 · Klart</div><div id="joy"><div id="knob"></div></div><div id="actions" hidden aria-hidden="true"><button id="interact" tabindex="-1">🚪 Dør</button><button id="reset" tabindex="-1">↺ Start</button></div><div id="earthTools"><button id="earthDig" class="active">Grav</button><button id="earthFill">Fyll</button><select id="earthMat"><option value="soil">Jord</option><option value="sand">Sand</option><option value="gravel">Grus</option><option value="clay">Leire</option></select><div id="earthAvailability" aria-live="polite" style="font-size:11px;line-height:1.3;color:#c9e3d6;margin-top:5px"></div></div><button id="pileToggle" type="button" aria-controls="pileControls" aria-expanded="false">📦 Lager</button><div id="pileOverlay" class="af-modal-overlay" role="presentation"><div id="pileControls" role="dialog" aria-modal="true" aria-label="Masselager"><button id="pileClose" type="button">Lukk ✕</button><select id="pileMaterial"><option value="soil">Jord</option><option value="sand">Sand</option><option value="gravel">Grus</option><option value="clay">Leire</option><option value="stone">Stein</option><option value="coal">Kull</option><option value="iron_ore">Jernmalm</option><option value="copper_ore">Kobbermalm</option><option value="silver_ore">Sølvmalm</option><option value="gold_ore">Gullmalm</option><option value="titanium_ore">Titanmalm</option><option value="diamond">Diamant</option><option value="sticks">Pinner</option><option value="logs">Tømmer</option><option value="planks">Planker</option><option value="battens">Lekter</option><option value="firewood">Ved</option><option value="sawdust">Sagflis</option></select><div><button id="pileTake">Ta</button><button id="pileDrop">Legg fra</button></div><button id="pileMove">Flytt haug</button></div></div><div id="loadHud">Last: 0 / 30 kg</div><div id="sawOverlay" role="dialog" aria-modal="true" aria-label="Trebearbeiding"><div id="sawCard"><button id="sawClose">Lukk ✕</button><h2>🪚 Trebearbeiding</h2><label for="sawRecipe">Produkt</label><select id="sawRecipe"><option value="planks">Tømmer → planker</option><option value="firewood">Tømmer → ved</option><option value="battens">Planke → lekter</option></select><label for="sawCount">Antall råenheter (1–10)</label><input id="sawCount" type="number" min="1" max="10" value="1" inputmode="numeric"><div id="sawInfo"></div><button id="sawCraft">🪚 Sag materialer</button><button id="sawStation">🪵 Plasser sagbukk (4 pinner)</button></div></div><div id="toolHud" aria-label="Verktøylinje"><button data-tool="shovel" title="Spade">🪏<span>Spade</span></button><button data-tool="pickaxe" title="Hakke">⛏️<span>Hakke</span></button><button data-tool="axe" title="Øks">🪓<span>Øks</span></button><button data-tool="saw" title="Sag">🪚<span>Sag</span></button><button data-tool="hammer" title="Hammer">🔨<span>Hammer</span></button></div><button id="inventoryToggle">🎒 Inventar</button><button id="useTool">Bruk verktøy</button><div id="toolToast" role="status"></div><div id="inventoryPanel"><article><header><h2>🎒 Inventar</h2><button id="inventoryClose">Lukk ✕</button></header><p class="inventory-summary" id="inventorySummary"></p><p id="inventoryToolInfo"></p><table><thead><tr><th>Ressurs</th><th>Antall</th><th>Masse</th><th>Volum</th></tr></thead><tbody id="inventoryRows"></tbody></table><p><small>Masselagre, bærekapasitet, graving, oppfylling og bergbryting er aktivert. Saging og trebearbeiding er aktivert. Bygging kommer senere. Inventaret og verktøyvalget lagres lokalt.</small></p></article></div><div id="hint">Joystick ↑↓: frem/bak · ←→: roter · Separate elvemesher følger nedoverbakke · Dra høyre side: se rundt og opp/ned</div><div id="panel"><article><h2>AFTERFALL 3D · 0.6.3.5</h2><p>Trebearbeiding, sagbukk og materiallagre: dynamisk 4 × 4 km terreng, avstandsbasert LOD og separate elvemesher, og godkjent joystick/kollisjon/dør.</p><p>Verdensfrø 206414. 4096 × 4096 m logisk verden, 64 m chunks, dynamisk lasting. Globalt dreneringsnett, sammenkoblede lokale og globale elvesenterlinjer, variabel elvebredde, finere strandlinjer med terrengtilpasset klipping, hav ved kote 0 og lett shaderbasert vannanimasjon. Dette er en ny hydrologisk testmodell, ikke identisk med elvenettet i 0.4-serien.</p><button id="resume">Fortsett</button><button id="spawnOutside">Test utenfor</button><button id="spawnInside">Test inne</button><button id="save">Lagre</button><button id="load">Last inn</button><p><small>Ingen endringer i v0.4.7.2 eller originalhistorien.</small></p></article></div><button id="diagToggle" type="button" aria-label="Åpne eller lukk diagnosemeny">🔬 Diagnose</button><div id="diagIndicator" aria-live="polite"></div><div id="diagOverlay" class="af-modal-overlay" role="presentation"><aside id="diagPanel" role="dialog" aria-modal="true" aria-label="Vanngeometri-diagnostikk"><b>v0.6.3.5 · vannmesher</b><div id="diagLegend">🟠 Elv · 🔵 Innsjø · 🟣 Hav · 🟡 Terreng/vann-snitt · 🔴 Mulig manglende vanndekning · 🟪 Overlapp</div>
 <label><input type="checkbox" id="diagColors">Fargekod vannmeshene</label>
 <label><input type="checkbox" id="diagEdges">Vis vannpolygonkanter</label>
 <label><input type="checkbox" id="diagChunks">Vis 64 m chunkgrenser</label>
@@ -105,7 +105,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.m
 const SEED=206414, KEY='afterfall_054',WORLD=4096;
 const $=id=>document.getElementById(id), clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 
-// v0.6.3.4: Ressursregister (kg og m³ per enhet) og verktøydata.
+// v0.6.3.5: Ressursregister (kg og m³ per enhet) og verktøydata.
 // All mutasjon går gjennom inventoryAdd/inventoryRemove for senere utvinning og produksjon.
 const INVENTORY_KEY='afterfall_058_inventory';
 const RESOURCE_CATALOG=Object.freeze({
@@ -136,7 +136,7 @@ const TOOL_CATALOG=Object.freeze({
 });
 
 
-// Terrengredigering v0.6.3.4. Høydeverdier er centimeter på et globalt 1 m rutenett.
+// Terrengredigering v0.6.3.5. Høydeverdier er centimeter på et globalt 1 m rutenett.
 const EARTH_KEY='afterfall_060_world',EARTH_LIMIT=12000;
 const earthEdits=new Map(),earthFillLayers=new Map();
 const gradingProjects=[];let gradeCornerA=null,gradeCornerB=null,gradePreview=null;
@@ -200,16 +200,25 @@ function earthAction(){
  const aim=earthAim();if(!aim){toolMessage('Sikt på bakken innen 6,5 meter.');return}
  if(earthRestricted(aim.x,aim.z)){toolMessage('Beskyttet område ved vann eller stasjon.');return}
  const fill=earthMode==='fill',material=$('earthMat').value,changes=[],volumes={};
- // Glatt kubisk profil. Volum = eksakt integral av høydefeltets bilineære basisfunksjoner.
- for(let z=Math.floor(aim.z)-3;z<=Math.ceil(aim.z)+3;z++)for(let x=Math.floor(aim.x)-3;x<=Math.ceil(aim.x)+3;x++){
+ // Presisjonsplanering bruker én terrengnode om gangen innenfor aktivt prosjekt.
+ // En node representerer ca. 1 m², slik at 5 L gir maksimalt 0,5 cm per tak.
+ // Dette er raskere lokal kotejustering uten å endre masse eller tetthet.
+ const precisionGrade=gradingAt(aim.x,aim.z);
+ const nearestX=Math.round(aim.x),nearestZ=Math.round(aim.z);
+ const xMin=precisionGrade?nearestX:Math.floor(aim.x)-3;
+ const xMax=precisionGrade?nearestX:Math.ceil(aim.x)+3;
+ const zMin=precisionGrade?nearestZ:Math.floor(aim.z)-3;
+ const zMax=precisionGrade?nearestZ:Math.ceil(aim.z)+3;
+ for(let z=zMin;z<=zMax;z++)for(let x=xMin;x<=xMax;x++){
   if(earthRestricted(x,z))continue;
   const distance=Math.hypot(x-aim.x,z-aim.z),radius=2.15;
-  if(distance>=radius)continue;
+  if(!precisionGrade&&distance>=radius)continue;
   const u=1-distance/radius,smooth=u*u*(3-2*u),key=earthKey(x,z),before=earthEdits.get(key)||0;
-  let cm=Math.max(1,Math.round(smooth*12));
+  let cm=precisionGrade?1:Math.max(1,Math.round(smooth*12));
   const stack=earthFillLayers.get(key)||[],top=stack[stack.length-1];
   if(!fill)cm=top?Math.min(cm,top.cm):Math.min(cm,Math.max(0,Math.floor(geoLimit(x,z)*100)+before));
   const grade=gradingAt(x,z);
+  if(precisionGrade&&!grade)continue;
   if(grade){
    const difference=grade.level-(originalGround(x,z)+before*.01);
    if(fill){if(difference<=0.00000001)continue;cm=Math.min(cm,Math.floor(difference*100000+1e-7)/1000)}
@@ -224,8 +233,8 @@ function earthAction(){
   changes.push({key,before,after:before+(fill?cm:-cm),type,cm,volume});
   volumes[type]=(volumes[type]||0)+volume;
  }
- if(!changes.length){toolMessage(gradingAt(Math.round(aim.x),Math.round(aim.z))?'Prosjektert kote er nådd eller handlingen går feil vei.':'Fast berg nådd eller ingen masser tilgjengelig.');return}
- // v0.6.3.4: Fylling skaleres til både tilgjengelige masser og maksimalt 5 L.
+ if(!changes.length){toolMessage(gradingAt(Math.round(aim.x),Math.round(aim.z))?'Denne terrengnoden har nådd målkoten, eller du har valgt feil retning.':'Fast berg nådd eller ingen masser tilgjengelig.');return}
+ // v0.6.3.5: Fylling skaleres til både tilgjengelige masser og maksimalt 5 L.
  // Noder kvantiseres til 0,001 cm, med identisk volumregnskap for terreng og ressurser.
  if(fill){
   const source=pileAt(p.x,p.z,material,5);
@@ -254,7 +263,7 @@ function earthAction(){
   for(const k of Object.keys(volumes))delete volumes[k];
   volumes[material]=best.volume;
  }
- // v0.6.3.4: Ett spadestikk kan aldri overstige 5 L, og det kan
+ // v0.6.3.5: Ett spadestikk kan aldri overstige 5 L, og det kan
  // aldri ta ut mer enn ledig masse- eller volumkapasitet. Beregn på
  // terrengnoder med 0,001 cm presisjon FØR geometri, ressurser og lagring endres.
  // Hver nodemodifikasjon har en integralvekt på 1 m² i høydefeltet.
@@ -368,7 +377,7 @@ function earthUI(){
 }
 
 
-// v0.6.3.4 – fysisk masseregnskap, lagerhauger og atomiske IndexedDB-snapshots.
+// v0.6.3.5 – fysisk masseregnskap, lagerhauger og atomiske IndexedDB-snapshots.
 const LOAD_MAX_KG=30,LOAD_MAX_M3=.045,PILE_MAX_M3=Infinity;
 const PILE_RADIUS=.66,PILE_HEIGHT=.48,PILE_CLEARANCE=.35;
 const piles=new Map(),rockDamage=new Map(),dirtyChunks=new Set();
@@ -431,7 +440,7 @@ function pileMeshRefresh(){
  scene.add(pileGroup);
 }
 
-// v0.6.3.4: Transaksjonell trebearbeiding, fysiske trelastlagre og sagbukker.
+// v0.6.3.5: Transaksjonell trebearbeiding, fysiske trelastlagre og sagbukker.
 // Oppskrifter er dimensjonert slik at masse og fastvolum bevares innen modellens enheter.
 const SAW_RECIPES=Object.freeze({
  planks:{input:'logs',outputs:{planks:4,sawdust:17}}, // 35 kg, 0.065 m³ -> 26.5+8.5 kg, 0.048+0.017 m³
@@ -664,7 +673,7 @@ function rockBreak(){
  worldSave();rebuildTouched([{key}]);loadHudUpdate();toolMessage('Brutt 60 L berg · '+RESOURCE_CATALOG[type].name+' lagt i inventar');
 }
 
-// v0.6.3.4: Stabil objektidentitet uavhengig av LOD og genereringsrekkefølge.
+// v0.6.3.5: Stabil objektidentitet uavhengig av LOD og genereringsrekkefølge.
 const HARVEST_KEY='afterfall_059_harvest',HARVEST_RANGE=5.2;
 const harvestedIds=new Set(),harvestNodes=new Map();
 let harvestAssets=null,harvestLastAction=0;
@@ -1071,7 +1080,7 @@ function clipPoly(poly,x0,z0,x1,z1){for(let axis of ['x','z'])for(let side of [0
  for(let i=0;i<poly.length;i++){let a=poly[i],b=poly[(i+1)%poly.length],ia=inside(a),ib=inside(b);
  if(ia!==ib){let t=clamp((edge-a[axis])/((b[axis]-a[axis])||1e-20),0,1);out.push({x:a.x+(b.x-a.x)*t,z:a.z+(b.z-a.z)*t,y:a.y+(b.y-a.y)*t})}
  if(ib)out.push(b)}poly=out;if(poly.length<3)return []}return poly}
-// v0.6.3.4: Endepunkter på samme hydrologiske node deler en miter-kant.
+// v0.6.3.5: Endepunkter på samme hydrologiske node deler en miter-kant.
 // Topologien endres ikke: bare elvebåndenes geometriske sidekanter.
 let riverJoinCache=new WeakMap();
 function rebuildRiverJoinCache(){
@@ -1114,7 +1123,7 @@ function rebuildRiverJoinCache(){
 }
 // Elvebånd klippes mot chunk, men sidepunktene er beregnet GLOBALT.
 // Nabosegmenter får derfor identiske sidekanter i knutepunktene.
-// v0.6.3.4: Kontrollerte segmentbånd. Tidligere ble et potensielt konkavt
+// v0.6.3.5: Kontrollerte segmentbånd. Tidligere ble et potensielt konkavt
 // eller selvkryssende firkantpolygon triangulert med en ubetinget vifte.
 // Nå valideres begge endesnittene, og hvert segment klippes som to triangler.
 // Den hydrologiske senterlinjen og vannstanden endres ikke.
@@ -1205,7 +1214,7 @@ function clipWaterTriangle(triangle,level){
 // trianguleringsrutenett. Alle kantpunkter beregnes deterministisk i
 // verdenskoordinater; ingen chunk-lokale tilfeldige prøvepunkter.
 // Strandlinjer får 1 m triangler; åpne flater får 4 m triangler.
-// v0.6.3.4: Vannpolygoner klippes mot den FAKTISKE LOD-meshen.
+// v0.6.3.5: Vannpolygoner klippes mot den FAKTISKE LOD-meshen.
 // Polygonene deles på 1 m ved strandlinjer, og både hydromaske og
 // landmesh evalueres på samme globale koordinater i hver chunk.
 function buildChunkStillWater(cx,cz,lod){
@@ -1298,7 +1307,7 @@ function buildChunkStillWater(cx,cz,lod){
  return meshes;
 }
 
-// v0.6.3.4: Deterministisk chunkvegetasjon. Ingen nye kollidere eller endringer i hydrologien.
+// v0.6.3.5: Deterministisk chunkvegetasjon. Ingen nye kollidere eller endringer i hydrologien.
 // Felles geometribuffere og materialer; bare instansmatrisene varierer per chunk/LOD.
 function initVegetation(){
  const mk=(geometry,color)=>({geometry,material:new THREE.MeshLambertMaterial({color,side:THREE.FrontSide})});
@@ -1510,7 +1519,7 @@ function setPlayer(x,z,yaw){p.x=x;p.z=z;p.yaw=yaw;updateCamera()}
 function updateCamera(){camera.position.set(p.x-PAD_X,ground(p.x,p.z)+1.72,p.z-PAD_Z);camera.rotation.set(p.pitch||0,p.yaw,0,'YXZ')}
 function move(dx,dz){const load=inventoryTotals();if(load.mass>LOAD_MAX_KG*.8||load.volume>LOAD_MAX_M3*.8){dx*=.75;dz*=.75}let nx=clamp(p.x+dx,1,WORLD-1),nz=clamp(p.z+dz,1,WORLD-1);if(!collides(nx-PAD_X,p.z-PAD_Z))p.x=nx;if(!collides(p.x-PAD_X,nz-PAD_Z))p.z=nz}
 
-// v0.6.3.4: Visuelt vær og astronomisk lys. Ingen inngrep i hydrologi, chunking eller kollisjon.
+// v0.6.3.5: Visuelt vær og astronomisk lys. Ingen inngrep i hydrologi, chunking eller kollisjon.
 const WEATHER_DAY_SECONDS=3600,WEATHER_NAMES=['Klart','Overskyet','Regn','Tåke'];
 const weatherSkyDay=new THREE.Color(0x91a9ac),weatherSkyNight=new THREE.Color(0x0c172c);
 function weatherHash(day,slot){
@@ -1598,13 +1607,13 @@ function updateWeather(dt){
  $('weatherHud').textContent=`${altitude>0?'☀':'☾'} ${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')} · ${WEATHER_NAMES[['klart','overskyet','regn','tåke'].indexOf(kind)]} · Vind ${Math.round(wind*8)} m/s`;
 }
 
-function save(){worldSave();saveInventory();localStorage.setItem(KEY,JSON.stringify({version:557,seed:SEED,...p,weatherElapsed:weatherState.elapsed}));$('status').textContent='Lagring startet · v0.6.3.4'}
+function save(){worldSave();saveInventory();localStorage.setItem(KEY,JSON.stringify({version:557,seed:SEED,...p,weatherElapsed:weatherState.elapsed}));$('status').textContent='Lagring startet · v0.6.3.5'}
 function load(){try{let v=JSON.parse(localStorage.getItem(KEY));if(v&&(v.version===557||v.version===553||v.version===551||v.version===55||v.version===541||v.version===54||v.version===53)&&v.seed===SEED&&[v.x,v.z,v.yaw].every(Number.isFinite)&&v.x>0&&v.x<WORLD&&v.z>0&&v.z<WORLD){setPlayer(v.x,v.z,v.yaw);if(Number.isFinite(v.pitch))p.pitch=THREE.MathUtils.clamp(v.pitch,-Math.PI*.46,Math.PI*.46);if(Number.isFinite(v.weatherElapsed)&&v.weatherElapsed>=0)weatherState.elapsed=v.weatherElapsed;return true}}catch(e){}return false}
 
-// v0.6.3.4: Prosjektert planering; geoteknisk schema reserveres til senere versjoner.
+// v0.6.3.5: Prosjektert planering; geoteknisk schema reserveres til senere versjoner.
 const GRADE_SCHEMA={version:1,materialSlopes:{soil:1.5,sand:2,gravel:1.5,clay:2,bedrock:0},foundationProtection:'future-restriction'};
 function gradingAt(x,z){return gradingProjects.find(q=>x>=q.x0&&x<=q.x1&&z>=q.z0&&z<=q.z1)||null}
-// v0.6.3.4: All elevations use the existing local world height datum (not NN2000).
+// v0.6.3.5: All elevations use the existing local world height datum (not NN2000).
 function gradeBounds(){
  if(gradeCornerA&&gradeCornerB){const a=gradeCornerA,b=gradeCornerB;return {x0:Math.min(a.x,b.x),x1:Math.max(a.x,b.x),z0:Math.min(a.z,b.z),z1:Math.max(a.z,b.z)}}
  const q=gradingProjects[0];return q?{x0:q.x0,x1:q.x1,z0:q.z0,z1:q.z1}:null;
