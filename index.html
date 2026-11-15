@@ -1,6 +1,6 @@
-<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#14221b"><title>AFTERFALL 3D v0.5.5.2</title><style>
+<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#14221b"><title>AFTERFALL 3D v0.5.5.3</title><style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101b19;color:#eef4e9;font:14px system-ui,-apple-system,sans-serif;touch-action:none}canvas{display:block}#hud{position:absolute;top:env(safe-area-inset-top);left:0;right:0;display:flex;justify-content:space-between;align-items:start;padding:12px;pointer-events:none}#hud>div{background:#10231dd9;border:1px solid #ffffff24;border-radius:12px;padding:10px;pointer-events:auto}small{color:#b3c4b8}button{background:#263d35;border:1px solid #80948766;border-radius:9px;color:white;padding:10px 12px;font:inherit}#status{position:absolute;top:88px;left:12px;right:12px;pointer-events:none;text-shadow:0 1px 3px #000;font-size:13px}#cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:24px;color:#ffffffa0;pointer-events:none}#joy{position:absolute;left:22px;bottom:calc(24px + env(safe-area-inset-bottom));width:138px;height:138px;border:2px solid #ffffff5e;background:#10271c88;border-radius:50%;touch-action:none}#knob{position:absolute;left:45px;top:45px;width:44px;height:44px;border-radius:50%;background:#b8cfbcbb;pointer-events:none}#actions{position:absolute;right:18px;bottom:calc(36px + env(safe-area-inset-bottom));display:grid;gap:8px}#actions button{min-width:112px;background:#193b2fe6}#panel{position:absolute;inset:0;background:#09140edc;display:none;place-items:center;padding:22px;z-index:8}#panel.show{display:grid}#panel article{width:min(460px,100%);background:#1b2d25;padding:22px;border-radius:16px;max-height:90vh;overflow:auto}#panel button{margin:4px}#warning{color:#f8c28a}#hint{position:absolute;bottom:calc(176px + env(safe-area-inset-bottom));left:12px;right:12px;text-align:center;pointer-events:none;color:#d7e7d7;font-size:12px}#error{position:absolute;inset:0;display:none;place-items:center;padding:24px;background:#15251c;z-index:10}#error>div{max-width:440px}
-</style></head><body><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small>WEBAPP 0.5.5.2 · SEED 206414</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="joy"><div id="knob"></div></div><div id="actions"><button id="interact">🚪 Dør</button><button id="reset">↺ Start</button></div><div id="hint">Joystick ↑↓: frem/bak · ←→: roter · Separate elvemesher følger nedoverbakke · Dra høyre side: se rundt</div><div id="panel"><article><h2>AFTERFALL 3D · 0.5.5.1</h2><p>Teknisk 3D-test: dynamisk 4 × 4 km terreng, avstandsbasert LOD og separate elvemesher, og godkjent joystick/kollisjon/dør.</p><p>Verdensfrø 206414. 4096 × 4096 m logisk verden, 64 m chunks, dynamisk lasting. Globalt dreneringsnett, sammenkoblede lokale og globale elvesenterlinjer, variabel elvebredde, finere strandlinjer med terrengtilpasset klipping, hav ved kote 0 og lett shaderbasert vannanimasjon. Dette er en ny hydrologisk testmodell, ikke identisk med elvenettet i 0.4-serien.</p><button id="resume">Fortsett</button><button id="spawnOutside">Test utenfor</button><button id="spawnInside">Test inne</button><button id="save">Lagre</button><button id="load">Last inn</button><p><small>Ingen endringer i v0.4.7.2 eller originalhistorien.</small></p></article></div><div id="error"><div><h2>3D-motoren kunne ikke startes</h2><p id="errText"></p><p>Spillet krever WebGL og nettverkstilgang for å hente Three.js første gang. Åpne via HTTPS på GitHub Pages.</p></div></div>
+</style></head><body><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small>WEBAPP 0.5.5.3 · SEED 206414</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="joy"><div id="knob"></div></div><div id="actions"><button id="interact">🚪 Dør</button><button id="reset">↺ Start</button></div><div id="hint">Joystick ↑↓: frem/bak · ←→: roter · Separate elvemesher følger nedoverbakke · Dra høyre side: se rundt</div><div id="panel"><article><h2>AFTERFALL 3D · 0.5.5.3</h2><p>Teknisk 3D-test: dynamisk 4 × 4 km terreng, avstandsbasert LOD og separate elvemesher, og godkjent joystick/kollisjon/dør.</p><p>Verdensfrø 206414. 4096 × 4096 m logisk verden, 64 m chunks, dynamisk lasting. Globalt dreneringsnett, sammenkoblede lokale og globale elvesenterlinjer, variabel elvebredde, finere strandlinjer med terrengtilpasset klipping, hav ved kote 0 og lett shaderbasert vannanimasjon. Dette er en ny hydrologisk testmodell, ikke identisk med elvenettet i 0.4-serien.</p><button id="resume">Fortsett</button><button id="spawnOutside">Test utenfor</button><button id="spawnInside">Test inne</button><button id="save">Lagre</button><button id="load">Last inn</button><p><small>Ingen endringer i v0.4.7.2 eller originalhistorien.</small></p></article></div><div id="error"><div><h2>3D-motoren kunne ikke startes</h2><p id="errText"></p><p>Spillet krever WebGL og nettverkstilgang for å hente Three.js første gang. Åpne via HTTPS på GitHub Pages.</p></div></div>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js';
 const SEED=206414, KEY='afterfall_054',WORLD=4096;
@@ -223,93 +223,99 @@ function clipWaterTriangle(triangle,level){
 }
 // Hav og innsjø er separate, horisontale mesher. Strandlinjen klippes
 // mot terrengkotene i stedet for å fylle hele 8 m rasterkvadrater.
-// v0.5.5.2: Kyst-/strandlinje genereres fra SAMME ground()-funksjon
+// v0.5.5.3: Kyst-/strandlinje genereres fra SAMME ground()-funksjon
 // som terrengmeshen, ikke raw elevation(). Kantceller underdeles adaptivt
 // til 1 m for å redusere åpninger mellom vann og land.
 // Klippnivået får 0.22 m overlapp under terrengoverflaten slik at
 // numerisk interpolasjon ikke åpner synlige sprekker ved strandkanten.
-// v0.5.5.2: Kontinuerlig vannmaske, ingen per-rute klassifisering av midtpunkt.
+// v0.5.5.3: Kontinuerlig vannmaske, ingen per-rute klassifisering av midtpunkt.
 // Vannpolygoner klippes mot BÅDE vannregionens interpolerte maske og
 // terrengkotens skjæringslinje. Begge feltene samples i globale koordinater.
+// v0.5.5.3: Kontinuerlig vannregion og terrengsnitt på felles, globalt
+// trianguleringsrutenett. Alle kantpunkter beregnes deterministisk i
+// verdenskoordinater; ingen chunk-lokale tilfeldige prøvepunkter.
+// Strandlinjer får 1 m triangler; åpne flater får 4 m triangler.
 function buildChunkStillWater(cx,cz){
- const x0=cx*64,z0=cz*64,STEP=4,FINE=1,EPS=.08;
- const buckets=new Map(), heightCache=new Map(), maskCache=new Map();
- const h=(x,z)=>{const k=x.toFixed(4)+','+z.toFixed(4);if(!heightCache.has(k))heightCache.set(k,ground(x,z)+PAD_H);return heightCache.get(k)};
- // Hydrologiske regioner er globalt definerte. Utvid en region kun til
- // nærliggende terreng som faktisk ligger under regionens vannstand.
- // Dette hindrer at en 32 m cellegrense tegnes som en rett vannkant.
- function nearbyBodies(x,z){
-  const ci=Math.round(x/HY_STEP),cj=Math.round(z/HY_STEP),out=new Map();
-  for(let dj=-2;dj<=2;dj++)for(let di=-2;di<=2;di++){
-   const i=ci+di,j=cj+dj;if(i<0||j<0||i>=HY_N||j>=HY_N)continue;
-   const id=hydId(i,j),dx=x-i*HY_STEP,dz=z-j*HY_STEP,d=Math.hypot(dx,dz);
-   if(hydroOcean[id]){
-    const old=out.get('sea');if(old===undefined||d<old)out.set('sea',d);
-   }
-   const li=hydroLakeId[id];if(li>=0){const k='lake:'+li,old=out.get(k);if(old===undefined||d<old)out.set(k,d)}
+ const x0=cx*64,z0=cz*64,COARSE=4,FINE=1;
+ const buckets=new Map(),heightCache=new Map(),maskCache=new Map();
+ const h=(x,z)=>{const k=x.toFixed(5)+','+z.toFixed(5);if(!heightCache.has(k))heightCache.set(k,ground(x,z)+PAD_H);return heightCache.get(k)};
+ // Kontinuerlig, bilineær interpolasjon av hydrologiske regioner.
+ // Rasteret styrer hvilke innsjøer/hav som finnes; dets cellekanter
+ // brukes IKKE som geometriske vannkanter.
+ function region(x,z,key){
+  const cacheKey=key+'|'+x.toFixed(5)+','+z.toFixed(5);
+  if(maskCache.has(cacheKey))return maskCache.get(cacheKey);
+  const u=clamp(x/HY_STEP,0,HY_N-1-1e-8),v=clamp(z/HY_STEP,0,HY_N-1-1e-8);
+  const i=Math.floor(u),j=Math.floor(v),tx=u-i,tz=v-j;
+  const ids=[hydId(i,j),hydId(i+1,j),hydId(i,j+1),hydId(i+1,j+1)];
+  const weights=[(1-tx)*(1-tz),tx*(1-tz),(1-tx)*tz,tx*tz];
+  let occupancy=0;
+  for(let n=0;n<4;n++){
+   const id=ids[n],belongs=key==='sea'?hydroOcean[id]:hydroLakeId[id]===Number(key.slice(5));
+   if(belongs)occupancy+=weights[n];
   }
-  return out;
+  const result=0.5-occupancy;
+  maskCache.set(cacheKey,result);return result;
  }
- // Den kontinuerlige regionmasken har negativ verdi innenfor området.
- // Masken blir samplet også på rutekanter, slik at nabochunks får identiske
- // klippepunkter uten midtpunktsavhengige brudd.
- function mask(x,z,key){
-  const ck=key+'@'+x.toFixed(4)+','+z.toFixed(4);
-  if(maskCache.has(ck))return maskCache.get(ck);
-  const near=nearbyBodies(x,z),dist=near.get(key);
-  const maxReach=key==='sea'?HY_STEP*1.65:HY_STEP*1.2;
-  const value=dist===undefined?maxReach:dist-maxReach;
-  maskCache.set(ck,value);return value;
- }
- function clip(poly,field){
-  if(!poly.length)return [];
+ function clipField(poly,field){
+  if(poly.length<3)return [];
   const out=[];
   for(let i=0;i<poly.length;i++){
-   const a=poly[i],b=poly[(i+1)%poly.length],va=field(a),vb=field(b),ina=va<=0,inb=vb<=0;
-   if(ina!==inb){const t=Math.max(0,Math.min(1,va/(va-vb)));out.push({x:a.x+(b.x-a.x)*t,z:a.z+(b.z-a.z)*t})}
-   if(inb)out.push(b);
+   const a=poly[i],b=poly[(i+1)%poly.length],fa=field(a),fb=field(b),ia=fa<=0,ib=fb<=0;
+   if(ia!==ib){const t=clamp(fa/(fa-fb),0,1);out.push({x:a.x+(b.x-a.x)*t,z:a.z+(b.z-a.z)*t})}
+   if(ib)out.push(b);
   }
   return out;
  }
- function addTriangle(tri,key,level){
-  let poly=clip(tri,p=>mask(p.x,p.z,key));
-  poly=clip(poly,p=>h(p.x,p.z)-level-EPS);
+ function emitTriangle(tri,key,level){
+  // Først geografisk vannregion, deretter faktisk terreng-/vannsnitt.
+  let poly=clipField(tri,p=>region(p.x,p.z,key));
+  poly=clipField(poly,p=>h(p.x,p.z)-level);
   if(poly.length<3)return;
-  let bucket=buckets.get(key);if(!bucket){bucket={v:[],idx:[],level};buckets.set(key,bucket)}
-  const base=bucket.v.length/3;
-  for(const p of poly)bucket.v.push(p.x-PAD_X,level-PAD_H+.035,p.z-PAD_Z);
-  for(let k=1;k<poly.length-1;k++)bucket.idx.push(base,base+k,base+k+1);
+  let bucket=buckets.get(key);
+  if(!bucket){bucket={verts:[],indices:[],level};buckets.set(key,bucket)}
+  const base=bucket.verts.length/3;
+  for(const p of poly)bucket.verts.push(p.x-PAD_X,level-PAD_H+.055,p.z-PAD_Z);
+  for(let k=1;k<poly.length-1;k++)bucket.indices.push(base,base+k,base+k+1);
  }
  function tile(x,z,size,key,level){
-  const a={x,z},b={x:x+size,z},c={x:x+size,z:z+size},d={x,z:z+size};
-  addTriangle([a,b,c],key,level);addTriangle([a,c,d],key,level);
+  // Diagonal samsvarer med terrengmeshens (k,k+SEG+1,k+1).
+  // Samme delingsregel brukes på begge sider av chunkgrenser.
+  const a={x,z},b={x:x+size,z},c={x,z:z+size},d={x:x+size,z:z+size};
+  emitTriangle([a,c,b],key,level);emitTriangle([b,c,d],key,level);
  }
- // Finn regioner fra globalt hydrologiraster, men bruk ikke rasterets
- // nærmeste-celle-grenser som polygonkanter.
- for(let j=0;j<16;j++)for(let i=0;i<16;i++){
-  const x=x0+i*STEP,z=z0+j*STEP;
-  const candidates=new Set();
-  for(const [xx,zz] of [[x,z],[x+4,z],[x,z+4],[x+4,z+4],[x+2,z+2]]){
-   for(const key of nearbyBodies(xx,zz).keys())candidates.add(key);
+ function nearbyKeys(x,z){
+  const keys=new Set(),i=Math.floor(x/HY_STEP),j=Math.floor(z/HY_STEP);
+  for(let dz=-2;dz<=2;dz++)for(let dx=-2;dx<=2;dx++){
+   const ii=i+dx,jj=j+dz;if(ii<0||jj<0||ii>=HY_N||jj>=HY_N)continue;
+   const id=hydId(ii,jj);
+   if(hydroOcean[id])keys.add('sea');
+   if(hydroLakeId[id]>=0)keys.add('lake:'+hydroLakeId[id]);
   }
-  if(!candidates.size)continue;
-  for(const key of candidates){
+  return keys;
+ }
+ for(let j=0;j<16;j++)for(let i=0;i<16;i++){
+  const x=x0+i*COARSE,z=z0+j*COARSE;
+  const keys=nearbyKeys(x+2,z+2);
+  if(!keys.size)continue;
+  for(const key of keys){
    const level=key==='sea'?0:hydroLakes[Number(key.slice(5))]?.level;
-   if(level===undefined)continue;
+   if(!Number.isFinite(level))continue;
    const corners=[[x,z],[x+4,z],[x,z+4],[x+4,z+4]];
-   const m=corners.map(([xx,zz])=>mask(xx,zz,key));
-   const heights=corners.map(([xx,zz])=>h(xx,zz)-level);
-   if(Math.min(...m)>0||Math.min(...heights)>EPS)continue;
-   const boundary=(Math.min(...m)<0&&Math.max(...m)>0)||(Math.min(...heights)<0&&Math.max(...heights)>0);
-   if(boundary){for(let dz=0;dz<4;dz++)for(let dx=0;dx<4;dx++)tile(x+dx,z+dz,FINE,key,level)}
-   else tile(x,z,STEP,key,level);
+   const r=corners.map(([xx,zz])=>region(xx,zz,key));
+   const t=corners.map(([xx,zz])=>h(xx,zz)-level);
+   if(Math.min(...r)>0||Math.min(...t)>0)continue;
+   const edge=(Math.min(...r)<=0&&Math.max(...r)>=0)||(Math.min(...t)<=0&&Math.max(...t)>=0);
+   if(edge){for(let dz=0;dz<4;dz++)for(let dx=0;dx<4;dx++)tile(x+dx,z+dz,FINE,key,level)}
+   else tile(x,z,COARSE,key,level);
   }
  }
  const meshes=[];
  for(const [key,bucket] of buckets){
-  if(!bucket.idx.length)continue;
-  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(bucket.v,3));
-  geo.setIndex(bucket.idx);geo.computeVertexNormals();
+  if(!bucket.indices.length)continue;
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(bucket.verts,3));
+  geo.setIndex(bucket.indices);geo.computeVertexNormals();
   const mesh=new THREE.Mesh(geo,key==='sea'?seaMaterial:lakeMaterial);
   mesh.renderOrder=3;scene.add(mesh);meshes.push(mesh);
  }
@@ -377,8 +383,8 @@ function collides(x,z){let radius=.34,foot=ground(x+PAD_X,z+PAD_Z)+.12,head=foot
 function setPlayer(x,z,yaw){p.x=x;p.z=z;p.yaw=yaw;updateCamera()}
 function updateCamera(){camera.position.set(p.x-PAD_X,ground(p.x,p.z)+1.72,p.z-PAD_Z);camera.rotation.set(0,p.yaw,0,'YXZ')}
 function move(dx,dz){let nx=clamp(p.x+dx,1,WORLD-1),nz=clamp(p.z+dz,1,WORLD-1);if(!collides(nx-PAD_X,p.z-PAD_Z))p.x=nx;if(!collides(p.x-PAD_X,nz-PAD_Z))p.z=nz}
-function save(){localStorage.setItem(KEY,JSON.stringify({version:551,seed:SEED,...p}));$('status').textContent='Lagret lokalt · v0.5.5.2'}
-function load(){try{let v=JSON.parse(localStorage.getItem(KEY));if(v&&(v.version===551||v.version===55||v.version===541||v.version===54||v.version===53)&&v.seed===SEED&&[v.x,v.z,v.yaw].every(Number.isFinite)&&v.x>0&&v.x<WORLD&&v.z>0&&v.z<WORLD){setPlayer(v.x,v.z,v.yaw);return true}}catch(e){}return false}
+function save(){localStorage.setItem(KEY,JSON.stringify({version:553,seed:SEED,...p}));$('status').textContent='Lagret lokalt · v0.5.5.3'}
+function load(){try{let v=JSON.parse(localStorage.getItem(KEY));if(v&&(v.version===553||v.version===551||v.version===55||v.version===541||v.version===54||v.version===53)&&v.seed===SEED&&[v.x,v.z,v.yaw].every(Number.isFinite)&&v.x>0&&v.x<WORLD&&v.z>0&&v.z<WORLD){setPlayer(v.x,v.z,v.yaw);return true}}catch(e){}return false}
 function init(){renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.insertBefore(renderer.domElement,document.body.firstChild);camera=new THREE.PerspectiveCamera(73,innerWidth/innerHeight,.08,260);camera.rotation.order='YXZ';clock=new THREE.Clock();buildWorld();load();updateCamera();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});$('status').textContent='4 × 4 km · dynamiske terrengchunks, elver, innsjøer og hav aktive · Gå gjennom den grønne døråpningen';animate()}
 function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05);if(!paused){let speed=3.5,turnSpeed=2.1,forward=-joy.y,turn=joy.x;p.yaw-=turn*turnSpeed*dt;let fx=-Math.sin(p.yaw),fz=-Math.cos(p.yaw);move(fx*forward*speed*dt,fz*forward*speed*dt);p.seconds+=dt;updateCamera();if((Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4)))updateChunks()}waterTime.value+=dt;renderer.render(scene,camera);let inside=Math.abs(p.x-PAD_X)<7.7&&Math.abs(p.z-PAD_Z)<5.7;$('status').textContent=`${inside?'INNE I SERVICESTASJONEN':'UTENDØRS'} · X ${p.x.toFixed(1)} · Z ${p.z.toFixed(1)} · ${terrainChunks.size} chunks · ${Math.round(1/Math.max(dt,.01))} FPS`}
 const joyEl=$('joy'),knob=$('knob');function joyMove(e){let r=joyEl.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,len=Math.max(1,Math.hypot(dx,dy)),v=Math.min(1,len/48);joy.x=dx/len*v;joy.y=dy/len*v;knob.style.transform=`translate(${joy.x*44}px,${joy.y*44}px)`}
