@@ -1,11 +1,27 @@
-<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#14221b"><title>AFTERFALL 3D v0.5.7.2</title><style>
+<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#14221b"><title>AFTERFALL 3D v0.5.8</title><style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101b19;color:#eef4e9;font:14px system-ui,-apple-system,sans-serif;touch-action:none}canvas{display:block}#hud{position:absolute;top:env(safe-area-inset-top);left:0;right:0;display:flex;justify-content:space-between;align-items:start;padding:12px;pointer-events:none}#hud>div{background:#10231dd9;border:1px solid #ffffff24;border-radius:12px;padding:10px;pointer-events:auto}small{color:#b3c4b8}button{background:#263d35;border:1px solid #80948766;border-radius:9px;color:white;padding:10px 12px;font:inherit}#status{position:absolute;top:88px;left:12px;right:12px;pointer-events:none;text-shadow:0 1px 3px #000;font-size:13px}#cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:24px;color:#ffffffa0;pointer-events:none}#joy{position:absolute;left:22px;bottom:calc(24px + env(safe-area-inset-bottom));width:138px;height:138px;border:2px solid #ffffff5e;background:#10271c88;border-radius:50%;touch-action:none}#knob{position:absolute;left:45px;top:45px;width:44px;height:44px;border-radius:50%;background:#b8cfbcbb;pointer-events:none}#actions{position:absolute;right:18px;bottom:calc(36px + env(safe-area-inset-bottom));display:grid;gap:8px}#actions button{min-width:112px;background:#193b2fe6}#panel{position:absolute;inset:0;background:#09140edc;display:none;place-items:center;padding:22px;z-index:8}#panel.show{display:grid}#panel article{width:min(460px,100%);background:#1b2d25;padding:22px;border-radius:16px;max-height:90vh;overflow:auto}#panel button{margin:4px}#warning{color:#f8c28a}#hint{position:absolute;bottom:calc(176px + env(safe-area-inset-bottom));left:12px;right:12px;text-align:center;pointer-events:none;color:#d7e7d7;font-size:12px}#error{position:absolute;inset:0;display:none;place-items:center;padding:24px;background:#15251c;z-index:10}#error>div{max-width:440px}
 #weatherHud{position:absolute;left:12px;top:calc(env(safe-area-inset-top) + 122px);z-index:4;background:#10231dc9;border:1px solid #ffffff22;border-radius:9px;padding:6px 9px;font-size:11px;pointer-events:none}#diagPanel{position:absolute;z-index:7;top:118px;right:8px;width:min(330px,calc(100vw - 16px));max-height:calc(100dvh - 175px);overflow:auto;background:#0c211de8;border:1px solid #9cc4b666;border-radius:12px;padding:11px;display:none;font-size:12px;line-height:1.35;box-shadow:0 5px 18px #0006}
 #diagPanel.show{display:block}#diagPanel label{display:flex;align-items:center;gap:7px;margin:7px 0}#diagPanel input{accent-color:#9cdeca}#diagPanel button{padding:7px;margin:3px}#diagStats{white-space:pre-wrap;font:11px/1.45 ui-monospace,monospace;background:#0005;padding:8px;border-radius:6px;max-height:210px;overflow:auto}#diagLegend{font-size:11px;color:#cde4dc}#diagToggle{position:absolute;z-index:9;top:calc(env(safe-area-inset-top) + 82px);right:12px;padding:7px 10px;background:#1c3d35f5;font-size:12px;box-shadow:0 2px 9px #0008}
 #diagToggle.active{background:#72501c;border-color:#ffd06c}
 #diagIndicator{position:absolute;z-index:5;top:calc(env(safe-area-inset-top) + 125px);right:12px;max-width:190px;padding:5px 8px;border-radius:7px;background:#10251fe6;color:#ffe4a4;font-size:10px;line-height:1.35;pointer-events:none;display:none}
 #diagIndicator.show{display:block}
-</style></head><body><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small>WEBAPP 0.5.7.2 · SEED 206414</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="weatherHud">☀ 12:00 · Klart</div><div id="joy"><div id="knob"></div></div><div id="actions"><button id="interact">🚪 Dør</button><button id="reset">↺ Start</button></div><div id="hint">Joystick ↑↓: frem/bak · ←→: roter · Separate elvemesher følger nedoverbakke · Dra høyre side: se rundt og opp/ned</div><div id="panel"><article><h2>AFTERFALL 3D · 0.5.7.2</h2><p>Teknisk 3D-test: dynamisk 4 × 4 km terreng, avstandsbasert LOD og separate elvemesher, og godkjent joystick/kollisjon/dør.</p><p>Verdensfrø 206414. 4096 × 4096 m logisk verden, 64 m chunks, dynamisk lasting. Globalt dreneringsnett, sammenkoblede lokale og globale elvesenterlinjer, variabel elvebredde, finere strandlinjer med terrengtilpasset klipping, hav ved kote 0 og lett shaderbasert vannanimasjon. Dette er en ny hydrologisk testmodell, ikke identisk med elvenettet i 0.4-serien.</p><button id="resume">Fortsett</button><button id="spawnOutside">Test utenfor</button><button id="spawnInside">Test inne</button><button id="save">Lagre</button><button id="load">Last inn</button><p><small>Ingen endringer i v0.4.7.2 eller originalhistorien.</small></p></article></div><button id="diagToggle" type="button" aria-label="Åpne eller lukk diagnosemeny">🔬 Diagnose</button><div id="diagIndicator" aria-live="polite"></div><aside id="diagPanel" aria-label="Vanngeometri-diagnostikk"><b>v0.5.7.2 · vannmesher</b><div id="diagLegend">🟠 Elv · 🔵 Innsjø · 🟣 Hav · 🟡 Terreng/vann-snitt · 🔴 Mulig manglende vanndekning · 🟪 Overlapp</div>
+
+#toolHud{position:absolute;z-index:5;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:4px;max-width:calc(100vw - 12px);padding:5px;border-radius:12px;background:#10231de8;border:1px solid #ffffff35}
+#toolHud button{min-width:43px;padding:6px 7px;font-size:19px;line-height:1.2;background:#213a30}
+#toolHud button.active{border-color:#f4d58b;background:#4c4930;box-shadow:0 0 0 1px #f4d58b}
+#toolHud button span{display:block;font-size:9px;color:#e2e9dd}
+#inventoryToggle{position:absolute;z-index:5;right:12px;bottom:calc(160px + env(safe-area-inset-bottom));padding:8px}
+#useTool{position:absolute;z-index:5;right:12px;bottom:calc(208px + env(safe-area-inset-bottom));padding:9px;background:#574c2f}
+#inventoryPanel{position:absolute;z-index:11;inset:0;display:none;place-items:center;background:#07120ee9;padding:14px}
+#inventoryPanel.show{display:grid}
+#inventoryPanel article{background:#1b3028;border:1px solid #a4bdab55;border-radius:14px;padding:16px;width:min(510px,100%);max-height:85dvh;overflow:auto}
+#inventoryPanel header{display:flex;justify-content:space-between;align-items:center;gap:10px}
+#inventoryPanel table{width:100%;border-collapse:collapse;font-size:12px}
+#inventoryPanel th,#inventoryPanel td{padding:7px 3px;border-bottom:1px solid #ffffff22;text-align:left}
+#inventoryPanel .inventory-summary{color:#c8dfce;margin:10px 0}
+#toolToast{position:absolute;z-index:6;left:50%;top:calc(50% + 38px);transform:translateX(-50%);max-width:min(330px,90vw);text-align:center;background:#10271be8;border-radius:8px;padding:8px 12px;display:none;pointer-events:none}
+@media(max-width:430px){#actions{bottom:calc(94px + env(safe-area-inset-bottom))}#joy{bottom:calc(95px + env(safe-area-inset-bottom));width:120px;height:120px}#knob{left:36px;top:36px}#hint{display:none}#inventoryToggle{bottom:calc(235px + env(safe-area-inset-bottom))}#useTool{bottom:calc(283px + env(safe-area-inset-bottom))}}
+</style></head><body><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small>WEBAPP 0.5.8 · SEED 206414</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="weatherHud">☀ 12:00 · Klart</div><div id="joy"><div id="knob"></div></div><div id="actions"><button id="interact">🚪 Dør</button><button id="reset">↺ Start</button></div><div id="toolHud" aria-label="Verktøylinje"><button data-tool="shovel" title="Spade">🪏<span>Spade</span></button><button data-tool="pickaxe" title="Hakke">⛏️<span>Hakke</span></button><button data-tool="axe" title="Øks">🪓<span>Øks</span></button><button data-tool="saw" title="Sag">🪚<span>Sag</span></button><button data-tool="hammer" title="Hammer">🔨<span>Hammer</span></button></div><button id="inventoryToggle">🎒 Inventar</button><button id="useTool">Bruk verktøy</button><div id="toolToast" role="status"></div><div id="inventoryPanel"><article><header><h2>🎒 Inventar</h2><button id="inventoryClose">Lukk ✕</button></header><p class="inventory-summary" id="inventorySummary"></p><p id="inventoryToolInfo"></p><table><thead><tr><th>Ressurs</th><th>Antall</th><th>Masse</th><th>Volum</th></tr></thead><tbody id="inventoryRows"></tbody></table><p><small>Ressursutvinning og terrengforming implementeres i senere versjoner. Inventaret og verktøyvalget lagres lokalt.</small></p></article></div><div id="hint">Joystick ↑↓: frem/bak · ←→: roter · Separate elvemesher følger nedoverbakke · Dra høyre side: se rundt og opp/ned</div><div id="panel"><article><h2>AFTERFALL 3D · 0.5.8</h2><p>Teknisk 3D-test: dynamisk 4 × 4 km terreng, avstandsbasert LOD og separate elvemesher, og godkjent joystick/kollisjon/dør.</p><p>Verdensfrø 206414. 4096 × 4096 m logisk verden, 64 m chunks, dynamisk lasting. Globalt dreneringsnett, sammenkoblede lokale og globale elvesenterlinjer, variabel elvebredde, finere strandlinjer med terrengtilpasset klipping, hav ved kote 0 og lett shaderbasert vannanimasjon. Dette er en ny hydrologisk testmodell, ikke identisk med elvenettet i 0.4-serien.</p><button id="resume">Fortsett</button><button id="spawnOutside">Test utenfor</button><button id="spawnInside">Test inne</button><button id="save">Lagre</button><button id="load">Last inn</button><p><small>Ingen endringer i v0.4.7.2 eller originalhistorien.</small></p></article></div><button id="diagToggle" type="button" aria-label="Åpne eller lukk diagnosemeny">🔬 Diagnose</button><div id="diagIndicator" aria-live="polite"></div><aside id="diagPanel" aria-label="Vanngeometri-diagnostikk"><b>v0.5.8 · vannmesher</b><div id="diagLegend">🟠 Elv · 🔵 Innsjø · 🟣 Hav · 🟡 Terreng/vann-snitt · 🔴 Mulig manglende vanndekning · 🟪 Overlapp</div>
 <label><input type="checkbox" id="diagColors">Fargekod vannmeshene</label>
 <label><input type="checkbox" id="diagEdges">Vis vannpolygonkanter</label>
 <label><input type="checkbox" id="diagChunks">Vis 64 m chunkgrenser</label>
@@ -17,6 +33,120 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js';
 const SEED=206414, KEY='afterfall_054',WORLD=4096;
 const $=id=>document.getElementById(id), clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+
+// v0.5.8: Ressursregister (kg og m³ per enhet) og verktøydata.
+// All mutasjon går gjennom inventoryAdd/inventoryRemove for senere utvinning og produksjon.
+const INVENTORY_KEY='afterfall_058_inventory';
+const RESOURCE_CATALOG=Object.freeze({
+ soil:{name:'Jord',mass:1.45,volume:.001,unit:'L'},
+ sand:{name:'Sand',mass:1.6,volume:.001,unit:'L'},
+ gravel:{name:'Grus',mass:1.7,volume:.001,unit:'L'},
+ clay:{name:'Leire',mass:1.65,volume:.001,unit:'L'},
+ stone:{name:'Stein',mass:2.65,volume:.001,unit:'L'},
+ iron_ore:{name:'Jernmalm',mass:1,volume:.0003,unit:'kg'},
+ copper_ore:{name:'Kobbermalm',mass:1,volume:.00028,unit:'kg'},
+ silver_ore:{name:'Sølvmalm',mass:1,volume:.00025,unit:'kg'},
+ gold_ore:{name:'Gullmalm',mass:1,volume:.00025,unit:'kg'},
+ titanium_ore:{name:'Titanmalm',mass:1,volume:.00025,unit:'kg'},
+ diamond:{name:'Diamant',mass:.001,volume:.0000003,unit:'stk'},
+ sticks:{name:'Pinner',mass:.3,volume:.001,unit:'stk'},
+ firewood:{name:'Ved',mass:2.5,volume:.008,unit:'stk'},
+ logs:{name:'Tømmer',mass:35,volume:.065,unit:'stk'},
+ planks:{name:'Planker',mass:4,volume:.0075,unit:'stk'}
+});
+const TOOL_CATALOG=Object.freeze({
+ shovel:{name:'Spade',icon:'🪏',verb:'Grave / fylle',description:'Terrengforming og uttak av løsmasser kommer i v0.6.0.'},
+ pickaxe:{name:'Hakke',icon:'⛏️',verb:'Bryte berg',description:'Mineralutvinning og bergforekomster kommer i v0.5.9.'},
+ axe:{name:'Øks',icon:'🪓',verb:'Hogge',description:'Hogst og høsting av busker kommer i v0.5.9.'},
+ saw:{name:'Sag',icon:'🪚',verb:'Sage',description:'Produksjon av planker og ved kommer i v0.6.1.'},
+ hammer:{name:'Hammer',icon:'🔨',verb:'Bygge',description:'Byggesystemet kommer i v0.6.2.'}
+});
+const inventoryState={selectedTool:'shovel',items:Object.create(null)};
+let inventoryOpen=false,toolToastUntil=0;
+function inventoryAdd(id,quantity){
+ if(!RESOURCE_CATALOG[id]||!Number.isFinite(quantity)||quantity<=0)return false;
+ inventoryState.items[id]=Math.round(((inventoryState.items[id]||0)+quantity)*1000)/1000;
+ saveInventory();return true;
+}
+function inventoryRemove(id,quantity){
+ if(!RESOURCE_CATALOG[id]||!Number.isFinite(quantity)||quantity<=0||(inventoryState.items[id]||0)<quantity)return false;
+ inventoryState.items[id]=Math.round((inventoryState.items[id]-quantity)*1000)/1000;
+ if(inventoryState.items[id]<=0)delete inventoryState.items[id];
+ saveInventory();return true;
+}
+function inventoryTotals(){
+ let mass=0,volume=0,quantity=0;
+ for(const [id,q] of Object.entries(inventoryState.items)){
+  if(!RESOURCE_CATALOG[id])continue;
+  mass+=q*RESOURCE_CATALOG[id].mass;volume+=q*RESOURCE_CATALOG[id].volume;quantity+=q;
+ }
+ return {mass,volume,quantity};
+}
+function saveInventory(){
+ try{localStorage.setItem(INVENTORY_KEY,JSON.stringify({version:1,seed:SEED,selectedTool:inventoryState.selectedTool,items:inventoryState.items}));return true}
+ catch(e){toolMessage('Kunne ikke lagre inventaret lokalt.');return false}
+}
+function loadInventory(){
+ try{
+  const data=JSON.parse(localStorage.getItem(INVENTORY_KEY)||'null');
+  if(!data||data.seed!==SEED)return;
+  if(TOOL_CATALOG[data.selectedTool])inventoryState.selectedTool=data.selectedTool;
+  if(data.items&&typeof data.items==='object'){
+   for(const [id,q] of Object.entries(data.items)){
+    if(RESOURCE_CATALOG[id]&&Number.isFinite(q)&&q>0&&q<1e9)inventoryState.items[id]=q;
+   }
+  }
+ }catch(e){console.warn('Inventar kunne ikke leses',e)}
+}
+function selectTool(id){
+ if(!TOOL_CATALOG[id])return;
+ inventoryState.selectedTool=id;
+ for(const b of document.querySelectorAll('#toolHud button'))b.classList.toggle('active',b.dataset.tool===id);
+ $('useTool').textContent=TOOL_CATALOG[id].icon+' '+TOOL_CATALOG[id].verb;
+ saveInventory();
+}
+function toolMessage(message){
+ const el=$('toolToast');if(!el)return;
+ el.textContent=message;el.style.display='block';toolToastUntil=performance.now()+2600;
+}
+function useSelectedTool(){
+ const tool=TOOL_CATALOG[inventoryState.selectedTool];
+ // Ingen ressurser opprettes før faktiske terreng-/objektinteraksjoner finnes.
+ toolMessage(tool.icon+' '+tool.description);
+}
+function renderInventory(){
+ const total=inventoryTotals();
+ $('inventorySummary').textContent=`${total.quantity.toLocaleString('nb-NO')} enheter · ${total.mass.toFixed(2)} kg · ${total.volume.toFixed(3)} m³`;
+ $('inventoryToolInfo').textContent='Aktivt verktøy: '+TOOL_CATALOG[inventoryState.selectedTool].name;
+ const tbody=$('inventoryRows');tbody.replaceChildren();
+ const entries=Object.entries(inventoryState.items).filter(([id,q])=>RESOURCE_CATALOG[id]&&q>0);
+ if(!entries.length){
+  const tr=document.createElement('tr'),td=document.createElement('td');
+  td.colSpan=4;td.textContent='Ingen innsamlede ressurser ennå.';tr.appendChild(td);tbody.appendChild(tr);
+ }
+ for(const [id,q] of entries){
+  const item=RESOURCE_CATALOG[id],tr=document.createElement('tr');
+  for(const value of [item.name,q.toLocaleString('nb-NO')+' '+item.unit,(q*item.mass).toFixed(2)+' kg',(q*item.volume).toFixed(3)+' m³']){
+   const td=document.createElement('td');td.textContent=value;tr.appendChild(td);
+  }
+  tbody.appendChild(tr);
+ }
+}
+function showInventory(on){
+ inventoryOpen=on;$('inventoryPanel').classList.toggle('show',on);
+ if(on)renderInventory();
+ paused=on||$('panel').classList.contains('show');
+ joy.x=joy.y=0;$('knob').style.transform='translate(0,0)';
+}
+function initInventoryUI(){
+ loadInventory();
+ document.querySelectorAll('#toolHud button').forEach(b=>b.addEventListener('click',()=>selectTool(b.dataset.tool)));
+ $('inventoryToggle').onclick=()=>showInventory(true);
+ $('inventoryClose').onclick=()=>showInventory(false);
+ $('useTool').onclick=useSelectedTool;
+ selectTool(inventoryState.selectedTool);
+}
+
 let vegetationAssets=null,atmosphereSun=null,atmosphereHemi=null,weatherRain=null,weatherMoon=null,weatherSun=null,weatherState={elapsed:0,day:0,kind:'klart',wind:0},weatherWaterBase=null;let scene,camera,renderer,clock,building=[],wallBoxes=[],roundColliders=[],riverMeshes=[],riverPaths=[],riverSegments=[],riverBuckets=new Map(),terrainChunks=new Map(),terrainMaterial=null,waterMaterial=null,seaMaterial=null,lakeMaterial=null,waterTime={value:0},p={x:288,z:301,yaw:Math.PI,pitch:0,seconds:0},joy={x:0,y:0},paused=false,lookPointer=null,lookLastX=0,lookLastY=0;
 const hash=(x,z)=>{let n=Math.sin(x*127.1+z*311.7+SEED*.017)*43758.5453;return n-Math.floor(n)};
 function noise(x,z){let a=Math.floor(x),b=Math.floor(z),u=x-a,v=z-b;u=u*u*(3-2*u);v=v*v*(3-2*v);return (hash(a,b)*(1-u)+hash(a+1,b)*u)*(1-v)+(hash(a,b+1)*(1-u)+hash(a+1,b+1)*u)*v}
@@ -192,7 +322,7 @@ function clipPoly(poly,x0,z0,x1,z1){for(let axis of ['x','z'])for(let side of [0
  for(let i=0;i<poly.length;i++){let a=poly[i],b=poly[(i+1)%poly.length],ia=inside(a),ib=inside(b);
  if(ia!==ib){let t=clamp((edge-a[axis])/((b[axis]-a[axis])||1e-20),0,1);out.push({x:a.x+(b.x-a.x)*t,z:a.z+(b.z-a.z)*t,y:a.y+(b.y-a.y)*t})}
  if(ib)out.push(b)}poly=out;if(poly.length<3)return []}return poly}
-// v0.5.7.2: Endepunkter på samme hydrologiske node deler en miter-kant.
+// v0.5.8: Endepunkter på samme hydrologiske node deler en miter-kant.
 // Topologien endres ikke: bare elvebåndenes geometriske sidekanter.
 let riverJoinCache=new WeakMap();
 function rebuildRiverJoinCache(){
@@ -235,7 +365,7 @@ function rebuildRiverJoinCache(){
 }
 // Elvebånd klippes mot chunk, men sidepunktene er beregnet GLOBALT.
 // Nabosegmenter får derfor identiske sidekanter i knutepunktene.
-// v0.5.7.2: Kontrollerte segmentbånd. Tidligere ble et potensielt konkavt
+// v0.5.8: Kontrollerte segmentbånd. Tidligere ble et potensielt konkavt
 // eller selvkryssende firkantpolygon triangulert med en ubetinget vifte.
 // Nå valideres begge endesnittene, og hvert segment klippes som to triangler.
 // Den hydrologiske senterlinjen og vannstanden endres ikke.
@@ -326,7 +456,7 @@ function clipWaterTriangle(triangle,level){
 // trianguleringsrutenett. Alle kantpunkter beregnes deterministisk i
 // verdenskoordinater; ingen chunk-lokale tilfeldige prøvepunkter.
 // Strandlinjer får 1 m triangler; åpne flater får 4 m triangler.
-// v0.5.7.2: Vannpolygoner klippes mot den FAKTISKE LOD-meshen.
+// v0.5.8: Vannpolygoner klippes mot den FAKTISKE LOD-meshen.
 // Polygonene deles på 1 m ved strandlinjer, og både hydromaske og
 // landmesh evalueres på samme globale koordinater i hver chunk.
 function buildChunkStillWater(cx,cz,lod){
@@ -419,7 +549,7 @@ function buildChunkStillWater(cx,cz,lod){
  return meshes;
 }
 
-// v0.5.7.2: Deterministisk chunkvegetasjon. Ingen nye kollidere eller endringer i hydrologien.
+// v0.5.8: Deterministisk chunkvegetasjon. Ingen nye kollidere eller endringer i hydrologien.
 // Felles geometribuffere og materialer; bare instansmatrisene varierer per chunk/LOD.
 function initVegetation(){
  const mk=(geometry,color)=>({geometry,material:new THREE.MeshLambertMaterial({color,side:THREE.FrontSide})});
@@ -531,7 +661,7 @@ function diagIndex(meshes,x0,z0){const cells=new Map(),step=8;for(const [mesh,ki
 function diagMarker(x,z,color){const y=ground(x,z)+.32,geo=new THREE.PlaneGeometry(3.4,3.4);geo.rotateX(-Math.PI/2);const mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:.85,depthTest:false,depthWrite:false,side:THREE.DoubleSide});const mesh=new THREE.Mesh(geo,mat);mesh.position.set(x-PAD_X,y,z-PAD_Z);mesh.renderOrder=15;mesh.userData.diagOwnMaterial=true;diagAdd(mesh)}
 function diagScan(){const centerX=Math.floor(p.x/64),centerZ=Math.floor(p.z/64),cx=Math.max(0,centerX-1),cz=Math.max(0,centerZ-1),x0=cx*64,z0=cz*64,near=[];for(const c of terrainChunks.values())if(c.cx>=cx&&c.cx<cx+3&&c.cz>=cz&&c.cz<cz+3){if(c.water)near.push([c.water,'river']);for(const m of c.stillWater)near.push([m,diagMeshKind(m,c)])}const index=diagIndex(near,x0,z0),step=8;let missing=0,overlap=0,samples=0,water=0;for(let j=0;j<24;j++)for(let i=0;i<24;i++){const x=x0+i*step+step/2,z=z0+j*step+step/2;if(x>=WORLD||z>=WORLD)continue;const arr=index.get(i+','+j)||[],kinds=new Set();for(const t of arr)if(diagTriangleContains(x,z,t.v[0][0],t.v[0][1],t.v[1][0],t.v[1][1],t.v[2][0],t.v[2][1]))kinds.add(t.kind);const body=waterBodyAt(x,z),river=riverSample(x,z),riverExpected=river&&river.distance<river.width*.77,expected=!!body||!!riverExpected;if(expected)water++;samples++;if(expected&&!kinds.size){missing++;if(diag.coverage)diagMarker(x,z,0xff4141)}if(kinds.size>1){overlap++;if(diag.coverage)diagMarker(x,z,0xe050fa)}}return {missing,overlap,samples,expected:water,nearMeshes:near.length,area:[x0,z0,x0+192,z0+192]}}
 function diagRefresh(runScan=false){if(!scene)return;diagClear();if(!diag.on)return;let riverCount=0,lakeCount=0,seaCount=0,riverTriangles=0,stillTriangles=0;for(const c of terrainChunks.values()){if(diag.chunks)diagChunkGrid(c);const meshes=[];if(c.water)meshes.push(c.water);meshes.push(...c.stillWater);for(const mesh of meshes){const kind=diagMeshKind(mesh,c),triangles=mesh.geometry.getIndex()?.count/3||0;if(kind==='river'){riverCount++;riverTriangles+=triangles}else if(kind==='sea'){seaCount++;stillTriangles+=triangles}else{lakeCount++;stillTriangles+=triangles}if(diag.colors){diag.materials.set(mesh,mesh.material);mesh.material=diagMats[kind]}if(diag.edges)diagWaterEdges(mesh);if(diag.shore&&kind!=='river')diagShoreSegments(mesh)}}
- const hi=clamp(Math.round(p.x/HY_STEP),0,HY_N-1),hj=clamp(Math.round(p.z/HY_STEP),0,HY_N-1),id=hydId(hi,hj),lake=hydroLakeId[id],r=riverSample(p.x,p.z),body=waterBodyAt(p.x,p.z);let report=`AFTERFALL 3D 0.5.7.2\nSeed ${SEED} | X ${p.x.toFixed(1)} Z ${p.z.toFixed(1)}\nChunk ${Math.floor(p.x/64)},${Math.floor(p.z/64)} | aktive ${terrainChunks.size}\nHydroraster ${hi},${hj} (id ${id}) | kote ${hydroHeight[id].toFixed(2)} m\nHavcelle ${!!hydroOcean[id]} | innsjø-ID ${lake} | innsjøkote ${lake>=0?hydroLakes[lake].level.toFixed(2):'-'}\nwaterBodyAt ${body?body.kind+' @ '+body.level.toFixed(2):'ingen'}\nElv nærmest ${r?r.distance.toFixed(2)+' m fra senterlinje, bredde '+r.width.toFixed(2)+' m':'ingen'}\nTerrengkote ${(ground(p.x,p.z)+PAD_H).toFixed(2)} m\nAktive mesher: elv ${riverCount}, innsjø ${lakeCount}, hav ${seaCount}\nTrekanter: elv ${riverTriangles}, innsjø/hav ${stillTriangles}\nElvegeometri siden oppstart: delsegmenter ${riverGeometryStats.segments}, reparerte ${riverGeometryStats.repaired}, avviste degenererte ${riverGeometryStats.rejected}`;
+ const hi=clamp(Math.round(p.x/HY_STEP),0,HY_N-1),hj=clamp(Math.round(p.z/HY_STEP),0,HY_N-1),id=hydId(hi,hj),lake=hydroLakeId[id],r=riverSample(p.x,p.z),body=waterBodyAt(p.x,p.z);let report=`AFTERFALL 3D 0.5.8\nSeed ${SEED} | X ${p.x.toFixed(1)} Z ${p.z.toFixed(1)}\nChunk ${Math.floor(p.x/64)},${Math.floor(p.z/64)} | aktive ${terrainChunks.size}\nHydroraster ${hi},${hj} (id ${id}) | kote ${hydroHeight[id].toFixed(2)} m\nHavcelle ${!!hydroOcean[id]} | innsjø-ID ${lake} | innsjøkote ${lake>=0?hydroLakes[lake].level.toFixed(2):'-'}\nwaterBodyAt ${body?body.kind+' @ '+body.level.toFixed(2):'ingen'}\nElv nærmest ${r?r.distance.toFixed(2)+' m fra senterlinje, bredde '+r.width.toFixed(2)+' m':'ingen'}\nTerrengkote ${(ground(p.x,p.z)+PAD_H).toFixed(2)} m\nAktive mesher: elv ${riverCount}, innsjø ${lakeCount}, hav ${seaCount}\nTrekanter: elv ${riverTriangles}, innsjø/hav ${stillTriangles}\nElvegeometri siden oppstart: delsegmenter ${riverGeometryStats.segments}, reparerte ${riverGeometryStats.repaired}, avviste degenererte ${riverGeometryStats.rejected}`;
  if(runScan||diag.coverage){const v=diagScan();report+=`\nDiagnostisk 192×192 m område: ${v.area.join(', ')}\nPrøvepunkter ${v.samples} | forventet vått ${v.expected}\nMulig manglende dekning ${v.missing} | overlapp mellom vanntyper ${v.overlap}\nMerk: 8 m prøvepunkter, forventning bruker waterBodyAt/riverSample; falske positiver mulige.`}
  diag.lastReport=report;$('diagStats').textContent=report}
 // DIAG.1: Menyens synlighet er uavhengig av diagnoseobjektenes levetid.
@@ -616,7 +746,7 @@ function setPlayer(x,z,yaw){p.x=x;p.z=z;p.yaw=yaw;updateCamera()}
 function updateCamera(){camera.position.set(p.x-PAD_X,ground(p.x,p.z)+1.72,p.z-PAD_Z);camera.rotation.set(p.pitch||0,p.yaw,0,'YXZ')}
 function move(dx,dz){let nx=clamp(p.x+dx,1,WORLD-1),nz=clamp(p.z+dz,1,WORLD-1);if(!collides(nx-PAD_X,p.z-PAD_Z))p.x=nx;if(!collides(p.x-PAD_X,nz-PAD_Z))p.z=nz}
 
-// v0.5.7.2: Visuelt vær og astronomisk lys. Ingen inngrep i hydrologi, chunking eller kollisjon.
+// v0.5.8: Visuelt vær og astronomisk lys. Ingen inngrep i hydrologi, chunking eller kollisjon.
 const WEATHER_DAY_SECONDS=3600,WEATHER_NAMES=['Klart','Overskyet','Regn','Tåke'];
 const weatherSkyDay=new THREE.Color(0x91a9ac),weatherSkyNight=new THREE.Color(0x0c172c);
 function weatherHash(day,slot){
@@ -704,14 +834,14 @@ function updateWeather(dt){
  $('weatherHud').textContent=`${altitude>0?'☀':'☾'} ${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')} · ${WEATHER_NAMES[['klart','overskyet','regn','tåke'].indexOf(kind)]} · Vind ${Math.round(wind*8)} m/s`;
 }
 
-function save(){localStorage.setItem(KEY,JSON.stringify({version:557,seed:SEED,...p,weatherElapsed:weatherState.elapsed}));$('status').textContent='Lagret lokalt · v0.5.7.2'}
+function save(){saveInventory();localStorage.setItem(KEY,JSON.stringify({version:557,seed:SEED,...p,weatherElapsed:weatherState.elapsed}));$('status').textContent='Lagret lokalt · v0.5.8'}
 function load(){try{let v=JSON.parse(localStorage.getItem(KEY));if(v&&(v.version===557||v.version===553||v.version===551||v.version===55||v.version===541||v.version===54||v.version===53)&&v.seed===SEED&&[v.x,v.z,v.yaw].every(Number.isFinite)&&v.x>0&&v.x<WORLD&&v.z>0&&v.z<WORLD){setPlayer(v.x,v.z,v.yaw);if(Number.isFinite(v.pitch))p.pitch=THREE.MathUtils.clamp(v.pitch,-Math.PI*.46,Math.PI*.46);if(Number.isFinite(v.weatherElapsed)&&v.weatherElapsed>=0)weatherState.elapsed=v.weatherElapsed;return true}}catch(e){}return false}
-function init(){renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.insertBefore(renderer.domElement,document.body.firstChild);camera=new THREE.PerspectiveCamera(73,innerWidth/innerHeight,.08,260);camera.rotation.order='YXZ';clock=new THREE.Clock();buildWorld();initWeather();weatherState.elapsed=WEATHER_DAY_SECONDS*.5;load();updateWeather(0);updateCamera();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});$('status').textContent='4 × 4 km · dynamiske terrengchunks, elver, innsjøer og hav aktive · Gå gjennom den grønne døråpningen';animate()}
-function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05);if(!paused){let speed=3.5,turnSpeed=2.1,forward=-joy.y,turn=joy.x;p.yaw-=turn*turnSpeed*dt;let fx=-Math.sin(p.yaw),fz=-Math.cos(p.yaw);move(fx*forward*speed*dt,fz*forward*speed*dt);p.seconds+=dt;updateCamera();if((Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4)))updateChunks()}waterTime.value+=dt;updateWeather(paused?0:dt);renderer.render(scene,camera);let inside=Math.abs(p.x-PAD_X)<7.7&&Math.abs(p.z-PAD_Z)<5.7;$('status').textContent=`${inside?'INNE I SERVICESTASJONEN':'UTENDØRS'} · X ${p.x.toFixed(1)} · Z ${p.z.toFixed(1)} · ${terrainChunks.size} chunks · ${Math.round(1/Math.max(dt,.01))} FPS`}
+function init(){renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.insertBefore(renderer.domElement,document.body.firstChild);camera=new THREE.PerspectiveCamera(73,innerWidth/innerHeight,.08,260);camera.rotation.order='YXZ';clock=new THREE.Clock();buildWorld();initWeather();initInventoryUI();weatherState.elapsed=WEATHER_DAY_SECONDS*.5;load();updateWeather(0);updateCamera();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});$('status').textContent='4 × 4 km · dynamiske terrengchunks, elver, innsjøer og hav aktive · Gå gjennom den grønne døråpningen';animate()}
+function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05);if(!paused){let speed=3.5,turnSpeed=2.1,forward=-joy.y,turn=joy.x;p.yaw-=turn*turnSpeed*dt;let fx=-Math.sin(p.yaw),fz=-Math.cos(p.yaw);move(fx*forward*speed*dt,fz*forward*speed*dt);p.seconds+=dt;updateCamera();if((Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4)))updateChunks()}waterTime.value+=dt;updateWeather(paused?0:dt);renderer.render(scene,camera);if(toolToastUntil&&performance.now()>toolToastUntil){$('toolToast').style.display='none';toolToastUntil=0}let inside=Math.abs(p.x-PAD_X)<7.7&&Math.abs(p.z-PAD_Z)<5.7;$('status').textContent=`${inside?'INNE I SERVICESTASJONEN':'UTENDØRS'} · X ${p.x.toFixed(1)} · Z ${p.z.toFixed(1)} · ${terrainChunks.size} chunks · ${Math.round(1/Math.max(dt,.01))} FPS`}
 const joyEl=$('joy'),knob=$('knob');function joyMove(e){let r=joyEl.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,len=Math.max(1,Math.hypot(dx,dy)),v=Math.min(1,len/48);joy.x=dx/len*v;joy.y=dy/len*v;knob.style.transform=`translate(${joy.x*44}px,${joy.y*44}px)`}
 joyEl.addEventListener('pointerdown',e=>{e.preventDefault();joyEl.setPointerCapture(e.pointerId);joyMove(e)});joyEl.addEventListener('pointermove',e=>{if(joyEl.hasPointerCapture(e.pointerId))joyMove(e)});function joyEnd(){joy.x=joy.y=0;knob.style.transform='translate(0,0)'}joyEl.addEventListener('pointerup',joyEnd);joyEl.addEventListener('pointercancel',joyEnd);
 document.addEventListener('pointerdown',e=>{
- if(paused||e.target.closest('button,#joy,#panel'))return;
+ if(paused||e.target.closest('button,#joy,#panel,#toolHud,#inventoryPanel'))return;
  if(e.clientX<innerWidth*.35)return;
  lookPointer=e.pointerId;lookLastX=e.clientX;lookLastY=e.clientY;
  if(e.target.setPointerCapture)e.target.setPointerCapture(e.pointerId);
@@ -728,7 +858,7 @@ document.addEventListener('pointermove',e=>{
 function endLook(e){if(e.pointerId===lookPointer)lookPointer=null}
 document.addEventListener('pointerup',endLook);
 document.addEventListener('pointercancel',endLook);
-const panel=$('panel');function showPanel(on){paused=on;panel.classList.toggle('show',on);joyEnd()}$('menu').onclick=()=>showPanel(true);$('resume').onclick=()=>showPanel(false);$('spawnOutside').onclick=()=>{setPlayer(288,294,0);showPanel(false)};$('spawnInside').onclick=()=>{setPlayer(288,283,Math.PI);showPanel(false)};$('save').onclick=save;$('load').onclick=()=>{load();showPanel(false)};$('reset').onclick=()=>setPlayer(288,294,0);$('interact').onclick=()=>{let doorDist=Math.hypot(p.x-288,p.z-289);if(doorDist<3.4){$('status').textContent='Døråpningen er fysisk: gå rett frem gjennom åpningen.'}else{$('status').textContent='Finn den grønne døråpningen foran bygningen.'}};
+const panel=$('panel');function showPanel(on){paused=on||inventoryOpen;panel.classList.toggle('show',on);joyEnd()}$('menu').onclick=()=>showPanel(true);$('resume').onclick=()=>showPanel(false);$('spawnOutside').onclick=()=>{setPlayer(288,294,0);showPanel(false)};$('spawnInside').onclick=()=>{setPlayer(288,283,Math.PI);showPanel(false)};$('save').onclick=save;$('load').onclick=()=>{load();showPanel(false)};$('reset').onclick=()=>setPlayer(288,294,0);$('interact').onclick=()=>{let doorDist=Math.hypot(p.x-288,p.z-289);if(doorDist<3.4){$('status').textContent='Døråpningen er fysisk: gå rett frem gjennom åpningen.'}else{$('status').textContent='Finn den grønne døråpningen foran bygningen.'}};
 addEventListener('keydown',e=>{if(e.key==='Escape')showPanel(!paused);if(e.key==='ArrowLeft')p.yaw+=.08;if(e.key==='ArrowRight')p.yaw-=.08;if(e.key==='w'||e.key==='ArrowUp')joy.y=-1;if(e.key==='s'||e.key==='ArrowDown')joy.y=1;if(e.key==='a')joy.x=-1;if(e.key==='d')joy.x=1});addEventListener('keyup',e=>{if(['w','s','a','d','ArrowUp','ArrowDown'].includes(e.key))joyEnd()});
 try{init()}catch(err){$('error').style.display='grid';$('errText').textContent=String(err);console.error(err)}
 </script></body></html>
