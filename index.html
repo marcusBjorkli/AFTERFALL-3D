@@ -1,4 +1,4 @@
-<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#14221b"><title>AFTERFALL 3D v0.6.0</title><style>
+<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#14221b"><title>AFTERFALL 3D v0.6.1</title><style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101b19;color:#eef4e9;font:14px system-ui,-apple-system,sans-serif;touch-action:none}canvas{display:block}#hud{position:absolute;top:env(safe-area-inset-top);left:0;right:0;display:flex;justify-content:space-between;align-items:start;padding:12px;pointer-events:none}#hud>div{background:#10231dd9;border:1px solid #ffffff24;border-radius:12px;padding:10px;pointer-events:auto}small{color:#b3c4b8}button{background:#263d35;border:1px solid #80948766;border-radius:9px;color:white;padding:10px 12px;font:inherit}#status{position:absolute;top:88px;left:12px;right:12px;pointer-events:none;text-shadow:0 1px 3px #000;font-size:13px}#cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:24px;color:#ffffffa0;pointer-events:none}#joy{position:absolute;left:22px;bottom:calc(24px + env(safe-area-inset-bottom));width:138px;height:138px;border:2px solid #ffffff5e;background:#10271c88;border-radius:50%;touch-action:none}#knob{position:absolute;left:45px;top:45px;width:44px;height:44px;border-radius:50%;background:#b8cfbcbb;pointer-events:none}#actions{position:absolute;right:18px;bottom:calc(36px + env(safe-area-inset-bottom));display:grid;gap:8px}#actions button{min-width:112px;background:#193b2fe6}#panel{position:absolute;inset:0;background:#09140edc;display:none;place-items:center;padding:22px;z-index:8}#panel.show{display:grid}#panel article{width:min(460px,100%);background:#1b2d25;padding:22px;border-radius:16px;max-height:90vh;overflow:auto}#panel button{margin:4px}#warning{color:#f8c28a}#hint{position:absolute;bottom:calc(176px + env(safe-area-inset-bottom));left:12px;right:12px;text-align:center;pointer-events:none;color:#d7e7d7;font-size:12px}#error{position:absolute;inset:0;display:none;place-items:center;padding:24px;background:#15251c;z-index:10}#error>div{max-width:440px}
 #weatherHud{position:absolute;left:12px;top:calc(env(safe-area-inset-top) + 122px);z-index:4;background:#10231dc9;border:1px solid #ffffff22;border-radius:9px;padding:6px 9px;font-size:11px;pointer-events:none}#diagPanel{position:absolute;z-index:7;top:118px;right:8px;width:min(330px,calc(100vw - 16px));max-height:calc(100dvh - 175px);overflow:auto;background:#0c211de8;border:1px solid #9cc4b666;border-radius:12px;padding:11px;display:none;font-size:12px;line-height:1.35;box-shadow:0 5px 18px #0006}
 #diagPanel.show{display:block}#diagPanel label{display:flex;align-items:center;gap:7px;margin:7px 0}#diagPanel input{accent-color:#9cdeca}#diagPanel button{padding:7px;margin:3px}#diagStats{white-space:pre-wrap;font:11px/1.45 ui-monospace,monospace;background:#0005;padding:8px;border-radius:6px;max-height:210px;overflow:auto}#diagLegend{font-size:11px;color:#cde4dc}#diagToggle{position:absolute;z-index:9;top:calc(env(safe-area-inset-top) + 82px);right:12px;padding:7px 10px;background:#1c3d35f5;font-size:12px;box-shadow:0 2px 9px #0008}
@@ -25,7 +25,12 @@
 #earthTools{position:absolute;right:12px;bottom:calc(330px + env(safe-area-inset-bottom));z-index:6;background:#19372edc;border-radius:10px;padding:7px;display:none}
 #earthTools button{padding:7px;font-size:13px}#earthTools button.active{background:#69572c;border-color:#f4d58b}
 #earthTools select{display:block;width:100%;background:#234438;color:white;margin-top:5px;padding:5px}
-</style></head><body><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small>WEBAPP 0.6.0 · SEED 206414</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="weatherHud">☀ 12:00 · Klart</div><div id="joy"><div id="knob"></div></div><div id="actions"><button id="interact">🚪 Dør</button><button id="reset">↺ Start</button></div><div id="earthTools"><button id="earthDig" class="active">Grav</button><button id="earthFill">Fyll</button><select id="earthMat"><option value="soil">Jord</option><option value="sand">Sand</option><option value="gravel">Grus</option><option value="clay">Leire</option></select></div><div id="toolHud" aria-label="Verktøylinje"><button data-tool="shovel" title="Spade">🪏<span>Spade</span></button><button data-tool="pickaxe" title="Hakke">⛏️<span>Hakke</span></button><button data-tool="axe" title="Øks">🪓<span>Øks</span></button><button data-tool="saw" title="Sag">🪚<span>Sag</span></button><button data-tool="hammer" title="Hammer">🔨<span>Hammer</span></button></div><button id="inventoryToggle">🎒 Inventar</button><button id="useTool">Bruk verktøy</button><div id="toolToast" role="status"></div><div id="inventoryPanel"><article><header><h2>🎒 Inventar</h2><button id="inventoryClose">Lukk ✕</button></header><p class="inventory-summary" id="inventorySummary"></p><p id="inventoryToolInfo"></p><table><thead><tr><th>Ressurs</th><th>Antall</th><th>Masse</th><th>Volum</th></tr></thead><tbody id="inventoryRows"></tbody></table><p><small>Hogst, mineralutvinning, graving og oppfylling er aktivert. Saging og bygging kommer senere. Inventaret og verktøyvalget lagres lokalt.</small></p></article></div><div id="hint">Joystick ↑↓: frem/bak · ←→: roter · Separate elvemesher følger nedoverbakke · Dra høyre side: se rundt og opp/ned</div><div id="panel"><article><h2>AFTERFALL 3D · 0.6.0</h2><p>Teknisk 3D-test: dynamisk 4 × 4 km terreng, avstandsbasert LOD og separate elvemesher, og godkjent joystick/kollisjon/dør.</p><p>Verdensfrø 206414. 4096 × 4096 m logisk verden, 64 m chunks, dynamisk lasting. Globalt dreneringsnett, sammenkoblede lokale og globale elvesenterlinjer, variabel elvebredde, finere strandlinjer med terrengtilpasset klipping, hav ved kote 0 og lett shaderbasert vannanimasjon. Dette er en ny hydrologisk testmodell, ikke identisk med elvenettet i 0.4-serien.</p><button id="resume">Fortsett</button><button id="spawnOutside">Test utenfor</button><button id="spawnInside">Test inne</button><button id="save">Lagre</button><button id="load">Last inn</button><p><small>Ingen endringer i v0.4.7.2 eller originalhistorien.</small></p></article></div><button id="diagToggle" type="button" aria-label="Åpne eller lukk diagnosemeny">🔬 Diagnose</button><div id="diagIndicator" aria-live="polite"></div><aside id="diagPanel" aria-label="Vanngeometri-diagnostikk"><b>v0.6.0 · vannmesher</b><div id="diagLegend">🟠 Elv · 🔵 Innsjø · 🟣 Hav · 🟡 Terreng/vann-snitt · 🔴 Mulig manglende vanndekning · 🟪 Overlapp</div>
+
+#pileControls{position:absolute;z-index:6;right:12px;bottom:calc(402px + env(safe-area-inset-bottom));background:#17372fe9;border:1px solid #68897a;border-radius:10px;padding:7px;max-width:185px}
+#pileControls button{font-size:12px;padding:6px;margin:2px}#pileControls select{width:100%;background:#244639;color:white;padding:5px}
+#loadHud{position:absolute;left:12px;top:calc(170px + env(safe-area-inset-top));background:#17372fdb;padding:6px 8px;border-radius:7px;font-size:12px;z-index:5}
+@media(max-width:430px){#pileControls{bottom:calc(380px + env(safe-area-inset-bottom));right:8px;max-width:156px}#loadHud{top:calc(190px + env(safe-area-inset-top))}}
+</style></head><body><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small>WEBAPP 0.6.1 · SEED 206414</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="weatherHud">☀ 12:00 · Klart</div><div id="joy"><div id="knob"></div></div><div id="actions"><button id="interact">🚪 Dør</button><button id="reset">↺ Start</button></div><div id="earthTools"><button id="earthDig" class="active">Grav</button><button id="earthFill">Fyll</button><select id="earthMat"><option value="soil">Jord</option><option value="sand">Sand</option><option value="gravel">Grus</option><option value="clay">Leire</option></select></div><div id="pileControls"><select id="pileMaterial"><option value="soil">Jord</option><option value="sand">Sand</option><option value="gravel">Grus</option><option value="clay">Leire</option><option value="stone">Stein</option><option value="coal">Kull</option><option value="iron_ore">Jernmalm</option><option value="copper_ore">Kobbermalm</option><option value="silver_ore">Sølvmalm</option><option value="gold_ore">Gullmalm</option><option value="titanium_ore">Titanmalm</option><option value="diamond">Diamant</option><option value="sticks">Pinner</option><option value="logs">Tømmer</option></select><div><button id="pileTake">Ta</button><button id="pileDrop">Legg fra</button></div><button id="pileMove">Flytt haug</button></div><div id="loadHud">Last: 0 / 30 kg</div><div id="toolHud" aria-label="Verktøylinje"><button data-tool="shovel" title="Spade">🪏<span>Spade</span></button><button data-tool="pickaxe" title="Hakke">⛏️<span>Hakke</span></button><button data-tool="axe" title="Øks">🪓<span>Øks</span></button><button data-tool="saw" title="Sag">🪚<span>Sag</span></button><button data-tool="hammer" title="Hammer">🔨<span>Hammer</span></button></div><button id="inventoryToggle">🎒 Inventar</button><button id="useTool">Bruk verktøy</button><div id="toolToast" role="status"></div><div id="inventoryPanel"><article><header><h2>🎒 Inventar</h2><button id="inventoryClose">Lukk ✕</button></header><p class="inventory-summary" id="inventorySummary"></p><p id="inventoryToolInfo"></p><table><thead><tr><th>Ressurs</th><th>Antall</th><th>Masse</th><th>Volum</th></tr></thead><tbody id="inventoryRows"></tbody></table><p><small>Masselagre, bærekapasitet, graving, oppfylling og bergbryting er aktivert. Saging og bygging kommer senere. Inventaret og verktøyvalget lagres lokalt.</small></p></article></div><div id="hint">Joystick ↑↓: frem/bak · ←→: roter · Separate elvemesher følger nedoverbakke · Dra høyre side: se rundt og opp/ned</div><div id="panel"><article><h2>AFTERFALL 3D · 0.6.1</h2><p>Teknisk 3D-test: dynamisk 4 × 4 km terreng, avstandsbasert LOD og separate elvemesher, og godkjent joystick/kollisjon/dør.</p><p>Verdensfrø 206414. 4096 × 4096 m logisk verden, 64 m chunks, dynamisk lasting. Globalt dreneringsnett, sammenkoblede lokale og globale elvesenterlinjer, variabel elvebredde, finere strandlinjer med terrengtilpasset klipping, hav ved kote 0 og lett shaderbasert vannanimasjon. Dette er en ny hydrologisk testmodell, ikke identisk med elvenettet i 0.4-serien.</p><button id="resume">Fortsett</button><button id="spawnOutside">Test utenfor</button><button id="spawnInside">Test inne</button><button id="save">Lagre</button><button id="load">Last inn</button><p><small>Ingen endringer i v0.4.7.2 eller originalhistorien.</small></p></article></div><button id="diagToggle" type="button" aria-label="Åpne eller lukk diagnosemeny">🔬 Diagnose</button><div id="diagIndicator" aria-live="polite"></div><aside id="diagPanel" aria-label="Vanngeometri-diagnostikk"><b>v0.6.1 · vannmesher</b><div id="diagLegend">🟠 Elv · 🔵 Innsjø · 🟣 Hav · 🟡 Terreng/vann-snitt · 🔴 Mulig manglende vanndekning · 🟪 Overlapp</div>
 <label><input type="checkbox" id="diagColors">Fargekod vannmeshene</label>
 <label><input type="checkbox" id="diagEdges">Vis vannpolygonkanter</label>
 <label><input type="checkbox" id="diagChunks">Vis 64 m chunkgrenser</label>
@@ -38,7 +43,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.m
 const SEED=206414, KEY='afterfall_054',WORLD=4096;
 const $=id=>document.getElementById(id), clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 
-// v0.6.0: Ressursregister (kg og m³ per enhet) og verktøydata.
+// v0.6.1: Ressursregister (kg og m³ per enhet) og verktøydata.
 // All mutasjon går gjennom inventoryAdd/inventoryRemove for senere utvinning og produksjon.
 const INVENTORY_KEY='afterfall_058_inventory';
 const RESOURCE_CATALOG=Object.freeze({
@@ -62,12 +67,12 @@ const TOOL_CATALOG=Object.freeze({
  shovel:{name:'Spade',icon:'🪏',verb:'Grave / fylle',description:'Grav og fyll med løsmasser.'},
  pickaxe:{name:'Hakke',icon:'⛏️',verb:'Bryte berg',description:'Bryt stein og malm ved å sikte på en forekomst innen 5 meter.'},
  axe:{name:'Øks',icon:'🪓',verb:'Hogge',description:'Hogg trær og busker ved å sikte på dem innen 5 meter.'},
- saw:{name:'Sag',icon:'🪚',verb:'Sage',description:'Produksjon av planker og ved kommer i v0.6.1.'},
+ saw:{name:'Sag',icon:'🪚',verb:'Sage',description:'Produksjon av planker og ved kommer i en senere versjon.'},
  hammer:{name:'Hammer',icon:'🔨',verb:'Bygge',description:'Byggesystemet kommer i v0.6.2.'}
 });
 
 
-// Terrengredigering v0.6.0. Høydeverdier er centimeter på et globalt 1 m rutenett.
+// Terrengredigering v0.6.1. Høydeverdier er centimeter på et globalt 1 m rutenett.
 const EARTH_KEY='afterfall_060_world',EARTH_LIMIT=12000;
 const earthEdits=new Map(),earthFillLayers=new Map();
 let earthMode='dig',earthReady=false,earthSaved=null,earthRay=new THREE.Raycaster();
@@ -106,10 +111,12 @@ function earthSnapshot(){
  return {version:1,seed:SEED,edits:[...earthEdits].map(([key,cm])=>[...key.split(',').map(Number),cm]),layers:[...earthFillLayers],inventory:{selectedTool:inventoryState.selectedTool,items:{...inventoryState.items}},harvested:[...harvestedIds]};
 }
 function earthCommit(){
+ if(earthReady){worldSave();return true}
  try{localStorage.setItem(EARTH_KEY,JSON.stringify(earthSnapshot()));return true}
  catch(e){console.error('Lagring',e);toolMessage('Kunne ikke lagre terreng. Lagringskvoten kan være full.');return false}
 }
 function earthChunkEdited(cx,cz){
+ if(dirtyChunks.has(chunkKey(cx,cz)))return true;
  // Sparse lookup: bare lokale noder i og ved denne chunken.
  for(let z=cz*64-1;z<=cz*64+65;z++)for(let x=cx*64-1;x<=cx*64+65;x++)
   if(earthEdits.has(earthKey(x,z)))return true;
@@ -123,65 +130,59 @@ function earthAim(){
  return hits.length?{x:hits[0].point.x+PAD_X,z:hits[0].point.z+PAD_Z}:null;
 }
 function earthAction(){
- const aim=earthAim();
- if(!aim){toolMessage('Se ned og sikt på bakken innen 6,5 meter.');return}
- if(earthRestricted(aim.x,aim.z)){toolMessage('Graving sperret nær vann og servicestasjon.');return}
+ if(earthActionBusy)return;earthActionBusy=true;
+ try{
+ const aim=earthAim();if(!aim){toolMessage('Sikt på bakken innen 6,5 meter.');return}
+ if(earthRestricted(aim.x,aim.z)){toolMessage('Beskyttet område ved vann eller stasjon.');return}
  const fill=earthMode==='fill',material=$('earthMat').value,changes=[],volumes={};
- for(let z=Math.floor(aim.z)-2;z<=Math.ceil(aim.z)+2;z++)for(let x=Math.floor(aim.x)-2;x<=Math.ceil(aim.x)+2;x++){
+ // Glatt kubisk profil. Volum = eksakt integral av høydefeltets bilineære basisfunksjoner.
+ for(let z=Math.floor(aim.z)-3;z<=Math.ceil(aim.z)+3;z++)for(let x=Math.floor(aim.x)-3;x<=Math.ceil(aim.x)+3;x++){
   if(earthRestricted(x,z))continue;
-  const distance=Math.hypot(x-aim.x,z-aim.z);
-  if(distance>=1.9)continue;
-  const key=earthKey(x,z),before=earthEdits.get(key)||0;
-  let cm=Math.max(1,Math.round((1-distance/1.9)*9));
-  const layers=earthFillLayers.get(key)||[],top=layers[layers.length-1];
+  const distance=Math.hypot(x-aim.x,z-aim.z),radius=2.15;
+  if(distance>=radius)continue;
+  const u=1-distance/radius,smooth=u*u*(3-2*u),key=earthKey(x,z),before=earthEdits.get(key)||0;
+  let cm=Math.max(1,Math.round(smooth*12));
+  const stack=earthFillLayers.get(key)||[],top=stack[stack.length-1];
   if(!fill)cm=top?Math.min(cm,top.cm):Math.min(cm,Math.max(0,Math.floor(geoLimit(x,z)*100)+before));
   if(cm<=0)continue;
   const type=fill?material:(top?top.type:geoLayer(x,z,Math.max(0,-before*.01)));
   if(type==='bedrock')continue;
-  changes.push({key,before,after:before+(fill?cm:-cm),type,cm});
-  volumes[type]=(volumes[type]||0)+cm*.01;
+  // For et indre globalt rutenettpunkt er integralvekten 1 m². Randpunkter vektes tilsvarende.
+  const weight=(x===0||x===WORLD?.5:1)*(z===0||z===WORLD?.5:1);
+  const volume=cm*.01*weight;
+  changes.push({key,before,after:before+(fill?cm:-cm),type,cm,volume});
+  volumes[type]=(volumes[type]||0)+volume;
  }
- if(!changes.length){toolMessage('Ingen løsmasser tilgjengelig. Fast berg nådd.');return}
- if(earthEdits.size+changes.length>EARTH_LIMIT){toolMessage('Maksimal redigeringsmengde nådd.');return}
- const oldItems={...inventoryState.items},oldEdits=new Map(earthEdits),oldLayers=new Map([...earthFillLayers].map(([k,v])=>[k,v.map(q=>({...q}))]));
- for(const [type,volume] of Object.entries(volumes)){
-  const amount=Math.round(volume/RESOURCE_CATALOG[type].volume*1000)/1000;
-  if(fill&&(inventoryState.items[type]||0)+1e-8<amount){
-   toolMessage('Du mangler '+Math.round(volume*1000)+' L '+RESOURCE_CATALOG[type].name.toLowerCase()+'.');return;
+ if(!changes.length){toolMessage('Fast berg nådd eller ingen masser tilgjengelig.');return}
+ if(earthEdits.size+changes.length>EARTH_LIMIT){toolMessage('Grense for terrengendringer nådd.');return}
+ const quantity=Object.fromEntries(Object.entries(volumes).map(([id,v])=>[id,Math.round(v/RESOURCE_CATALOG[id].volume*1000)/1000]));
+ let source=null;
+ if(fill){
+  source=pileAt(p.x,p.z,material,5);
+  const needed=quantity[material];
+  if((source?.qty||0)+(inventoryState.items[material]||0)<needed-1e-7){toolMessage('Ikke nok masser i inventar eller nærmeste haug.');return}
+ }else{
+  // Alt uttak må kunne plasseres i et lager før terrenget endres.
+  for(const [id,q] of Object.entries(quantity)){
+   const existing=pileAt(aim.x,aim.z,id,2.5);
+   if(existing&&existing.qty+q>PILE_MAX_M3/RESOURCE_CATALOG[id].volume){toolMessage('Masselager fullt.');return}
   }
  }
+ const oldItems={...inventoryState.items},oldEdits=new Map(earthEdits),oldLayers=new Map([...earthFillLayers].map(([k,v])=>[k,v.map(q=>({...q}))])),oldPiles=new Map([...piles].map(([k,v])=>[k,{...v}]));
  for(const e of changes){
   if(e.after)earthEdits.set(e.key,e.after);else earthEdits.delete(e.key);
   const stack=earthFillLayers.get(e.key)||[];
   if(fill){if(stack.length&&stack[stack.length-1].type===e.type)stack[stack.length-1].cm+=e.cm;else stack.push({type:e.type,cm:e.cm});earthFillLayers.set(e.key,stack)}
   else if(stack.length){stack[stack.length-1].cm-=e.cm;if(stack[stack.length-1].cm<=0)stack.pop();if(!stack.length)earthFillLayers.delete(e.key)}
  }
- for(const [type,volume] of Object.entries(volumes)){
-  const amount=Math.round(volume/RESOURCE_CATALOG[type].volume*1000)/1000;
-  const q=Math.round(((inventoryState.items[type]||0)+(fill?-amount:amount))*1000)/1000;
-  if(q>0)inventoryState.items[type]=q;else delete inventoryState.items[type];
- }
- if(!earthCommit()){
-  earthEdits.clear();for(const [k,v] of oldEdits)earthEdits.set(k,v);
-  earthFillLayers.clear();for(const [k,v] of oldLayers)earthFillLayers.set(k,v);
-  inventoryState.items=Object.assign(Object.create(null),oldItems);return;
- }
- // Legacy beholdning oppdateres for bakoverkompatibilitet.
- try{localStorage.setItem(INVENTORY_KEY,JSON.stringify({version:1,seed:SEED,selectedTool:inventoryState.selectedTool,items:inventoryState.items}))}catch(e){}
- const touched=new Set();
- for(const e of changes){
-  const [x,z]=e.key.split(',').map(Number);
-  for(const cx of [Math.floor(x/64),Math.floor((x-1)/64)])
-   for(const cz of [Math.floor(z/64),Math.floor((z-1)/64)])
-    touched.add(chunkKey(cx,cz));
- }
- for(const key of touched){
-  const c=terrainChunks.get(key);
-  if(c){disposeChunk(c);terrainChunks.set(key,createTerrainChunk(c.cx,c.cz,c.lod))}
- }
- updateCamera();
- const amount=Math.round(Object.values(volumes).reduce((a,b)=>a+b,0)*1000);
- toolMessage((fill?'Fylt ':'Gravd ')+amount+' L · '+Object.keys(volumes).map(id=>RESOURCE_CATALOG[id].name).join(', '));
+ if(fill){
+  let remaining=quantity[material];
+  if(source){const q=Math.min(remaining,source.qty);source.qty=Math.round((source.qty-q)*1000)/1000;remaining-=q;if(source.qty<=0)piles.delete(source.id)}
+  if(remaining>0){inventoryState.items[material]=Math.round(((inventoryState.items[material]||0)-remaining)*1000)/1000;if(inventoryState.items[material]<=0)delete inventoryState.items[material]}
+ }else for(const [id,q] of Object.entries(quantity))pileAdd(aim.x,aim.z,id,q);
+ worldSave();rebuildTouched(changes);pileMeshRefresh();loadHudUpdate();updateCamera();
+ toolMessage((fill?'Fylt ':'Gravd ')+Math.round(Object.values(volumes).reduce((a,b)=>a+b,0)*1000)+' L · '+Object.keys(volumes).map(id=>RESOURCE_CATALOG[id].name).join(', '));
+ }finally{earthActionBusy=false}
 }
 function earthUI(){
  const shovel=inventoryState.selectedTool==='shovel';
@@ -191,18 +192,203 @@ function earthUI(){
  $('earthFill').classList.toggle('active',earthMode==='fill');
 }
 
-// v0.6.0: Stabil objektidentitet uavhengig av LOD og genereringsrekkefølge.
+
+// v0.6.1 – fysisk masseregnskap, lagerhauger og atomiske IndexedDB-snapshots.
+const LOAD_MAX_KG=30,LOAD_MAX_M3=.045,PILE_MAX_M3=120;
+const piles=new Map(),rockDamage=new Map(),dirtyChunks=new Set();
+let pileSequence=0,pileGroup=null,pileAssets=null,db=null,saveChain=Promise.resolve(),worldRevision=0,earthActionBusy=false;
+const bulkMaterials=new Set(['soil','sand','gravel','clay','stone','coal']);
+const pileColors={soil:0x745b40,sand:0xb9a16c,gravel:0x777b75,clay:0x88755f,stone:0x747777,coal:0x282a2c,iron_ore:0x765849,copper_ore:0x956e47,silver_ore:0xa3a6aa,gold_ore:0xb5a055,titanium_ore:0x657d83,diamond:0x83ced4,sticks:0x796342,logs:0x604a30};
+function pileAt(x,z,material,range=3.2){
+ let best=null,d=range;
+ for(const pile of piles.values()){
+  if(material&&pile.material!==material)continue;
+  const dist=Math.hypot(x-pile.x,z-pile.z);
+  if(dist<d){best=pile;d=dist}
+ }
+ return best;
+}
+function pileCreate(x,z,material){
+ const id='pile-'+SEED+'-'+(++pileSequence);
+ const pile={id,x,z,material,qty:0};piles.set(id,pile);return pile;
+}
+function pileAdd(x,z,material,qty){
+ if(!RESOURCE_CATALOG[material]||qty<=0)return false;
+ let pile=pileAt(x,z,material,2.5);
+ if(!pile)pile=pileCreate(x,z,material);
+ const cap=PILE_MAX_M3/RESOURCE_CATALOG[material].volume;
+ if(pile.qty+qty>cap+1e-6)return false;
+ pile.qty=Math.round((pile.qty+qty)*1000)/1000;return true;
+}
+function pileMeshRefresh(){
+ if(!scene)return;
+ if(pileGroup){scene.remove(pileGroup);pileGroup.traverse(o=>{if(o.isInstancedMesh)o.dispose()})}
+ pileGroup=new THREE.Group();pileGroup.name='Masselagre';
+ const grouped=new Map();
+ for(const pile of piles.values()){
+  if(pile.qty<=0)continue;
+  if(!grouped.has(pile.material))grouped.set(pile.material,[]);
+  grouped.get(pile.material).push(pile);
+ }
+ if(!pileAssets){pileAssets={geometry:new THREE.ConeGeometry(1,1,7),materials:new Map()}}
+ const dummy=new THREE.Object3D();
+ for(const [material,items] of grouped){
+  if(!pileAssets.materials.has(material))pileAssets.materials.set(material,new THREE.MeshLambertMaterial({color:pileColors[material]||0x777777}));
+  const mesh=new THREE.InstancedMesh(pileAssets.geometry,pileAssets.materials.get(material),items.length);
+  mesh.frustumCulled=false;
+  for(let i=0;i<items.length;i++){
+   const q=items[i],volume=q.qty*RESOURCE_CATALOG[material].volume;
+   const radius=Math.max(.25,Math.cbrt(volume*1.2));const height=Math.max(.2,radius*.7);
+   dummy.position.set(q.x-PAD_X,ground(q.x,q.z)+height*.5,q.z-PAD_Z);
+   dummy.rotation.set(0,0,0);dummy.scale.set(radius,height,radius);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);
+  }
+  mesh.instanceMatrix.needsUpdate=true;pileGroup.add(mesh);
+ }
+ scene.add(pileGroup);
+}
+function loadCapacity(id){
+ const totals=inventoryTotals(),item=RESOURCE_CATALOG[id];
+ return Math.max(0,Math.min((LOAD_MAX_KG-totals.mass)/item.mass,(LOAD_MAX_M3-totals.volume)/item.volume));
+}
+function loadHudUpdate(){
+ const t=inventoryTotals();$('loadHud').textContent='Last '+t.mass.toFixed(1)+'/30 kg · '+(t.volume*1000).toFixed(1)+'/45 L';
+ $('loadHud').style.color=t.mass>LOAD_MAX_KG+.01||t.volume>LOAD_MAX_M3+.00001?'#ffd4a3':'#e5f4e7';
+}
+function pileTransfer(take){
+ if(paused)return;
+ const mat=$('pileMaterial').value,amount=bulkMaterials.has(mat)?5:1;
+ const target=pileAt(p.x,p.z,mat,5);
+ if(take){
+  if(!target){toolMessage('Ingen '+RESOURCE_CATALOG[mat].name.toLowerCase()+'-haug innen 5 meter.');return}
+  const qty=Math.min(target.qty,amount,Math.floor(loadCapacity(mat)*1000)/1000);
+  if(qty<=0){toolMessage('Inventaret er fullt.');return}
+  target.qty=Math.round((target.qty-qty)*1000)/1000;if(target.qty<=0)piles.delete(target.id);
+  inventoryState.items[mat]=Math.round(((inventoryState.items[mat]||0)+qty)*1000)/1000;
+  toolMessage('Tok '+qty+' '+RESOURCE_CATALOG[mat].unit+' '+RESOURCE_CATALOG[mat].name);
+ }else{
+  const qty=Math.min(inventoryState.items[mat]||0,amount);
+  if(qty<=0){toolMessage('Ingen '+RESOURCE_CATALOG[mat].name.toLowerCase()+' i inventaret.');return}
+  if(!pileAdd(p.x+Math.sin(p.yaw)*-1.5,p.z+Math.cos(p.yaw)*-1.5,mat,qty)){toolMessage('Haugen er full.');return}
+  inventoryState.items[mat]=Math.round((inventoryState.items[mat]-qty)*1000)/1000;
+  if(inventoryState.items[mat]<=0)delete inventoryState.items[mat];
+  toolMessage('La fra '+qty+' '+RESOURCE_CATALOG[mat].unit);
+ }
+ worldSave();pileMeshRefresh();loadHudUpdate();
+}
+function pileMove(){
+ if(paused)return;
+ const target=pileAt(p.x,p.z,null,3.5);
+ if(!target){toolMessage('Gå nærmere en haug.');return}
+ const x=clamp(p.x-Math.sin(p.yaw)*2.2,2,WORLD-2),z=clamp(p.z-Math.cos(p.yaw)*2.2,2,WORLD-2);
+ if(earthRestricted(x,z)){toolMessage('Kan ikke flytte haug hit.');return}
+ target.x=x;target.z=z;worldSave();pileMeshRefresh();toolMessage('Haug flyttet 2 meter foran spilleren.');
+}
+function worldSnapshot(){
+ const snap=earthSnapshot();snap.version=2;snap.revision=++worldRevision;
+ snap.piles=[...piles.values()].map(q=>({...q}));snap.pileSequence=pileSequence;
+ snap.rock=[...rockDamage];return snap;
+}
+function openWorldDB(){return new Promise((resolve,reject)=>{
+ if(!('indexedDB' in window)){reject(new Error('IndexedDB ikke tilgjengelig'));return}
+ const request=indexedDB.open('AFTERFALL_3D_WORLD',2);
+ request.onupgradeneeded=()=>{const d=request.result;if(!d.objectStoreNames.contains('world'))d.createObjectStore('world')};
+ request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
+ })}
+function readWorldDB(database){return new Promise((resolve,reject)=>{
+ const tx=database.transaction('world','readonly');const r=tx.objectStore('world').get('seed-'+SEED);
+ r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);
+ })}
+function writeWorldDB(database,snap){return new Promise((resolve,reject)=>{
+ const tx=database.transaction('world','readwrite');tx.objectStore('world').put(snap,'seed-'+SEED);
+ tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('Avbrutt transaksjon'));
+ })}
+function worldSave(){
+ const snap=worldSnapshot();
+ if(!db){try{localStorage.setItem('afterfall_061_fallback',JSON.stringify(snap))}catch(e){console.warn('Fallbacklagring mislyktes',e)}return Promise.resolve()}
+ saveChain=saveChain.catch(()=>{}).then(()=>writeWorldDB(db,snap)).catch(err=>{console.error('IndexedDB-lagring',err);toolMessage('Lagring mislyktes: '+err.message)});
+ return saveChain;
+}
+function applyWorldSnapshot(data){
+ if(!data||data.seed!==SEED||![1,2].includes(data.version))return;
+ earthEdits.clear();earthFillLayers.clear();harvestedIds.clear();piles.clear();rockDamage.clear();
+ for(const [x,z,cm] of data.edits||[])if(Number.isInteger(x)&&Number.isInteger(z)&&Number.isInteger(cm)&&x>=0&&z>=0&&x<=WORLD&&z<=WORLD&&Math.abs(cm)<=5000&&cm)earthEdits.set(earthKey(x,z),cm);
+ for(const [key,layers] of data.layers||[])if(typeof key==='string'&&Array.isArray(layers))earthFillLayers.set(key,layers.map(l=>({...l})));
+ for(const id of data.harvested||[])if(typeof id==='string')harvestedIds.add(id);
+ for(const [key,v] of data.rock||[])if(typeof key==='string'&&Number.isFinite(v))rockDamage.set(key,v);
+ for(const q of data.piles||[])if(q&&RESOURCE_CATALOG[q.material]&&Number.isFinite(q.qty)&&q.qty>0&&Number.isFinite(q.x)&&Number.isFinite(q.z))piles.set(q.id,{...q});
+ pileSequence=Math.max(Number.isInteger(data.pileSequence)?data.pileSequence:0,piles.size);
+ if(data.inventory){inventoryState.items=Object.assign(Object.create(null),data.inventory.items||{});if(TOOL_CATALOG[data.inventory.selectedTool])inventoryState.selectedTool=data.inventory.selectedTool}
+ earthSaved=null;earthReady=true;
+}
+function migrateOverload(){
+ const t=inventoryTotals();if(t.mass<=LOAD_MAX_KG&&t.volume<=LOAD_MAX_M3)return;
+ // Spilleren beholder lette verktøyressurser; alle overskytende mengder lagres på bakken.
+ for(const [id,qty] of Object.entries(inventoryState.items)){
+  if(!RESOURCE_CATALOG[id])continue;
+  const allowed=Math.max(0,Math.floor(loadCapacity(id)*1000)/1000);
+  // Eksisterende beholdning trekkes midlertidig ut av kapasitetsberegningen.
+  const original=inventoryState.items[id];delete inventoryState.items[id];
+  const keep=Math.min(original,Math.floor(loadCapacity(id)*1000)/1000);
+  if(keep>0)inventoryState.items[id]=keep;
+  const surplus=Math.round((original-keep)*1000)/1000;
+  if(surplus>0){
+   const maxQty=PILE_MAX_M3/RESOURCE_CATALOG[id].volume;
+   let rest=surplus;while(rest>0){const pile=pileCreate(p.x+2+(piles.size%5)*1.5,p.z+3+Math.floor(piles.size/5)*1.5,id);pile.qty=Math.min(rest,maxQty);rest=Math.round((rest-pile.qty)*1000)/1000}
+  }
+ }
+}
+async function worldInitialize(){
+ // VIKTIG: Første migrering fra v0.6.0 skal skje før spillverdenen bygges.
+ earthLoad();
+ if(earthSaved){const legacy=earthSaved;earthSaved=null;applyWorldSnapshot(legacy)}
+ else{
+  try{const inv=JSON.parse(localStorage.getItem(INVENTORY_KEY)||'null');if(inv?.seed===SEED){inventoryState.items=Object.assign(Object.create(null),inv.items||{});if(TOOL_CATALOG[inv.selectedTool])inventoryState.selectedTool=inv.selectedTool}}catch(e){}
+  try{const harvest=JSON.parse(localStorage.getItem(HARVEST_KEY)||'null');if(harvest?.seed===SEED)for(const id of harvest.ids||[])harvestedIds.add(id)}catch(e){}
+ }
+ try{db=await openWorldDB();const stored=await readWorldDB(db);if(stored)applyWorldSnapshot(stored)}catch(e){console.warn('IndexedDB utilgjengelig, fallback',e);db=null;
+  try{const backup=JSON.parse(localStorage.getItem('afterfall_061_fallback')||'null');if(backup)applyWorldSnapshot(backup)}catch(e){}
+ }
+ migrateOverload();earthReady=true;await worldSave();
+}
+function rebuildTouched(changes){
+ const touched=new Set();
+ for(const e of changes){
+  const [x,z]=e.key.split(',').map(Number);
+  for(const cx of [Math.floor(x/64),Math.floor((x-1)/64)])for(const cz of [Math.floor(z/64),Math.floor((z-1)/64)])touched.add(chunkKey(cx,cz));
+ }
+ for(const key of touched){dirtyChunks.add(key);const c=terrainChunks.get(key);if(c){disposeChunk(c);terrainChunks.set(key,createTerrainChunk(c.cx,c.cz,c.lod))}}
+}
+function rockBreak(){
+ const aim=earthAim();if(!aim||earthRestricted(aim.x,aim.z)){toolMessage('Sikt på fast berg innen 6,5 m.');return}
+ const x=Math.round(aim.x),z=Math.round(aim.z),key=earthKey(x,z);
+ const before=earthEdits.get(key)||0,depth=Math.max(0,-before*.01);
+ if(depth<geoLimit(x,z)-.08){toolMessage('Grav først ned til fast berg.');return}
+ const damage=(rockDamage.get(key)||0)+1;
+ if(damage<3){rockDamage.set(key,damage);worldSave();toolMessage('Bergslag '+damage+'/3');return}
+ rockDamage.delete(key);
+ const cm=6,delta=-cm,volume=cm*.01;
+ earthEdits.set(key,before+delta);
+ const mineral=buriedOreKind(Math.floor(x/64),Math.floor(z/64),(x*13+z*7)%16);
+ const type=(noise(x/7+43,z/7-51)>.84)?mineral:'stone';
+ if(!pileAdd(x,z,type,volume/RESOURCE_CATALOG[type].volume)){
+  earthEdits.set(key,before);toolMessage('Ingen plass i masselager.');return;
+ }
+ worldSave();rebuildTouched([{key}]);pileMeshRefresh();toolMessage('Brutt 60 L berg · '+RESOURCE_CATALOG[type].name+' lagt i haug');
+}
+
+// v0.6.1: Stabil objektidentitet uavhengig av LOD og genereringsrekkefølge.
 const HARVEST_KEY='afterfall_059_harvest',HARVEST_RANGE=5.2;
 const harvestedIds=new Set(),harvestNodes=new Map();
 let harvestAssets=null,harvestLastAction=0;
 const ORE_TYPES=['stone','iron_ore','copper_ore','silver_ore','gold_ore','titanium_ore','diamond'];
 function harvestId(cx,cz,type,k){return cx+':'+cz+':'+type+':'+k}
 function saveHarvest(){
- if(earthReady)earthCommit();
+ if(earthReady){worldSave();return true}
  try{localStorage.setItem(HARVEST_KEY,JSON.stringify({seed:SEED,version:1,ids:[...harvestedIds]}));return true}
  catch(e){toolMessage('Uttak kunne ikke lagres.');return false}
 }
 function loadHarvest(){
+ if(earthReady)return;
  if(earthSaved){for(const id of earthSaved.harvested||[])if(typeof id==='string')harvestedIds.add(id);return}
  try{
   const d=JSON.parse(localStorage.getItem(HARVEST_KEY)||'null');
@@ -296,7 +482,7 @@ function harvestUse(){
  if(performance.now()-harvestLastAction<320)return;
  harvestLastAction=performance.now();
  const n=harvestTarget(),tool=inventoryState.selectedTool;
- if(!n){toolMessage('Sikt på et tre, en busk eller en stein innen 5 meter.');return}
+ if(!n){if(tool==='pickaxe')rockBreak();else toolMessage('Sikt på et tre eller en busk innen 5 meter.');return}
  if((tool==='axe'&&(n.type==='ore'||n.type==='buried'))||(tool==='pickaxe'&&n.type!=='ore'&&n.type!=='buried')){
   toolMessage((n.type==='ore'||n.type==='buried')?'Velg hakke for denne forekomsten.':'Velg øks for tre eller busk.');return;
  }
@@ -304,7 +490,8 @@ function harvestUse(){
  const reward=harvestReward(n);
  harvestedIds.add(n.id);
  // Ressursutbytte og uttaksstatus lagres i separate eksisterende systemer.
- for(const [id,q] of reward)inventoryAdd(id,q);
+ for(const [id,q] of reward){const carry=Math.min(q,Math.max(0,Math.floor(loadCapacity(id)*1000)/1000));if(carry>0)inventoryState.items[id]=Math.round(((inventoryState.items[id]||0)+carry)*1000)/1000;if(q-carry>0)pileAdd(n.x,n.z,id,q-carry)}
+ worldSave();pileMeshRefresh();loadHudUpdate();
  saveHarvest();
  const c=terrainChunks.get(chunkKey(n.cx,n.cz));
  if(c){
@@ -318,6 +505,7 @@ const inventoryState={selectedTool:'shovel',items:Object.create(null)};
 let inventoryOpen=false,toolToastUntil=0;
 function inventoryAdd(id,quantity){
  if(!RESOURCE_CATALOG[id]||!Number.isFinite(quantity)||quantity<=0)return false;
+ if(quantity>loadCapacity(id)+1e-7){toolMessage('Inventaret er fullt. Legg ressurser i en haug.');return false}
  inventoryState.items[id]=Math.round(((inventoryState.items[id]||0)+quantity)*1000)/1000;
  saveInventory();return true;
 }
@@ -336,11 +524,12 @@ function inventoryTotals(){
  return {mass,volume,quantity};
 }
 function saveInventory(){
- if(earthReady)earthCommit();
+ if(earthReady){worldSave();return true}
  try{localStorage.setItem(INVENTORY_KEY,JSON.stringify({version:1,seed:SEED,selectedTool:inventoryState.selectedTool,items:inventoryState.items}));return true}
  catch(e){toolMessage('Kunne ikke lagre inventaret lokalt.');return false}
 }
 function loadInventory(){
+ if(earthReady)return;
  if(earthSaved){const data=earthSaved.inventory||{};if(TOOL_CATALOG[data.selectedTool])inventoryState.selectedTool=data.selectedTool;for(const [id,q] of Object.entries(data.items||{}))if(RESOURCE_CATALOG[id]&&Number.isFinite(q)&&q>0)inventoryState.items[id]=q;return}
  try{
   const data=JSON.parse(localStorage.getItem(INVENTORY_KEY)||'null');
@@ -373,7 +562,7 @@ function useSelectedTool(){
 }
 function renderInventory(){
  const total=inventoryTotals();
- $('inventorySummary').textContent=`${total.quantity.toLocaleString('nb-NO')} enheter · ${total.mass.toFixed(2)} kg · ${total.volume.toFixed(3)} m³`;
+ $('inventorySummary').textContent=`${total.quantity.toLocaleString('nb-NO')} enheter · ${total.mass.toFixed(2)} / 30 kg · ${(total.volume*1000).toFixed(1)} / 45 L`;
  $('inventoryToolInfo').textContent='Aktivt verktøy: '+TOOL_CATALOG[inventoryState.selectedTool].name;
  const tbody=$('inventoryRows');tbody.replaceChildren();
  const entries=Object.entries(inventoryState.items).filter(([id,q])=>RESOURCE_CATALOG[id]&&q>0);
@@ -403,6 +592,8 @@ function initInventoryUI(){
  $('useTool').onclick=useSelectedTool;
  $('earthDig').onclick=()=>{earthMode='dig';earthUI()};
  $('earthFill').onclick=()=>{earthMode='fill';earthUI()};
+ $('pileTake').onclick=()=>pileTransfer(true);$('pileDrop').onclick=()=>pileTransfer(false);$('pileMove').onclick=pileMove;
+ loadHudUpdate();
  selectTool(inventoryState.selectedTool);
 }
 
@@ -582,7 +773,7 @@ function clipPoly(poly,x0,z0,x1,z1){for(let axis of ['x','z'])for(let side of [0
  for(let i=0;i<poly.length;i++){let a=poly[i],b=poly[(i+1)%poly.length],ia=inside(a),ib=inside(b);
  if(ia!==ib){let t=clamp((edge-a[axis])/((b[axis]-a[axis])||1e-20),0,1);out.push({x:a.x+(b.x-a.x)*t,z:a.z+(b.z-a.z)*t,y:a.y+(b.y-a.y)*t})}
  if(ib)out.push(b)}poly=out;if(poly.length<3)return []}return poly}
-// v0.6.0: Endepunkter på samme hydrologiske node deler en miter-kant.
+// v0.6.1: Endepunkter på samme hydrologiske node deler en miter-kant.
 // Topologien endres ikke: bare elvebåndenes geometriske sidekanter.
 let riverJoinCache=new WeakMap();
 function rebuildRiverJoinCache(){
@@ -625,7 +816,7 @@ function rebuildRiverJoinCache(){
 }
 // Elvebånd klippes mot chunk, men sidepunktene er beregnet GLOBALT.
 // Nabosegmenter får derfor identiske sidekanter i knutepunktene.
-// v0.6.0: Kontrollerte segmentbånd. Tidligere ble et potensielt konkavt
+// v0.6.1: Kontrollerte segmentbånd. Tidligere ble et potensielt konkavt
 // eller selvkryssende firkantpolygon triangulert med en ubetinget vifte.
 // Nå valideres begge endesnittene, og hvert segment klippes som to triangler.
 // Den hydrologiske senterlinjen og vannstanden endres ikke.
@@ -716,7 +907,7 @@ function clipWaterTriangle(triangle,level){
 // trianguleringsrutenett. Alle kantpunkter beregnes deterministisk i
 // verdenskoordinater; ingen chunk-lokale tilfeldige prøvepunkter.
 // Strandlinjer får 1 m triangler; åpne flater får 4 m triangler.
-// v0.6.0: Vannpolygoner klippes mot den FAKTISKE LOD-meshen.
+// v0.6.1: Vannpolygoner klippes mot den FAKTISKE LOD-meshen.
 // Polygonene deles på 1 m ved strandlinjer, og både hydromaske og
 // landmesh evalueres på samme globale koordinater i hver chunk.
 function buildChunkStillWater(cx,cz,lod){
@@ -809,7 +1000,7 @@ function buildChunkStillWater(cx,cz,lod){
  return meshes;
 }
 
-// v0.6.0: Deterministisk chunkvegetasjon. Ingen nye kollidere eller endringer i hydrologien.
+// v0.6.1: Deterministisk chunkvegetasjon. Ingen nye kollidere eller endringer i hydrologien.
 // Felles geometribuffere og materialer; bare instansmatrisene varierer per chunk/LOD.
 function initVegetation(){
  const mk=(geometry,color)=>({geometry,material:new THREE.MeshLambertMaterial({color,side:THREE.FrontSide})});
@@ -928,7 +1119,7 @@ function diagIndex(meshes,x0,z0){const cells=new Map(),step=8;for(const [mesh,ki
 function diagMarker(x,z,color){const y=ground(x,z)+.32,geo=new THREE.PlaneGeometry(3.4,3.4);geo.rotateX(-Math.PI/2);const mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:.85,depthTest:false,depthWrite:false,side:THREE.DoubleSide});const mesh=new THREE.Mesh(geo,mat);mesh.position.set(x-PAD_X,y,z-PAD_Z);mesh.renderOrder=15;mesh.userData.diagOwnMaterial=true;diagAdd(mesh)}
 function diagScan(){const centerX=Math.floor(p.x/64),centerZ=Math.floor(p.z/64),cx=Math.max(0,centerX-1),cz=Math.max(0,centerZ-1),x0=cx*64,z0=cz*64,near=[];for(const c of terrainChunks.values())if(c.cx>=cx&&c.cx<cx+3&&c.cz>=cz&&c.cz<cz+3){if(c.water)near.push([c.water,'river']);for(const m of c.stillWater)near.push([m,diagMeshKind(m,c)])}const index=diagIndex(near,x0,z0),step=8;let missing=0,overlap=0,samples=0,water=0;for(let j=0;j<24;j++)for(let i=0;i<24;i++){const x=x0+i*step+step/2,z=z0+j*step+step/2;if(x>=WORLD||z>=WORLD)continue;const arr=index.get(i+','+j)||[],kinds=new Set();for(const t of arr)if(diagTriangleContains(x,z,t.v[0][0],t.v[0][1],t.v[1][0],t.v[1][1],t.v[2][0],t.v[2][1]))kinds.add(t.kind);const body=waterBodyAt(x,z),river=riverSample(x,z),riverExpected=river&&river.distance<river.width*.77,expected=!!body||!!riverExpected;if(expected)water++;samples++;if(expected&&!kinds.size){missing++;if(diag.coverage)diagMarker(x,z,0xff4141)}if(kinds.size>1){overlap++;if(diag.coverage)diagMarker(x,z,0xe050fa)}}return {missing,overlap,samples,expected:water,nearMeshes:near.length,area:[x0,z0,x0+192,z0+192]}}
 function diagRefresh(runScan=false){if(!scene)return;diagClear();if(!diag.on)return;let riverCount=0,lakeCount=0,seaCount=0,riverTriangles=0,stillTriangles=0;for(const c of terrainChunks.values()){if(diag.chunks)diagChunkGrid(c);const meshes=[];if(c.water)meshes.push(c.water);meshes.push(...c.stillWater);for(const mesh of meshes){const kind=diagMeshKind(mesh,c),triangles=mesh.geometry.getIndex()?.count/3||0;if(kind==='river'){riverCount++;riverTriangles+=triangles}else if(kind==='sea'){seaCount++;stillTriangles+=triangles}else{lakeCount++;stillTriangles+=triangles}if(diag.colors){diag.materials.set(mesh,mesh.material);mesh.material=diagMats[kind]}if(diag.edges)diagWaterEdges(mesh);if(diag.shore&&kind!=='river')diagShoreSegments(mesh)}}
- const hi=clamp(Math.round(p.x/HY_STEP),0,HY_N-1),hj=clamp(Math.round(p.z/HY_STEP),0,HY_N-1),id=hydId(hi,hj),lake=hydroLakeId[id],r=riverSample(p.x,p.z),body=waterBodyAt(p.x,p.z);let report=`AFTERFALL 3D 0.6.0\nSeed ${SEED} | X ${p.x.toFixed(1)} Z ${p.z.toFixed(1)}\nChunk ${Math.floor(p.x/64)},${Math.floor(p.z/64)} | aktive ${terrainChunks.size}\nHydroraster ${hi},${hj} (id ${id}) | kote ${hydroHeight[id].toFixed(2)} m\nHavcelle ${!!hydroOcean[id]} | innsjø-ID ${lake} | innsjøkote ${lake>=0?hydroLakes[lake].level.toFixed(2):'-'}\nwaterBodyAt ${body?body.kind+' @ '+body.level.toFixed(2):'ingen'}\nElv nærmest ${r?r.distance.toFixed(2)+' m fra senterlinje, bredde '+r.width.toFixed(2)+' m':'ingen'}\nTerrengkote ${(ground(p.x,p.z)+PAD_H).toFixed(2)} m\nAktive mesher: elv ${riverCount}, innsjø ${lakeCount}, hav ${seaCount}\nTrekanter: elv ${riverTriangles}, innsjø/hav ${stillTriangles}\nElvegeometri siden oppstart: delsegmenter ${riverGeometryStats.segments}, reparerte ${riverGeometryStats.repaired}, avviste degenererte ${riverGeometryStats.rejected}`;
+ const hi=clamp(Math.round(p.x/HY_STEP),0,HY_N-1),hj=clamp(Math.round(p.z/HY_STEP),0,HY_N-1),id=hydId(hi,hj),lake=hydroLakeId[id],r=riverSample(p.x,p.z),body=waterBodyAt(p.x,p.z);let report=`AFTERFALL 3D 0.6.1\nSeed ${SEED} | X ${p.x.toFixed(1)} Z ${p.z.toFixed(1)}\nChunk ${Math.floor(p.x/64)},${Math.floor(p.z/64)} | aktive ${terrainChunks.size}\nHydroraster ${hi},${hj} (id ${id}) | kote ${hydroHeight[id].toFixed(2)} m\nHavcelle ${!!hydroOcean[id]} | innsjø-ID ${lake} | innsjøkote ${lake>=0?hydroLakes[lake].level.toFixed(2):'-'}\nwaterBodyAt ${body?body.kind+' @ '+body.level.toFixed(2):'ingen'}\nElv nærmest ${r?r.distance.toFixed(2)+' m fra senterlinje, bredde '+r.width.toFixed(2)+' m':'ingen'}\nTerrengkote ${(ground(p.x,p.z)+PAD_H).toFixed(2)} m\nAktive mesher: elv ${riverCount}, innsjø ${lakeCount}, hav ${seaCount}\nTrekanter: elv ${riverTriangles}, innsjø/hav ${stillTriangles}\nElvegeometri siden oppstart: delsegmenter ${riverGeometryStats.segments}, reparerte ${riverGeometryStats.repaired}, avviste degenererte ${riverGeometryStats.rejected}`;
  if(runScan||diag.coverage){const v=diagScan();report+=`\nDiagnostisk 192×192 m område: ${v.area.join(', ')}\nPrøvepunkter ${v.samples} | forventet vått ${v.expected}\nMulig manglende dekning ${v.missing} | overlapp mellom vanntyper ${v.overlap}\nMerk: 8 m prøvepunkter, forventning bruker waterBodyAt/riverSample; falske positiver mulige.`}
  diag.lastReport=report;$('diagStats').textContent=report}
 // DIAG.1: Menyens synlighet er uavhengig av diagnoseobjektenes levetid.
@@ -1011,9 +1202,9 @@ for(let k=0;k<50;k++){let x=PAD_X+(hash(k,7)-.5)*225,z=PAD_Z+(hash(k,11)-.5)*225
 function collides(x,z){let radius=.34,foot=ground(x+PAD_X,z+PAD_Z)+.12,head=foot+1.65;for(let b of wallBoxes)if(x+radius>b.minX&&x-radius<b.maxX&&z+radius>b.minZ&&z-radius<b.maxZ&&foot<b.maxY&&head>b.minY)return true;for(let c of roundColliders){if(head<=c.minY||foot>=c.maxY)continue;let dx=x-c.x,dz=z-c.z,rr=radius+c.radius;if(dx*dx+dz*dz<rr*rr)return true}return false}
 function setPlayer(x,z,yaw){p.x=x;p.z=z;p.yaw=yaw;updateCamera()}
 function updateCamera(){camera.position.set(p.x-PAD_X,ground(p.x,p.z)+1.72,p.z-PAD_Z);camera.rotation.set(p.pitch||0,p.yaw,0,'YXZ')}
-function move(dx,dz){let nx=clamp(p.x+dx,1,WORLD-1),nz=clamp(p.z+dz,1,WORLD-1);if(!collides(nx-PAD_X,p.z-PAD_Z))p.x=nx;if(!collides(p.x-PAD_X,nz-PAD_Z))p.z=nz}
+function move(dx,dz){const load=inventoryTotals();if(load.mass>LOAD_MAX_KG*.8||load.volume>LOAD_MAX_M3*.8){dx*=.75;dz*=.75}let nx=clamp(p.x+dx,1,WORLD-1),nz=clamp(p.z+dz,1,WORLD-1);if(!collides(nx-PAD_X,p.z-PAD_Z))p.x=nx;if(!collides(p.x-PAD_X,nz-PAD_Z))p.z=nz}
 
-// v0.6.0: Visuelt vær og astronomisk lys. Ingen inngrep i hydrologi, chunking eller kollisjon.
+// v0.6.1: Visuelt vær og astronomisk lys. Ingen inngrep i hydrologi, chunking eller kollisjon.
 const WEATHER_DAY_SECONDS=3600,WEATHER_NAMES=['Klart','Overskyet','Regn','Tåke'];
 const weatherSkyDay=new THREE.Color(0x91a9ac),weatherSkyNight=new THREE.Color(0x0c172c);
 function weatherHash(day,slot){
@@ -1101,14 +1292,14 @@ function updateWeather(dt){
  $('weatherHud').textContent=`${altitude>0?'☀':'☾'} ${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')} · ${WEATHER_NAMES[['klart','overskyet','regn','tåke'].indexOf(kind)]} · Vind ${Math.round(wind*8)} m/s`;
 }
 
-function save(){earthCommit();saveInventory();localStorage.setItem(KEY,JSON.stringify({version:557,seed:SEED,...p,weatherElapsed:weatherState.elapsed}));$('status').textContent='Lagret lokalt · v0.6.0'}
+function save(){worldSave();saveInventory();localStorage.setItem(KEY,JSON.stringify({version:557,seed:SEED,...p,weatherElapsed:weatherState.elapsed}));$('status').textContent='Lagring startet · v0.6.1'}
 function load(){try{let v=JSON.parse(localStorage.getItem(KEY));if(v&&(v.version===557||v.version===553||v.version===551||v.version===55||v.version===541||v.version===54||v.version===53)&&v.seed===SEED&&[v.x,v.z,v.yaw].every(Number.isFinite)&&v.x>0&&v.x<WORLD&&v.z>0&&v.z<WORLD){setPlayer(v.x,v.z,v.yaw);if(Number.isFinite(v.pitch))p.pitch=THREE.MathUtils.clamp(v.pitch,-Math.PI*.46,Math.PI*.46);if(Number.isFinite(v.weatherElapsed)&&v.weatherElapsed>=0)weatherState.elapsed=v.weatherElapsed;return true}}catch(e){}return false}
-function init(){renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.insertBefore(renderer.domElement,document.body.firstChild);camera=new THREE.PerspectiveCamera(73,innerWidth/innerHeight,.08,260);camera.rotation.order='YXZ';clock=new THREE.Clock();earthLoad();buildWorld();initWeather();initInventoryUI();if(!earthReady){earthReady=true;earthCommit()}weatherState.elapsed=WEATHER_DAY_SECONDS*.5;load();updateWeather(0);updateCamera();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});$('status').textContent='4 × 4 km · dynamiske terrengchunks, elver, innsjøer og hav aktive · Gå gjennom den grønne døråpningen';animate()}
+async function init(){await worldInitialize();renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.insertBefore(renderer.domElement,document.body.firstChild);camera=new THREE.PerspectiveCamera(73,innerWidth/innerHeight,.08,260);camera.rotation.order='YXZ';clock=new THREE.Clock();buildWorld();pileMeshRefresh();initWeather();initInventoryUI();loadHudUpdate();weatherState.elapsed=WEATHER_DAY_SECONDS*.5;load();updateWeather(0);updateCamera();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});$('status').textContent='4 × 4 km · dynamiske terrengchunks, elver, innsjøer og hav aktive · Gå gjennom den grønne døråpningen';animate()}
 function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05);if(!paused){let speed=3.5,turnSpeed=2.1,forward=-joy.y,turn=joy.x;p.yaw-=turn*turnSpeed*dt;let fx=-Math.sin(p.yaw),fz=-Math.cos(p.yaw);move(fx*forward*speed*dt,fz*forward*speed*dt);p.seconds+=dt;updateCamera();if((Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4)))updateChunks()}waterTime.value+=dt;updateWeather(paused?0:dt);renderer.render(scene,camera);if(toolToastUntil&&performance.now()>toolToastUntil){$('toolToast').style.display='none';toolToastUntil=0}let inside=Math.abs(p.x-PAD_X)<7.7&&Math.abs(p.z-PAD_Z)<5.7;$('status').textContent=`${inside?'INNE I SERVICESTASJONEN':'UTENDØRS'} · X ${p.x.toFixed(1)} · Z ${p.z.toFixed(1)} · ${terrainChunks.size} chunks · ${Math.round(1/Math.max(dt,.01))} FPS`}
 const joyEl=$('joy'),knob=$('knob');function joyMove(e){let r=joyEl.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,len=Math.max(1,Math.hypot(dx,dy)),v=Math.min(1,len/48);joy.x=dx/len*v;joy.y=dy/len*v;knob.style.transform=`translate(${joy.x*44}px,${joy.y*44}px)`}
 joyEl.addEventListener('pointerdown',e=>{e.preventDefault();joyEl.setPointerCapture(e.pointerId);joyMove(e)});joyEl.addEventListener('pointermove',e=>{if(joyEl.hasPointerCapture(e.pointerId))joyMove(e)});function joyEnd(){joy.x=joy.y=0;knob.style.transform='translate(0,0)'}joyEl.addEventListener('pointerup',joyEnd);joyEl.addEventListener('pointercancel',joyEnd);
 document.addEventListener('pointerdown',e=>{
- if(paused||e.target.closest('button,#joy,#panel,#toolHud,#inventoryPanel'))return;
+ if(paused||e.target.closest('button,select,#joy,#panel,#toolHud,#inventoryPanel,#pileControls'))return;
  if(e.clientX<innerWidth*.35)return;
  lookPointer=e.pointerId;lookLastX=e.clientX;lookLastY=e.clientY;
  if(e.target.setPointerCapture)e.target.setPointerCapture(e.pointerId);
@@ -1127,5 +1318,5 @@ document.addEventListener('pointerup',endLook);
 document.addEventListener('pointercancel',endLook);
 const panel=$('panel');function showPanel(on){paused=on||inventoryOpen;panel.classList.toggle('show',on);joyEnd()}$('menu').onclick=()=>showPanel(true);$('resume').onclick=()=>showPanel(false);$('spawnOutside').onclick=()=>{setPlayer(288,294,0);showPanel(false)};$('spawnInside').onclick=()=>{setPlayer(288,283,Math.PI);showPanel(false)};$('save').onclick=save;$('load').onclick=()=>{load();showPanel(false)};$('reset').onclick=()=>setPlayer(288,294,0);$('interact').onclick=()=>{let doorDist=Math.hypot(p.x-288,p.z-289);if(doorDist<3.4){$('status').textContent='Døråpningen er fysisk: gå rett frem gjennom åpningen.'}else{$('status').textContent='Finn den grønne døråpningen foran bygningen.'}};
 addEventListener('keydown',e=>{if(e.key==='Escape')showPanel(!paused);if(e.key==='ArrowLeft')p.yaw+=.08;if(e.key==='ArrowRight')p.yaw-=.08;if(e.key==='w'||e.key==='ArrowUp')joy.y=-1;if(e.key==='s'||e.key==='ArrowDown')joy.y=1;if(e.key==='a')joy.x=-1;if(e.key==='d')joy.x=1});addEventListener('keyup',e=>{if(['w','s','a','d','ArrowUp','ArrowDown'].includes(e.key))joyEnd()});
-try{init()}catch(err){$('error').style.display='grid';$('errText').textContent=String(err);console.error(err)}
+init().catch(err=>{$('error').style.display='grid';$('errText').textContent=String(err);console.error(err)})
 </script></body></html>
