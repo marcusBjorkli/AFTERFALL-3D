@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#101c20">
-<title>AFTERFALL | Construction Editor CE 0.4</title>
+<title>AFTERFALL | Construction Editor CE 0.4.1</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:#101c20;color:#e9f0ed;font:14px system-ui,sans-serif}
 body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
@@ -66,13 +66,22 @@ button.wide{width:100%;margin-top:7px}
 #presetInfo{font:11px/1.45 ui-monospace,monospace;color:#b6cdcd}
 #connectorPanel select{font-size:12px}
 #connectionsInfo{font-size:11px;color:#b5d4cc;white-space:pre-line}
+
+#bracePanel{margin:12px 0;border:1px solid #486269;border-radius:8px;padding:9px;background:#192b31}
+#bracePanel summary{cursor:pointer;color:#d2e6df;font-weight:700;font-size:13px;padding:4px 0}
+#bracePanel[open] summary{margin-bottom:6px}
+#braceReport{white-space:pre-line;color:#eac77d;font-size:12px}
+#braceReport.error{color:#ffb6a2}
+#bracePanel .fields label{font-size:11px}
+#bracePanel select{font-size:12px}
+#editFields input[readonly]{opacity:.65}
 </style>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
 </script>
 </head>
 <body>
-<header><span class="brand">AFTERFALL</span><span class="version">CE 0.4</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
+<header><span class="brand">AFTERFALL</span><span class="version">CE 0.4.1</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
 <main>
 <aside>
 <div class="panelTabs" aria-label="Verktøypaneler"><button id="tabModules" type="button" aria-pressed="true">Moduler</button><button id="tabSite" type="button" aria-pressed="false">Byggeflate / mål</button></div>
@@ -80,7 +89,7 @@ button.wide{width:100%;margin-top:7px}
 <h1>Modulbibliotek</h1>
 <p>Standardmoduler med geometriske festepunkter. Bæreevne og materialbehov beregnes i senere versjoner.</p>
 <label for="moduleType">Komponent</label>
-<select id="moduleType"><optgroup label="Fundamentering"><option value="stoneFoot">Punktfundament – stein</option><option value="concreteFoot">Punktfundament – betong</option><option value="stripFoot">Stripefundament – betong</option><option value="foundationBeam">Fundamentbjelke – tre</option></optgroup><optgroup label="Bærende trevirke"><option value="timberPost">Trestolpe</option><option value="timberBeam">Trebjelke</option><option value="brace">Skråavstiver</option></optgroup><optgroup label="Testmoduler fra CE 0.3"><option value="block">Testblokk</option><option value="post">Stolpe (test)</option><option value="beam">Bjelke (test)</option><option value="panel">Plate (test)</option></optgroup></select>
+<select id="moduleType"><optgroup label="Fundamentering"><option value="stoneFoot">Punktfundament – stein</option><option value="concreteFoot">Punktfundament – betong</option><option value="stripFoot">Stripefundament – betong</option><option value="foundationBeam">Fundamentbjelke – tre</option></optgroup><optgroup label="Bærende trevirke"><option value="timberPost">Trestolpe</option><option value="timberBeam">Trebjelke</option><option value="brace">Skråavstiver – fast geometri</option></optgroup><optgroup label="Testmoduler fra CE 0.3"><option value="block">Testblokk</option><option value="post">Stolpe (test)</option><option value="beam">Bjelke (test)</option><option value="panel">Plate (test)</option></optgroup></select>
 <p id="presetInfo"></p>
 <div class="fields">
 <div><label for="placeY">Underkant Y (m)</label><input id="placeY" type="number" min="0" max="100" step="0.01" value="0"></div>
@@ -89,6 +98,26 @@ button.wide{width:100%;margin-top:7px}
 <label class="check"><input id="snapModules" type="checkbox" checked>Fest til 0,25 m rutenett</label>
 <label class="check"><input id="snapAnchors" type="checkbox" checked>Fest til nærliggende modulkanter</label>
 <button id="startPlace" class="primary" type="button">Plasser ny modul</button>
+<details id="bracePanel">
+<summary>Tilpasset skråavstiver – to punkter</summary>
+<p>Velg stolpens side og bjelkens underside i samme vertikalplan. Lengde, helning og endekutt beregnes automatisk.</p>
+<label for="bracePost">Stolpe / nedre målmodul</label>
+<select id="bracePost"><option value="">Velg stolpe</option></select>
+<label for="bracePostPoint">Nedre festepunkt</label>
+<select id="bracePostPoint" disabled></select>
+<label for="braceBeam">Bjelke / øvre målmodul</label>
+<select id="braceBeam"><option value="">Velg bjelke</option></select>
+<label for="braceBeamPoint">Øvre festepunkt</label>
+<select id="braceBeamPoint" disabled></select>
+<div class="fields">
+<div><label for="braceThickness">Tykkelse i planet (mm)</label><input id="braceThickness" type="number" min="50" max="300" step="1" value="98"></div>
+<div><label for="braceWidth">Bredde på tvers (mm)</label><input id="braceWidth" type="number" min="50" max="300" step="1" value="98"></div>
+</div>
+<div class="buttons" style="margin-top:8px"><button id="checkBrace" type="button">Beregn</button><button id="addBrace" type="button">Opprett avstiver</button></div>
+<button id="replaceBrace" class="wide" type="button" disabled>Tilpass valgt avstiver på nytt</button>
+<p id="braceReport" aria-live="polite">Velg begge målmoduler og festepunkter.</p>
+<p>Gule punkter markerer stolpens side; blå punkter markerer bjelkens underside når festepunkter vises.</p>
+</details>
 <h2>Prosjekt <span id="moduleCount">0 / 300</span></h2>
 <label for="moduleList">Velg eksisterende modul</label>
 <select id="moduleList"><option value="">Ingen valgt</option></select>
@@ -123,7 +152,7 @@ button.wide{width:100%;margin-top:7px}
 <button id="doConnect" class="primary" type="button" disabled>Koble moduler</button>
 <p id="connectorResult" aria-live="polite">Velg to festepunkter. Kilden flyttes i X, Y og Z. Punktene må vende mot hverandre.</p>
 </section>
-<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.4.</p>
+<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.4.1.</p>
 </section>
 <section id="sitePanel" hidden>
 <h1>Byggeflate</h1>
@@ -161,7 +190,7 @@ button.wide{width:100%;margin-top:7px}
 </div>
 </section>
 </main>
-<footer>CE 0.4 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
+<footer>CE 0.4.1 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
 <script type="module">
 const $=id=>document.getElementById(id);
 const status=$('status'),stage=$('stage'),form=$('dimensions'),lengthInput=$('length'),widthInput=$('width');
@@ -176,7 +205,8 @@ const catalog={
  foundationBeam:{name:'Fundamentbjelke',l:3,w:0.198,h:0.198,color:0x987b56,material:'Tre',role:'beam'},
  timberPost:{name:'Trestolpe',l:0.148,w:0.148,h:2.4,color:0xb28d64,material:'Tre',role:'post'},
  timberBeam:{name:'Trebjelke',l:3,w:0.098,h:0.198,color:0xc5a578,material:'Tre',role:'beam'},
- brace:{name:'Skråavstiver',l:1.2,w:0.098,h:1.2,color:0xb88d5e,material:'Tre',role:'brace'},
+ brace:{name:'Skråavstiver (fast)',l:1.2,w:0.098,h:1.2,color:0xb88d5e,material:'Tre',role:'brace'},
+ fittedBrace:{name:'Tilpasset skråavstiver',l:1,w:0.098,h:1,color:0xb88d5e,material:'Tre',role:'brace'},
  block:{name:'Testblokk',l:1,w:1,h:1,color:0x8da6ac},
  post:{name:'Stolpe',l:0.2,w:0.2,h:2.5,color:0xaf8961},
  beam:{name:'Bjelke',l:3,w:0.2,h:0.25,color:0xc7a47a},
@@ -184,7 +214,8 @@ const catalog={
 };
 const EPS=1e-7,MAX_MODULES=300;
 function footprint(m){return m.angle%180===0?{x:m.l/2,z:m.w/2}:{x:m.w/2,z:m.l/2};}
-function isBrace(m){return m.type==='brace';}
+function isFitted(m){return m.type==='fittedBrace';}
+function isBrace(m){return m.type==='brace'||isFitted(m);}
 function braceEndHeight(h){return Math.min(0.12,h*0.4);}
 function rotateVector(v,angle){
  const cs=[1,0,-1,0],sn=[0,1,0,-1],i=angle/90;
@@ -195,12 +226,17 @@ function pointToWorld(m,v){
 }
 function cross(a,b){return [a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];}
 function dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
-function solid(m){
+function profileOf(m){
+ if(isFitted(m))return m.profile;
  const t=braceEndHeight(m.h);
- const polygon=isBrace(m)?[[-m.l/2,0], [m.l/2,m.h-t],[m.l/2,m.h],[-m.l/2,t]]:
-  [[-m.l/2,0],[m.l/2,0],[m.l/2,m.h],[-m.l/2,m.h]];
- const localEdges=isBrace(m)?[[m.l,m.h-t,0],[0,1,0],[0,0,1]]:[[1,0,0],[0,1,0],[0,0,1]];
- const localNormals=isBrace(m)?[[1,0,0],[-(m.h-t),m.l,0],[0,0,1]]:[[1,0,0],[0,1,0],[0,0,1]];
+ return isBrace(m)?[[-m.l/2,0],[m.l/2,m.h-t],[m.l/2,m.h],[-m.l/2,t]]:
+ [[-m.l/2,0],[m.l/2,0],[m.l/2,m.h],[-m.l/2,m.h]];
+}
+function solid(m){
+ const polygon=profileOf(m);
+ const localEdges=polygon.map(([x,y],i)=>[polygon[(i+1)%polygon.length][0]-x,polygon[(i+1)%polygon.length][1]-y,0]);
+ const localNormals=localEdges.map(v=>[-v[1],v[0],0]);
+ localEdges.push([0,0,1]);localNormals.push([0,0,1]);
  return {vertices:polygon.flatMap(([x,y])=>[-m.w/2,m.w/2].map(z=>pointToWorld(m,[x,y,z]))),
  edges:localEdges.map(v=>rotateVector(v,m.angle)),normals:localNormals.map(v=>rotateVector(v,m.angle))};
 }
@@ -221,6 +257,11 @@ function solidOverlap(m,n){
 function anchors(m){
  const points=[];
  const add=(id,label,p,n)=>points.push({id,label,p:pointToWorld(m,p),n:rotateVector(n,m.angle)});
+ if(isFitted(m)){
+  add('low','Nedre endekutt',m.low,[-1,0,0]);
+  add('high','Øvre endekutt',m.high,[0,1,0]);
+  return points;
+ }
  if(isBrace(m)){
   const t=braceEndHeight(m.h);
   add('low','Nedre ende',[-m.l/2,t/2,0],[-1,0,0]);
@@ -235,6 +276,10 @@ function anchors(m){
  add('front','Side +Z',[0,m.h/2,m.w/2],[0,0,1]);
  const role=catalog[m.type]?.role;
  if(role==='beam'||m.type==='beam'||m.type==='stripFoot'){
+  for(const fraction of [-.25,.25]){
+   const id=fraction<0?'quarter−X':'quarter+X';
+   add(id,'Underkant – '+(fraction<0?'25 %':'75 %'),[m.l*fraction,0,0],[0,-1,0]);
+  }
   const d=m.l/2-Math.min(0.15,m.l/4);
   for(const [suffix,x] of [['−X',-d],['+X',d]]){
    add('bottom'+suffix,'Underkant ved '+suffix,[x,0,0],[0,-1,0]);
@@ -243,13 +288,49 @@ function anchors(m){
  }
  if(role==='post'||m.type==='post'){
   const h=Math.min(0.15,m.h/4);
-  for(const [suffix,y] of [['nedre',h],['øvre',m.h-h]]){
+  for(const [suffix,y] of [['nedre',h],['25%',m.h*.25],['75%',m.h*.75],['øvre',m.h-h]]){
    for(const [id,x,z,n] of [['−X',-m.l/2,0,[-1,0,0]],['+X',m.l/2,0,[1,0,0]],['−Z',0,-m.w/2,[0,0,-1]],['+Z',0,m.w/2,[0,0,1]]]){
     add(id+suffix,id+' – '+suffix,[x,y,z],n);
    }
   }
  }
  return points;
+}
+function bracePostType(m){return m.type==='timberPost'||m.type==='post';}
+function braceBeamType(m){return ['timberBeam','foundationBeam','beam'].includes(m.type);}
+function validEndFace(m,points){
+ // The selected contact plane has already been fixed by the cut.
+ // Verify every corner is inside the receiving rectangular component.
+ return points.every(p=>{
+  const v=rotateVector([p[0]-m.x,p[1]-m.y,p[2]-m.z],(360-m.angle)%360);
+  return Math.abs(v[0])<=m.l/2+EPS&&v[1]>=-EPS&&v[1]<=m.h+EPS&&Math.abs(v[2])<=m.w/2+EPS;
+ });
+}
+function fitBrace(post,postId,beam,beamId,thickness,width,id){
+ const fail=error=>({error});
+ if(!post||!beam||post.id===beam.id||!bracePostType(post)||!braceBeamType(beam))return fail('Velg en stolpe og en bjelke.');
+ if(![thickness,width].every(v=>Number.isFinite(v)&&v>=.05-EPS&&v<=.3+EPS))return fail('Tverrsnitt må være 50–300 mm.');
+ const a=anchors(post).find(p=>p.id===postId),b=anchors(beam).find(p=>p.id===beamId);
+ if(!a||!b||Math.abs(a.n[1])>EPS||b.n[1]>-1+EPS)return fail('Velg en stolpeside og bjelkens underside.');
+ const u=a.n,perp=[-u[2],0,u[0]],delta=b.p.map((v,i)=>v-a.p[i]);
+ if(Math.abs(dot(delta,perp))>1e-6)return fail('Festepunktene må ligge i samme vertikalplan.');
+ const dx=dot(delta,u),dy=delta[1];
+ if(dx<=EPS||dy<=EPS)return fail('Øvre punkt må ligge høyere og utenfor den valgte stolpesiden.');
+ const length=Math.hypot(dx,dy),cos=dx/length,sin=dy/length,r=thickness/2;
+ const halfVertical=r/cos,halfHorizontal=r/sin;
+ if(dy<=halfVertical+EPS||dx<=halfHorizontal+EPS)return fail('Festepunktene ligger for tett for dette tverrsnittet.');
+ const angle=u[0]>0.5?0:u[2]>0.5?90:u[0]<-.5?180:270;
+ const world=(x,y,z)=>a.p.map((v,i)=>v+x*u[i]+(i===1?y:0)+z*perp[i]);
+ const lowFace=[-halfVertical,halfVertical].flatMap(y=>[-width/2,width/2].map(z=>world(0,y,z)));
+ const highFace=[dx-halfHorizontal,dx+halfHorizontal].flatMap(x=>[-width/2,width/2].map(z=>world(x,dy,z)));
+ if(!validEndFace(post,lowFace))return fail('Hele det nedre endekuttet får ikke plass på stolpen. Velg et annet punkt eller mindre tverrsnitt.');
+ if(!validEndFace(beam,highFace))return fail('Hele det øvre endekuttet får ikke plass på bjelkens underside. Velg et annet punkt eller mindre tverrsnitt.');
+ const l=dx+halfHorizontal,h=dy+halfVertical,origin=world(l/2,-halfVertical,0);
+ const profile=[[-l/2,0],[l/2,h],[dx-halfHorizontal-l/2,h],[-l/2,2*halfVertical]];
+ return {module:{id,type:'fittedBrace',x:origin[0],y:origin[1],z:origin[2],l,w:width,h,angle,profile,
+ low:[-l/2,halfVertical,0],high:[dx-l/2,h,0],
+ fit:{postId:post.id,postPoint:postId,beamId:beam.id,beamPoint:beamId,thickness,width,length,slope:Math.atan2(dy,dx)*180/Math.PI,
+ sideCut:2*halfVertical,topCut:2*halfHorizontal,stockLength:length+halfVertical*sin+halfHorizontal*cos}}};
 }
 function aligned(m,sourceId,target,targetId){
  const a=anchors(m).find(p=>p.id===sourceId),b=anchors(target).find(p=>p.id===targetId);
@@ -275,6 +356,10 @@ function validModule(m,L,W,others=[],ignore=null){
  if(![m.x,m.y,m.z,m.l,m.w,m.h,m.angle].every(Number.isFinite))return 'Alle mål må være gyldige tall.';
  if(![0,90,180,270].includes(m.angle))return 'Rotasjon må være 0°, 90°, 180° eller 270°.';
  if([m.l,m.w,m.h].some(v=>v<0.05-EPS||v>100+EPS)||m.y<-EPS||m.y+m.h>100+EPS)return 'Dimensjoner: 0,05–100 m. Total høyde: maks 100 m.';
+ if(isFitted(m)&&(!m.profile||m.profile.length!==4||!m.fit||!m.low||!m.high||
+ !m.profile.flat().every(Number.isFinite)||Math.abs(Math.max(...m.profile.map(p=>p[0]))-m.l/2)>EPS||
+ Math.abs(Math.min(...m.profile.map(p=>p[0]))+m.l/2)>EPS||Math.abs(Math.max(...m.profile.map(p=>p[1]))-m.h)>EPS||
+ Math.abs(m.w-m.fit.width)>EPS))return 'Tilpasset avstiver må dimensjoneres med to festepunkter.';
  if(catalog[m.type].ground&&Math.abs(m.y)>EPS)return 'Dette fundamentet må stå på byggeplaten (Y = 0).';
  const a=footprint(m);
  if(m.x-a.x<-EPS||m.x+a.x>L+EPS||m.z-a.z<-EPS||m.z+a.z>W+EPS)return 'Modulen går utenfor byggeflaten.';
@@ -320,6 +405,74 @@ try{
  const moduleGroup=new THREE.Group();scene.add(moduleGroup);
  const meshes=new Map();
  let anchorGroup=null;
+ function braceTargets(){
+  return [modules.find(m=>String(m.id)===$('bracePost').value),modules.find(m=>String(m.id)===$('braceBeam').value)];
+ }
+ function refreshBraceOptions(){
+  const postSelect=$('bracePost'),beamSelect=$('braceBeam');
+  const items=filter=>[{id:'',label:'Velg modul'},...modules.filter(filter).map(m=>({id:m.id,label:catalog[m.type].name+' #'+m.id}))];
+  fillOptions(postSelect,items(bracePostType),postSelect.value);
+  fillOptions(beamSelect,items(braceBeamType),beamSelect.value);
+  const [post,beam]=braceTargets(),a=$('bracePostPoint'),b=$('braceBeamPoint'),oldA=a.value,oldB=b.value;
+  fillOptions(a,post?anchors(post).filter(p=>Math.abs(p.n[1])<EPS):[],oldA);
+  fillOptions(b,beam?anchors(beam).filter(p=>p.n[1]<-.999):[],oldB);
+  a.disabled=!post;b.disabled=!beam;
+  $('checkBrace').disabled=!post||!beam;$('addBrace').disabled=!post||!beam||modules.length>=MAX_MODULES;
+  $('replaceBrace').disabled=!post||!beam||!current()||!isBrace(current());
+ }
+ function braceResult(replaceId=null){
+  const [post,beam]=braceTargets();
+  const result=fitBrace(post,$('bracePostPoint').value,beam,$('braceBeamPoint').value,
+   $('braceThickness').valueAsNumber/1000,$('braceWidth').valueAsNumber/1000,replaceId??nextId);
+  if(result.error)return result;
+  const others=modules.filter(m=>m.id!==replaceId);
+  const error=validModule(result.module,L,W,others);
+  return error?{error}:result;
+ }
+ function reportBrace(result){
+  const report=$('braceReport');report.className=result.error?'error':'';
+  if(result.error){report.textContent=result.error;return;}
+  const f=result.module.fit;
+  report.textContent='Geometrisk godkjent\\nSenterlinjelengde: '+fmt.format(f.length)+' m\\nHelning: '+fmt.format(f.slope)+'°\\nRåemne (min. geometrisk lengde): '+fmt.format(f.stockLength)+' m\\nEndekutt mot stolpe: '+fmt.format(f.sideCut*1000)+' mm\\nEndekutt mot bjelke: '+fmt.format(f.topCut*1000)+' mm';
+ }
+ function clearBracePreview(){
+  if(fitGhost){disposeGroup(fitGhost);fitGhost=null;}
+ }
+ let fitGhost=null;
+ function calculateBrace(previewOnly,replaceId=null){
+  const result=braceResult(replaceId);reportBrace(result);clearBracePreview();
+  if(result.error){setStatus(result.error,true);return;}
+  if(measuring)setMeasuring(false);setMode('select');
+  if(previewOnly){
+   fitGhost=modelMesh(result.module,true);transform(fitGhost,result.module);scene.add(fitGhost);
+   setStatus('Forhåndsvisning av avstiver. Opprett eller tilpass valgt avstiver for å bekrefte.');
+   return;
+  }
+  const m=result.module;
+  if(replaceId!==null){
+   const index=modules.findIndex(n=>n.id===replaceId);
+   if(index<0||!isBrace(modules[index]))return;
+   removeMesh(replaceId);modules[index]=m;addMesh(m);
+  }else{
+   if(modules.length>=MAX_MODULES)return;
+   nextId++;modules.push(m);addMesh(m);
+  }
+  selectModule(m.id);setStatus('Tilpasset skråavstiver #'+m.id+' opprettet med to endekutt.');
+  reportBrace(result);
+ }
+ function resetBraceReport(){
+  clearBracePreview();$('braceReport').className='';$('braceReport').textContent='Beregn for å kontrollere passform og mål.';
+ }
+ function checkFitStatus(m){
+  if(!isFitted(m))return '';
+  const a=modules.find(n=>n.id===m.fit.postId),b=modules.find(n=>n.id===m.fit.beamId);
+  const pa=a&&anchors(a).find(p=>p.id===m.fit.postPoint),pb=b&&anchors(b).find(p=>p.id===m.fit.beamPoint),own=anchors(m);
+  const matches=(p,q)=>p&&q&&dot(p.n,q.n)<-.9999&&Math.hypot(...p.p.map((v,i)=>v-q.p[i]))<.001;
+  if(!matches(own[0],pa)||!matches(own[1],pb))return 'Opprinnelig tilpasning er endret. Beregn avstiveren på nytt.';
+  const fresh=fitBrace(a,m.fit.postPoint,b,m.fit.beamPoint,m.fit.thickness,m.fit.width,m.id);
+  if(fresh.error)return fresh.error;
+  return 'Begge opprinnelige endekutt har geometrisk kontakt.';
+ }
  function newModule(){
   const type=$('moduleType').value,d=catalog[type];
   return {id:nextId,type,x:0,z:0,l:d.l,w:d.w,h:d.h,y:$('placeY').valueAsNumber,angle:Number($('placeAngle').value)};
@@ -354,7 +507,7 @@ try{
   fillOptions(s,choices,oldS);
   t.disabled=!target;s.disabled=!source||!choices.length;
   $('doConnect').disabled=!source||!target||!choices.length||($('connectSource').value==='new'&&modules.length>=MAX_MODULES);
-  refreshAnchorMarkers();
+  refreshBraceOptions();refreshAnchorMarkers();
  }
  function refreshAnchorMarkers(){
   disposeGroup(anchorGroup);anchorGroup=null;
@@ -362,9 +515,14 @@ try{
   anchorGroup=new THREE.Group();scene.add(anchorGroup);
   const target=modules.find(n=>String(n.id)===$('connectTarget').value),selected=current();
   const r=Math.max(.035,Math.min(.10,Math.max(L,W)*.004));
-  for(const [m,color,chosen] of [[selected,0xffd58a,$('connectSource').value==='selected'?$('sourceAnchor').value:null],[target,0x82e4fa,$('targetAnchor').value]]){
+  const [post,beam]=braceTargets();
+  const targets=[[selected,0xffd58a,$('connectSource').value==='selected'?$('sourceAnchor').value:null,null],[target,0x82e4fa,$('targetAnchor').value,null]];
+  if($('bracePanel').open){
+   targets.push([post,0xffd58a,$('bracePostPoint').value,p=>Math.abs(p.n[1])<EPS],[beam,0x82e4fa,$('braceBeamPoint').value,p=>p.n[1]<-.999]);
+  }
+  for(const [m,color,chosen,filter] of targets){
    if(!m)continue;
-   for(const a of anchors(m)){
+   for(const a of anchors(m).filter(p=>!filter||filter(p))){
     const mark=new THREE.Mesh(new THREE.SphereGeometry(a.id===chosen?r*1.55:r,10,7),new THREE.MeshBasicMaterial({color:a.id===chosen?0xffffff:color,depthTest:false}));
     mark.position.set(a.p[0]-L/2+a.n[0]*.008,a.p[1]+a.n[1]*.008,a.p[2]-W/2+a.n[2]*.008);
     mark.renderOrder=5;anchorGroup.add(mark);
@@ -373,13 +531,12 @@ try{
  }
  function geometryFor(m){
   if(!isBrace(m))return new THREE.BoxGeometry(1,1,1);
-  const t=braceEndHeight(m.h)/m.h;
-  const shape=new THREE.Shape();
-  shape.moveTo(-.5,-.5);shape.lineTo(.5,.5-t);shape.lineTo(.5,.5);shape.lineTo(-.5,-.5+t);shape.closePath();
+  const shape=new THREE.Shape(),polygon=profileOf(m).map(([x,y])=>[x/m.l,y/m.h-.5]);
+  shape.moveTo(...polygon[0]);for(const p of polygon.slice(1))shape.lineTo(...p);shape.closePath();
   const geo=new THREE.ExtrudeGeometry(shape,{depth:1,bevelEnabled:false});geo.translate(0,0,-.5);
   return geo;
  }
- function geometryKey(m){return isBrace(m)?'brace:'+braceEndHeight(m.h)/m.h:'box';}
+ function geometryKey(m){return isFitted(m)?'fitted:'+JSON.stringify(m.profile):isBrace(m)?'brace:'+braceEndHeight(m.h)/m.h:'box';}
  function connectModules(){
   const source=sourceModule(),target=modules.find(n=>String(n.id)===$('connectTarget').value);
   const report=$('connectorResult');
@@ -424,6 +581,7 @@ try{
  function addMesh(m){const mesh=modelMesh(m);transform(mesh,m);moduleGroup.add(mesh);meshes.set(m.id,mesh);}
  function removeMesh(id){const mesh=meshes.get(id);if(!mesh)return;moduleGroup.remove(mesh);mesh.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose();});meshes.delete(id);}
  function refreshSelection(){
+  clearBracePreview();
   for(const [id,mesh] of meshes){
    const selected=id===selectedId;
    mesh.userData.edge.material.color.setHex(selected?0xffd58a:0x24383b);
@@ -434,20 +592,32 @@ try{
   list.value=m?String(m.id):'';
   $('moduleCount').textContent=modules.length+' / '+MAX_MODULES;
   $('editFields').disabled=!m;$('moveMode').disabled=!m;
+  for(const id of ['editL','editW','editH'])$(id).readOnly=!!m&&isFitted(m);
   $('moduleInfo').textContent=m?catalog[m.type].name+' #'+m.id+' · '+fmt.format(m.l)+' × '+fmt.format(m.w)+' × '+fmt.format(m.h)+' m':'Velg en modul i 3D-visningen eller listen.';
   if(m){for(const [field,key] of Object.entries({editX:'x',editZ:'z',editY:'y',editL:'l',editW:'w',editH:'h',editAngle:'angle'}))$(field).value=String(m[key]);}
   else for(const id of ['editX','editZ','editY','editL','editW','editH'])$(id).value='';
   const matches=m?matchingConnections(m,modules):[];
   $('connectionsInfo').textContent=!m?'Ingen modul valgt.':'Geometriske punktforbindelser: '+matches.length+(matches.length?'\\n'+matches.map(a=>a.label).join('\\n'):'');
+  if(m&&isFitted(m))$('connectionsInfo').textContent+='\\n'+checkFitStatus(m)+'\\nSenterlinje: '+fmt.format(m.fit.length)+' m · Helning: '+fmt.format(m.fit.slope)+'°';
   refreshConnectors();
  }
- function selectModule(id){selectedId=modules.some(m=>m.id===id)?id:null;refreshSelection();if(selectedId!==null)showPanel('modules');}
+ function selectModule(id){
+  selectedId=modules.some(m=>m.id===id)?id:null;refreshSelection();
+  const m=current();
+  if(m&&isFitted(m)){
+   $('bracePost').value=String(m.fit.postId);$('braceBeam').value=String(m.fit.beamId);
+   $('braceThickness').value=String(m.fit.thickness*1000);$('braceWidth').value=String(m.fit.width*1000);
+   refreshBraceOptions();$('bracePostPoint').value=m.fit.postPoint;$('braceBeamPoint').value=m.fit.beamPoint;
+   refreshAnchorMarkers();
+  }
+  if(selectedId!==null)showPanel('modules');
+ }
  function hideGhost(){if(ghost)ghost.visible=false;}
  function setMode(next){
   if(next==='move'&&!current())return;
   if(next==='place'&&modules.length>=MAX_MODULES){setStatus('Maks '+MAX_MODULES+' testmoduler.',true);return;}
   if(measuring&&next!=='select')setMeasuring(false);
-  mode=next;lastHover=null;hideGhost();
+  mode=next;lastHover=null;hideGhost();clearBracePreview();
   stage.classList.toggle('placing',next!=='select');
   $('selectMode').setAttribute('aria-pressed',String(next==='select'));
   $('placeMode').setAttribute('aria-pressed',String(next==='place'));
@@ -647,6 +817,7 @@ try{
   event.preventDefault();const m=current();if(!m)return;
   const patch={...m};
   for(const [field,key] of Object.entries({editX:'x',editZ:'z',editY:'y',editL:'l',editW:'w',editH:'h'}))patch[key]=$(field).valueAsNumber;
+  if(isFitted(m)){patch.l=m.l;patch.w=m.w;patch.h=m.h;}
   patch.angle=Number($('editAngle').value);
   if(commitEdit(patch))hideGhost();
  });
@@ -662,6 +833,12 @@ try{
  for(const id of ['showAnchors','sourceAnchor'])$(id).addEventListener('change',refreshAnchorMarkers);
  $('doConnect').addEventListener('click',connectModules);
  updatePreset();
+ $('bracePanel').addEventListener('toggle',()=>{refreshBraceOptions();refreshAnchorMarkers();if(!$('bracePanel').open)clearBracePreview();});
+ for(const id of ['bracePost','braceBeam'])$(id).addEventListener('change',()=>{refreshBraceOptions();refreshAnchorMarkers();resetBraceReport();});
+ for(const id of ['bracePostPoint','braceBeamPoint','braceThickness','braceWidth'])$(id).addEventListener('change',()=>{refreshAnchorMarkers();resetBraceReport();});
+ $('checkBrace').addEventListener('click',()=>calculateBrace(true,current()&&isBrace(current())?current().id:null));
+ $('addBrace').addEventListener('click',()=>calculateBrace(false));
+ $('replaceBrace').addEventListener('click',()=>{const m=current();if(m&&isBrace(m))calculateBrace(false,m.id);});
  window.addEventListener('keydown',e=>{
   if(e.target instanceof HTMLElement&&['INPUT','SELECT','TEXTAREA','BUTTON'].includes(e.target.tagName))return;
   if(e.key==='Escape'){if(measuring)setMeasuring(false);setMode('select');}
