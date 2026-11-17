@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#101c20">
-<title>AFTERFALL | Construction Editor CE 0.4.1</title>
+<title>AFTERFALL | Construction Editor CE 0.5</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:#101c20;color:#e9f0ed;font:14px system-ui,sans-serif}
 body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
@@ -75,13 +75,18 @@ button.wide{width:100%;margin-top:7px}
 #bracePanel .fields label{font-size:11px}
 #bracePanel select{font-size:12px}
 #editFields input[readonly]{opacity:.65}
+
+.paramBox{border:1px solid #486269;border-radius:7px;padding:9px;margin:9px 0;background:#192b31}
+.paramBox summary{cursor:pointer;font-weight:700;font-size:12px;color:#cfe3dc}
+.paramBox .fields{margin-top:5px}.paramBox label{font-size:11px}.paramBox input{padding:7px 5px}
+.paramBox p{font-size:11px}#insertPanel{border-top:1px solid #486269;margin-top:12px;padding-top:3px}
 </style>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
 </script>
 </head>
 <body>
-<header><span class="brand">AFTERFALL</span><span class="version">CE 0.4.1</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
+<header><span class="brand">AFTERFALL</span><span class="version">CE 0.5</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
 <main>
 <aside>
 <div class="panelTabs" aria-label="Verktøypaneler"><button id="tabModules" type="button" aria-pressed="true">Moduler</button><button id="tabSite" type="button" aria-pressed="false">Byggeflate / mål</button></div>
@@ -89,8 +94,9 @@ button.wide{width:100%;margin-top:7px}
 <h1>Modulbibliotek</h1>
 <p>Standardmoduler med geometriske festepunkter. Bæreevne og materialbehov beregnes i senere versjoner.</p>
 <label for="moduleType">Komponent</label>
-<select id="moduleType"><optgroup label="Fundamentering"><option value="stoneFoot">Punktfundament – stein</option><option value="concreteFoot">Punktfundament – betong</option><option value="stripFoot">Stripefundament – betong</option><option value="foundationBeam">Fundamentbjelke – tre</option></optgroup><optgroup label="Bærende trevirke"><option value="timberPost">Trestolpe</option><option value="timberBeam">Trebjelke</option><option value="brace">Skråavstiver – fast geometri</option></optgroup><optgroup label="Testmoduler fra CE 0.3"><option value="block">Testblokk</option><option value="post">Stolpe (test)</option><option value="beam">Bjelke (test)</option><option value="panel">Plate (test)</option></optgroup></select>
+<select id="moduleType"><optgroup label="Fundamentering"><option value="stoneFoot">Punktfundament – stein</option><option value="concreteFoot">Punktfundament – betong</option><option value="stripFoot">Stripefundament – betong</option><option value="foundationBeam">Fundamentbjelke – tre</option></optgroup><optgroup label="Bærende trevirke"><option value="timberPost">Trestolpe</option><option value="timberBeam">Trebjelke</option><option value="brace">Skråavstiver – fast geometri</option></optgroup><optgroup label="Gulv"><option value="floorFrame">Gulvbjelkelag</option><option value="floorDeck">Gulvmodul</option></optgroup><optgroup label="Vegger og åpninger"><option value="wallFrame">Veggramme</option><option value="cladding">Veggkledning</option><option value="solidWall">Hel vegg</option><option value="doorWall">Vegg med døråpning</option><option value="windowWall">Vegg med vindusåpning</option><option value="doorLeaf">Dør</option><option value="windowUnit">Vindu</option></optgroup><optgroup label="Tak"><option value="rafter">Taksperre</option><option value="flatRoof">Flatt tak</option><option value="shedRoof">Pulttak</option><option value="gableRoof">Saltak</option></optgroup><optgroup label="Testmoduler fra CE 0.3"><option value="block">Testblokk</option><option value="post">Stolpe (test)</option><option value="beam">Bjelke (test)</option><option value="panel">Plate (test)</option></optgroup></select>
 <p id="presetInfo"></p>
+<details id="newParamBox" class="paramBox" hidden><summary>Dimensjoner for ny bygningsmodul</summary><div id="newParamFields"></div><p id="newParamHint">Mål i meter, takvinkel i grader.</p></details>
 <div class="fields">
 <div><label for="placeY">Underkant Y (m)</label><input id="placeY" type="number" min="0" max="100" step="0.01" value="0"></div>
 <div><label for="placeAngle">Rotasjon</label><select id="placeAngle"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></div>
@@ -134,12 +140,13 @@ button.wide{width:100%;margin-top:7px}
 </div>
 <label for="editAngle">Rotasjon</label>
 <select id="editAngle"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select>
-<button class="primary" type="submit">Bruk endringer</button>
+<details id="editParamBox" class="paramBox" hidden><summary>Bygningsparametere</summary><div id="editParamFields"></div><p>Takets høyde beregnes automatisk. Bruk endringer for å oppdatere geometrien.</p></details><button class="primary" type="submit">Bruk endringer</button>
 <div class="buttons" style="margin-top:6px"><button id="moveModule" type="button">Flytt</button><button id="rotateModule" type="button">Roter 90°</button></div>
 <button id="deleteModule" class="wide" type="button">Slett valgt modul</button>
 </fieldset>
 </form>
 <p id="connectionsInfo">Ingen modul valgt.</p>
+<section id="insertPanel"><h2>Dør og vindu i åpning</h2><p>Marker en vegg med åpning. Generer et separat element som passer i åpningen.</p><button id="insertOpening" class="wide" type="button" disabled>Sett inn element</button><p id="insertReport" aria-live="polite"></p></section>
 <section id="connectorPanel">
 <h2>Presise tilkoblingspunkter</h2>
 <label class="check"><input id="showAnchors" type="checkbox" checked>Vis festepunkter på valgt modul og mål</label>
@@ -152,7 +159,7 @@ button.wide{width:100%;margin-top:7px}
 <button id="doConnect" class="primary" type="button" disabled>Koble moduler</button>
 <p id="connectorResult" aria-live="polite">Velg to festepunkter. Kilden flyttes i X, Y og Z. Punktene må vende mot hverandre.</p>
 </section>
-<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.4.1. Tilpassede avstivere må beregnes på nytt hvis festemodulene flyttes.</p>
+<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.5. Tilpassede avstivere må beregnes på nytt hvis festemodulene flyttes.</p>
 </section>
 <section id="sitePanel" hidden>
 <h1>Byggeflate</h1>
@@ -190,7 +197,7 @@ button.wide{width:100%;margin-top:7px}
 </div>
 </section>
 </main>
-<footer>CE 0.4.1 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
+<footer>CE 0.5 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
 <script type="module">
 const $=id=>document.getElementById(id);
 const status=$('status'),stage=$('stage'),form=$('dimensions'),lengthInput=$('length'),widthInput=$('width');
@@ -207,6 +214,19 @@ const catalog={
  timberBeam:{name:'Trebjelke',l:3,w:0.098,h:0.198,color:0xc5a578,material:'Tre',role:'beam'},
  brace:{name:'Skråavstiver (fast)',l:1.2,w:0.098,h:1.2,color:0xb88d5e,material:'Tre',role:'brace'},
  fittedBrace:{name:'Tilpasset skråavstiver',l:1,w:0.098,h:1,color:0xb88d5e,material:'Tre',role:'brace'},
+ floorFrame:{name:'Gulvbjelkelag',l:3,w:3,h:.198,color:0xaf8961,material:'Tre',role:'floor',params:{member:.098,spacing:.6}},
+ floorDeck:{name:'Gulvmodul',l:1,w:1,h:.035,color:0xb8a181,material:'Tre',role:'floor',params:{}},
+ wallFrame:{name:'Veggramme',l:3,w:.148,h:2.4,color:0xb28d64,material:'Tre',role:'wall',params:{member:.048,spacing:.6}},
+ cladding:{name:'Veggkledning',l:1,w:.048,h:2.4,color:0x9a7957,material:'Tre',role:'wall',params:{}},
+ solidWall:{name:'Hel vegg',l:3,w:.148,h:2.4,color:0xa88765,material:'Tre',role:'wall',params:{}},
+ doorWall:{name:'Vegg med døråpning',l:3,w:.148,h:2.4,color:0xa88765,material:'Tre',role:'wall',params:{openingW:.9,openingH:2.1,offset:0}},
+ windowWall:{name:'Vegg med vindusåpning',l:3,w:.148,h:2.4,color:0xa88765,material:'Tre',role:'wall',params:{openingW:1.2,openingH:1,sill:.9,offset:0}},
+ doorLeaf:{name:'Dør',l:.89,w:.045,h:2.09,color:0x76513b,material:'Tre',role:'door',params:{}},
+ windowUnit:{name:'Vindu',l:1.19,w:.075,h:.99,color:0xffffff,material:'Tre/glass',role:'window',params:{rim:.05}},
+ rafter:{name:'Taksperre',l:1.5,w:.098,h:1,color:0xc5a578,material:'Tre',role:'roof',params:{pitch:30,thickness:.198}},
+ flatRoof:{name:'Flatt tak',l:3,w:3,h:.12,color:0x66767a,material:'Tre/taktekking',role:'roof',params:{thickness:.12}},
+ shedRoof:{name:'Pulttak',l:3,w:3,h:1,color:0x66767a,material:'Tre/taktekking',role:'roof',params:{pitch:20,thickness:.12}},
+ gableRoof:{name:'Saltak',l:3,w:3,h:1,color:0x66767a,material:'Tre/taktekking',role:'roof',params:{pitch:30,thickness:.12}},
  block:{name:'Testblokk',l:1,w:1,h:1,color:0x8da6ac},
  post:{name:'Stolpe',l:0.2,w:0.2,h:2.5,color:0xaf8961},
  beam:{name:'Bjelke',l:3,w:0.2,h:0.25,color:0xc7a47a},
@@ -232,20 +252,102 @@ function profileOf(m){
  return isBrace(m)?[[-m.l/2,0],[m.l/2,m.h-t],[m.l/2,m.h],[-m.l/2,t]]:
  [[-m.l/2,0],[m.l/2,0],[m.l/2,m.h],[-m.l/2,m.h]];
 }
-function solid(m){
- const polygon=profileOf(m);
+function isBuilding(m){return !!catalog[m.type]?.params;}
+function isRoof(m){return catalog[m.type]?.role==='roof';}
+function isOpening(m){return m.type==='doorWall'||m.type==='windowWall';}
+function roofRise(m){return (m.type==='gableRoof'?m.l/2:m.l)*Math.tan((m.type==='flatRoof'?0:m.params.pitch)*Math.PI/180);}
+function roofThickness(m){return m.params.thickness/Math.cos((m.type==='flatRoof'?0:m.params.pitch)*Math.PI/180);}
+function normalizeBuilding(m){
+ if(!isBuilding(m))return m;
+ const n={...m,params:{...catalog[m.type].params,...m.params}};
+ if(isRoof(n))n.h=roofRise(n)+roofThickness(n);return n;
+}
+function openingOf(m){
+ const p=m.params,base=m.type==='doorWall'?0:p.sill;
+ return {x0:p.offset-p.openingW/2,x1:p.offset+p.openingW/2,y0:base,y1:base+p.openingH};
+}
+function buildingError(m){
+ if(!isBuilding(m))return '';
+ const p=m.params||{};
+ for(const k of Object.keys(catalog[m.type].params))if(!Number.isFinite(p[k]))return 'Ugyldig bygningsparameter: '+k;
+ if(isRoof(m)){
+  if(p.thickness<.05-EPS||p.thickness>.5+EPS)return 'Taktykkelse må være 0,05–0,50 m.';
+  if(m.type!=='flatRoof'&&(p.pitch<5||p.pitch>60))return 'Takvinkel må være 5–60°.';
+  if(Math.abs(m.h-roofRise(m)-roofThickness(m))>EPS)return 'Takhøyde må beregnes fra parametere.';
+ }
+ if(isOpening(m)){
+  const o=openingOf(m);
+  if(p.openingW<.2||p.openingH<.2||o.x0<-m.l/2+.05-EPS||o.x1>m.l/2-.05+EPS||o.y0<0||o.y1>m.h-.05+EPS||(m.type==='windowWall'&&o.y0<.05))return 'Åpningen må få plass med minst 50 mm vegg rundt (unntatt dørens underkant).';
+ }
+ if(m.type==='floorFrame'||m.type==='wallFrame'){
+  const span=m.type==='floorFrame'?m.w:m.l,other=m.type==='floorFrame'?m.l:m.h;
+  if(p.member<(m.type==='floorFrame'?.05:.025)-EPS||p.member>.3||p.spacing<.25||p.spacing>2||span<2*p.member+.05||other<2*p.member+.05||p.spacing<p.member+.025||span>24||(span-p.member)/Math.ceil((span-p.member)/p.spacing)<p.member-EPS)return 'Kontroller rammebredde, avstand og rammedimensjoner (maks 24 m på fordelingsaksen).';
+ }
+ if(m.type==='windowUnit'&&(p.rim<.02||p.rim>.3||2*p.rim>=Math.min(m.l,m.h)-EPS))return 'Vinduskarmen må være mindre enn vindusåpningen.';
+ return '';
+}
+function rectPiece(x0,x1,y0,y1,z0,z1,kind='body'){return {polygon:[[x0,y0],[x1,y0],[x1,y1],[x0,y1]],z0,z1,kind};}
+function piecesOf(m){
+ const x=m.l/2,z=m.w/2,h=m.h,p=m.params||{},pieces=[];
+ const box=(a,b,c,d,e=-z,f=z,kind='body')=>{if(b-a>EPS&&d-c>EPS&&f-e>EPS)pieces.push(rectPiece(a,b,c,d,e,f,kind));};
+ if(isOpening(m)){
+  const o=openingOf(m);box(-x,o.x0,0,h);box(o.x1,x,0,h);box(o.x0,o.x1,0,o.y0);box(o.x0,o.x1,o.y1,h);return pieces;
+ }
+ if(m.type==='wallFrame'){
+  const t=p.member;box(-x,x,0,t);box(-x,x,h-t,h);box(-x,-x+t,t,h-t);box(x-t,x,t,h-t);
+  const count=Math.ceil((m.l-t)/p.spacing);
+  for(let i=1;i<count;i++){const mid=-x+t/2+(m.l-t)*i/count;box(mid-t/2,mid+t/2,t,h-t);}
+  return pieces;
+ }
+ if(m.type==='floorFrame'){
+  const t=p.member;box(-x,-x+t,0,h);box(x-t,x,0,h);box(-x+t,x-t,0,h,-z,-z+t);box(-x+t,x-t,0,h,z-t,z);
+  const count=Math.ceil((m.w-t)/p.spacing);
+  for(let i=1;i<count;i++){const mid=-z+t/2+(m.w-t)*i/count;box(-x+t,x-t,0,h,mid-t/2,mid+t/2);}
+  return pieces;
+ }
+ if(m.type==='windowUnit'){
+  const t=p.rim;box(-x,-x+t,0,h);box(x-t,x,0,h);box(-x+t,x-t,0,t);box(-x+t,x-t,h-t,h);
+  box(-x+t,x-t,t,h-t,-Math.min(z,.006),Math.min(z,.006),'glass');return pieces;
+ }
+ if(isRoof(m)&&m.type!=='flatRoof'){
+  const rise=roofRise(m),t=roofThickness(m);
+  if(m.type==='gableRoof')pieces.push({polygon:[[-x,0],[0,rise],[0,rise+t],[-x,t]],z0:-z,z1:z,kind:'body'},{polygon:[[0,rise],[x,0],[x,t],[0,rise+t]],z0:-z,z1:z,kind:'body'});
+  else pieces.push({polygon:[[-x,0],[x,rise],[x,rise+t],[-x,t]],z0:-z,z1:z,kind:'body'});
+  return pieces;
+ }
+ return [{polygon:profileOf(m),z0:-z,z1:z,kind:'body'}];
+}
+function usesPieces(m){return isBrace(m)||['floorFrame','wallFrame','doorWall','windowWall','windowUnit','rafter','shedRoof','gableRoof'].includes(m.type);}
+function pointOnPiece(p,q){
+ if(q[2]<p.z0-EPS||q[2]>p.z1+EPS)return false;
+ const poly=p.polygon;let positive=false,negative=false;
+ for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length],v=(b[0]-a[0])*(q[1]-a[1])-(b[1]-a[1])*(q[0]-a[0]);if(v>EPS)positive=true;if(v<-EPS)negative=true;if(positive&&negative)return false;}
+ return true;
+}
+function openingInsert(wall,id){
+ if(!isOpening(wall))return {error:'Velg en vegg med dør- eller vindusåpning.'};
+ const o=openingOf(wall),gap=.005,type=wall.type==='doorWall'?'doorLeaf':'windowUnit',d=catalog[type],l=o.x1-o.x0-2*gap,h=o.y1-o.y0-2*gap;
+ const [x,y,z]=pointToWorld(wall,[(o.x0+o.x1)/2,o.y0+gap,0]);
+ return {module:normalizeBuilding({id,type,x,y,z,l,w:Math.min(wall.w,d.w),h,angle:wall.angle,params:type==='windowUnit'?{rim:Math.min(.05,l/4,h/4)}:{}})};
+}
+function solid(m,piece=null){
+ const part=piece||{polygon:profileOf(m),z0:-m.w/2,z1:m.w/2};
+ const polygon=part.polygon;
  const localEdges=polygon.map(([x,y],i)=>[polygon[(i+1)%polygon.length][0]-x,polygon[(i+1)%polygon.length][1]-y,0]);
  const localNormals=localEdges.map(v=>[-v[1],v[0],0]);
  localEdges.push([0,0,1]);localNormals.push([0,0,1]);
- return {vertices:polygon.flatMap(([x,y])=>[-m.w/2,m.w/2].map(z=>pointToWorld(m,[x,y,z]))),
+ return {vertices:polygon.flatMap(([x,y])=>[part.z0,part.z1].map(z=>pointToWorld(m,[x,y,z]))),
  edges:localEdges.map(v=>rotateVector(v,m.angle)),normals:localNormals.map(v=>rotateVector(v,m.angle))};
 }
 function solidOverlap(m,n){
  const a=footprint(m),b=footprint(n);
  if(Math.abs(m.x-n.x)>=a.x+b.x-EPS||Math.abs(m.z-n.z)>=a.z+b.z-EPS||m.y>=n.y+n.h-EPS||m.y+m.h<=n.y+EPS)return false;
- if(!isBrace(m)&&!isBrace(n))return true;
- // Separating-axis test for the convex rectangular and diagonal prisms.
- const A=solid(m),B=solid(n),axes=[...A.normals,...B.normals];
+ if(!usesPieces(m)&&!usesPieces(n))return true;
+ const A=piecesOf(m).map(p=>solid(m,p)),B=piecesOf(n).map(p=>solid(n,p));
+ return A.some(a=>B.some(b=>convexOverlap(a,b)));
+}
+function convexOverlap(A,B){
+ const axes=[...A.normals,...B.normals];
  for(const a of A.edges)for(const b of B.edges)axes.push(cross(a,b));
  for(const axis of axes){
   const mag=Math.hypot(...axis);if(mag<EPS)continue;
@@ -257,6 +359,12 @@ function solidOverlap(m,n){
 function anchors(m){
  const points=[];
  const add=(id,label,p,n)=>points.push({id,label,p:pointToWorld(m,p),n:rotateVector(n,m.angle)});
+ if(isRoof(m)&&m.type!=='flatRoof'){
+  const l=m.l/2,t=roofThickness(m),rise=roofRise(m),gable=m.type==='gableRoof';
+  add('eaveLow','Nedre takkant – referanse',[-l,0,0],[0,-1,0]);
+  add('eaveHigh',gable?'Motsatt takkant – referanse':'Øvre takkant – referanse',[l,gable?0:rise,0],[0,-1,0]);
+  add('ridge','Øvre takreferanse',[gable?0:l,rise+t,0],[0,1,0]);return points;
+ }
  if(isFitted(m)){
   add('low','Nedre endekutt',m.low,[-1,0,0]);
   add('high','Øvre endekutt',m.high,[0,1,0]);
@@ -275,6 +383,17 @@ function anchors(m){
  add('back','Side −Z',[0,m.h/2,-m.w/2],[0,0,-1]);
  add('front','Side +Z',[0,m.h/2,m.w/2],[0,0,1]);
  const role=catalog[m.type]?.role;
+ if(role==='floor'||role==='wall'||m.type==='flatRoof'){
+  for(const x of [-m.l/2,m.l/2])for(const z of [-m.w/2,m.w/2]){
+   const suffix=(x<0?'−X':'+X')+(z<0?'−Z':'+Z');add('base'+suffix,'Underkant '+suffix,[x,0,z],[0,-1,0]);add('top'+suffix,'Overkant '+suffix,[x,m.h,z],[0,1,0]);
+  }
+ }
+ if(isOpening(m)){
+  const o=openingOf(m),mid=(o.y0+o.y1)/2;
+  add('jambLeft','Åpning – venstre karm',[o.x0,mid,0],[1,0,0]);add('jambRight','Åpning – høyre karm',[o.x1,mid,0],[-1,0,0]);
+  if(o.y0>EPS)add('sill','Åpning – underkant',[(o.x0+o.x1)/2,o.y0,0],[0,1,0]);
+  add('lintel','Åpning – overkant',[(o.x0+o.x1)/2,o.y1,0],[0,-1,0]);
+ }
  if(role==='beam'||m.type==='beam'||m.type==='stripFoot'){
   for(const fraction of [-.25,.25]){
    const id=fraction<0?'quarter−X':'quarter+X';
@@ -293,6 +412,13 @@ function anchors(m){
     add(id+suffix,id+' – '+suffix,[x,y,z],n);
    }
   }
+ }
+ if(usesPieces(m)&&!isBrace(m)){
+  const pieces=piecesOf(m);
+  return points.filter(a=>{
+   const v=rotateVector([a.p[0]-m.x,a.p[1]-m.y,a.p[2]-m.z],(360-m.angle)%360),n=rotateVector(a.n,(360-m.angle)%360);
+   return pieces.some(p=>pointOnPiece(p,v))&&!pieces.some(p=>pointOnPiece(p,v.map((q,i)=>q+n[i]*.0001)));
+  });
  }
  return points;
 }
@@ -355,11 +481,13 @@ function validModule(m,L,W,others=[],ignore=null){
  if(!catalog[m.type])return 'Ukjent modultype.';
  if(![m.x,m.y,m.z,m.l,m.w,m.h,m.angle].every(Number.isFinite))return 'Alle mål må være gyldige tall.';
  if(![0,90,180,270].includes(m.angle))return 'Rotasjon må være 0°, 90°, 180° eller 270°.';
- if([m.l,m.w,m.h].some(v=>v<0.05-EPS||v>100+EPS)||m.y<-EPS||m.y+m.h>100+EPS)return 'Dimensjoner: 0,05–100 m. Total høyde: maks 100 m.';
+ const minDim=isBuilding(m)?.02:.05;
+ if([m.l,m.w,m.h].some(v=>v<minDim-EPS||v>100+EPS)||m.y<-EPS||m.y+m.h>100+EPS)return 'Ugyldige dimensjoner (byggemoduler minst 0,02 m, øvrige minst 0,05 m). Total høyde maks 100 m.';
  if(isFitted(m)&&(!m.profile||m.profile.length!==4||!m.fit||!m.low||!m.high||
  !m.profile.flat().every(Number.isFinite)||Math.abs(Math.max(...m.profile.map(p=>p[0]))-m.l/2)>EPS||
  Math.abs(Math.min(...m.profile.map(p=>p[0]))+m.l/2)>EPS||Math.abs(Math.max(...m.profile.map(p=>p[1]))-m.h)>EPS||
  Math.abs(m.w-m.fit.width)>EPS))return 'Tilpasset avstiver må dimensjoneres med to festepunkter.';
+ const paramError=buildingError(m);if(paramError)return paramError;
  if(catalog[m.type].ground&&Math.abs(m.y)>EPS)return 'Dette fundamentet må stå på byggeplaten (Y = 0).';
  const a=footprint(m);
  if(m.x-a.x<-EPS||m.x+a.x>L+EPS||m.z-a.z<-EPS||m.z+a.z>W+EPS)return 'Modulen går utenfor byggeflaten.';
@@ -394,6 +522,7 @@ function setStatus(message,error=false){status.className=error?'error':'';status
 try{
  const THREE=await import('three');
  const {OrbitControls}=await import('three/addons/controls/OrbitControls.js');
+ const {mergeGeometries}=await import('three/addons/utils/BufferGeometryUtils.js');
  const scene=new THREE.Scene();scene.background=new THREE.Color(0x101c20);
  const renderer=new THREE.WebGLRenderer({antialias:true});
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));stage.prepend(renderer.domElement);
@@ -405,6 +534,40 @@ try{
  const moduleGroup=new THREE.Group();scene.add(moduleGroup);
  const meshes=new Map();
  let anchorGroup=null;
+ const paramMeta={member:['Bord/stenderbredde (m)',.025,.3,.001],spacing:['Senteravstand, maks (m)',.25,2,.01],openingW:['Åpningsbredde (m)',.2,20,.01],openingH:['Åpningshøyde (m)',.2,20,.01],sill:['Brystningshøyde (m)',.05,20,.01],offset:['Sideforskyvning (m)',-50,50,.01],rim:['Karmbredde (m)',.02,.3,.005],pitch:['Takvinkel (°)',5,60,1],thickness:['Tykkelse (m)',.05,.5,.005]};
+ function makeFields(container,prefix,defs,values){
+  container.replaceChildren();const row=document.createElement('div');row.className='fields';container.append(row);
+  for(const [key,definition] of Object.entries(defs)){
+   const [label,min,max,step]=definition,id=prefix+key,wrap=document.createElement('div'),caption=document.createElement('label'),input=document.createElement('input');
+   caption.htmlFor=id;caption.textContent=label;input.id=id;input.type='number';input.min=String(min);input.max=String(max);input.step='any';input.value=String(values[key]);input.required=true;
+   wrap.append(caption,input);row.append(wrap);
+  }
+ }
+ const sizeDefs={l:['Lengde X (m)',.02,100,.001],w:['Bredde Z (m)',.02,100,.001],h:['Høyde Y (m)',.02,100,.001]};
+ function defsFor(m,includeSize){
+  const defs={};if(includeSize){defs.l=sizeDefs.l;defs.w=sizeDefs.w;if(!isRoof(m))defs.h=sizeDefs.h;}
+  for(const key of Object.keys(catalog[m.type].params||{}))defs[key]=paramMeta[key];return defs;
+ }
+ function readValues(container,prefix){return Object.fromEntries([...container.querySelectorAll('input')].map(i=>[i.id.slice(prefix.length),i.valueAsNumber]));}
+ function refreshNewFields(){
+  const d=catalog[$('moduleType').value],m=normalizeBuilding({type:$('moduleType').value,l:d.l,w:d.w,h:d.h});
+  $('newParamBox').hidden=!isBuilding(m);makeFields($('newParamFields'),'newParam_',isBuilding(m)?defsFor(m,true):{},{...m,...m.params});
+  if(isBuilding(m))$('newParamBox').open=true;
+ }
+ function refreshEditFields(m){
+  const defs=m&&isBuilding(m)?defsFor(m,false):{};$('editParamBox').hidden=!Object.keys(defs).length;
+  makeFields($('editParamFields'),'editParam_',defs,m?.params||{});if(Object.keys(defs).length)$('editParamBox').open=true;
+  $('insertOpening').disabled=!m||!isOpening(m)||modules.length>=MAX_MODULES;
+  $('insertOpening').textContent=m?.type==='doorWall'?'Sett inn dør':m?.type==='windowWall'?'Sett inn vindu':'Sett inn element';
+  $('insertReport').textContent=isOpening(m||{})?'Åpningen har 5 mm klaring på hver kant.':'';
+ }
+ function insertElement(){
+  const wall=current();if(!wall||modules.length>=MAX_MODULES)return;
+  const r=openingInsert(wall,nextId),err=r.error||validModule(r.module,L,W,modules);
+  if(err){$('insertReport').textContent=err;setStatus(err,true);return;}
+  const m=r.module;nextId++;modules.push(m);addMesh(m);if(measuring)setMeasuring(false);setMode('select');selectModule(m.id);
+  setStatus(catalog[m.type].name+' #'+m.id+' plassert i åpning #'+wall.id+'.');
+ }
  function braceTargets(){
   return [modules.find(m=>String(m.id)===$('bracePost').value),modules.find(m=>String(m.id)===$('braceBeam').value)];
  }
@@ -475,17 +638,24 @@ try{
  }
  function newModule(){
   const type=$('moduleType').value,d=catalog[type];
-  return {id:nextId,type,x:0,z:0,l:d.l,w:d.w,h:d.h,y:$('placeY').valueAsNumber,angle:Number($('placeAngle').value)};
+  const m={id:nextId,type,x:0,z:0,l:d.l,w:d.w,h:d.h,y:$('placeY').valueAsNumber,angle:Number($('placeAngle').value)};
+  if(!isBuilding(m))return m;
+  const v=readValues($('newParamFields'),'newParam_');
+  for(const key of ['l','w','h'])if(key in v){m[key]=v[key];delete v[key];}return normalizeBuilding({...m,params:v});
  }
  function sourceModule(){
   const m=$('connectSource').value==='selected'?current():newModule();
-  return m&&Number.isFinite(m.y)?m:null;
+  return m&&[m.x,m.y,m.z,m.l,m.w,m.h].every(Number.isFinite)&&[m.l,m.w,m.h].every(v=>v>=(isBuilding(m)?.02:.05)-EPS&&v<=100+EPS)&&!buildingError(m)?m:null;
  }
  function updatePreset(){
-  const d=catalog[$('moduleType').value];
-  $('presetInfo').textContent=[fmt.format(d.l),fmt.format(d.w),fmt.format(d.h)].join(' × ')+' m · '+(d.material||'Testmodul')+(d.ground?' · Y = 0':'');
+  const d=catalog[$('moduleType').value];refreshNewFields();updatePresetInfo();
   if(d.ground)$('placeY').value='0';
   $('placeY').disabled=!!d.ground;
+ }
+ function updatePresetInfo(){
+  const m=newModule(),d=catalog[m.type];
+  $('presetInfo').textContent=[fmt.format(m.l),fmt.format(m.w),fmt.format(m.h)].join(' × ')+' m · '+(d.material||'Testmodul')+(d.ground?' · Y = 0':'')+(isRoof(m)?' · beregnet høyde':'');
+  $('newParamHint').textContent=buildingError(m)||'Mål i meter, takvinkel i grader. Endringene gjelder neste modul.';
  }
  function fillOptions(select,items,previous){
   select.replaceChildren(...items.map(item=>new Option(item.label,item.id)));
@@ -530,13 +700,19 @@ try{
   }
  }
  function geometryFor(m){
-  if(!isBrace(m))return new THREE.BoxGeometry(1,1,1);
-  const shape=new THREE.Shape(),polygon=profileOf(m).map(([x,y])=>[x/m.l,y/m.h-.5]);
-  shape.moveTo(...polygon[0]);for(const p of polygon.slice(1))shape.lineTo(...p);shape.closePath();
-  const geo=new THREE.ExtrudeGeometry(shape,{depth:1,bevelEnabled:false});geo.translate(0,0,-.5);
-  return geo;
+  if(!usesPieces(m)){
+   const geo=new THREE.BoxGeometry(1,1,1);geo.setAttribute('color',new THREE.Float32BufferAttribute(new Float32Array(geo.attributes.position.count*3).fill(1),3));return geo;
+  }
+  const geos=piecesOf(m).map(part=>{
+   const shape=new THREE.Shape(),polygon=part.polygon.map(([x,y])=>[x/m.l,y/m.h-.5]);
+   shape.moveTo(...polygon[0]);for(const p of polygon.slice(1))shape.lineTo(...p);shape.closePath();
+   const geo=new THREE.ExtrudeGeometry(shape,{depth:(part.z1-part.z0)/m.w,bevelEnabled:false});geo.translate(0,0,part.z0/m.w);
+   const colors=[],color=part.kind==='glass'?[.60,.85,.94]:m.type==='windowUnit'?[.55,.45,.34]:[1,1,1];
+   for(let i=0;i<geo.attributes.position.count;i++)colors.push(...color);geo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));return geo;
+  });
+  if(geos.length===1)return geos[0];const result=mergeGeometries(geos,false);geos.forEach(g=>g.dispose());return result;
  }
- function geometryKey(m){return isFitted(m)?'fitted:'+JSON.stringify(m.profile):isBrace(m)?'brace:'+braceEndHeight(m.h)/m.h:'box';}
+ function geometryKey(m){return isFitted(m)?'fitted:'+JSON.stringify(m.profile):usesPieces(m)?JSON.stringify([m.type,m.l,m.w,m.h,m.params]):'box';}
  function connectModules(){
   const source=sourceModule(),target=modules.find(n=>String(n.id)===$('connectTarget').value);
   const report=$('connectorResult');
@@ -562,7 +738,7 @@ try{
  function current(){return modules.find(m=>m.id===selectedId)||null;}
  function modelMesh(m,preview=false){
   const geo=geometryFor(m);
-  const mat=new THREE.MeshStandardMaterial({color:preview?0x8fe0b4:catalog[m.type].color,roughness:0.76,transparent:preview,opacity:preview?0.48:1,depthWrite:!preview});
+  const mat=new THREE.MeshStandardMaterial({color:preview?0x8fe0b4:catalog[m.type].color,roughness:0.76,vertexColors:!preview,transparent:preview,opacity:preview?0.48:1,depthWrite:!preview});
   const mesh=new THREE.Mesh(geo,mat);
   const edge=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:preview?0xc5f3d9:0x24383b}));
   mesh.add(edge);mesh.userData.moduleId=m.id;mesh.userData.edge=edge;mesh.userData.geometryKey=geometryKey(m);
@@ -592,7 +768,10 @@ try{
   list.value=m?String(m.id):'';
   $('moduleCount').textContent=modules.length+' / '+MAX_MODULES;
   $('editFields').disabled=!m;$('moveMode').disabled=!m;
-  for(const id of ['editL','editW','editH'])$(id).readOnly=!!m&&isFitted(m);
+  for(const id of ['editL','editW','editH']){
+   $(id).readOnly=!!m&&(isFitted(m)||(id==='editH'&&isRoof(m)));$(id).min=m&&isBuilding(m)?'0.02':'0.05';
+  }
+  refreshEditFields(m);
   $('moduleInfo').textContent=m?catalog[m.type].name+' #'+m.id+' · '+fmt.format(m.l)+' × '+fmt.format(m.w)+' × '+fmt.format(m.h)+' m':'Velg en modul i 3D-visningen eller listen.';
   if(m){for(const [field,key] of Object.entries({editX:'x',editZ:'z',editY:'y',editL:'l',editW:'w',editH:'h',editAngle:'angle'}))$(field).value=String(m[key]);}
   else for(const id of ['editX','editZ','editY','editL','editW','editH'])$(id).value='';
@@ -637,6 +816,7 @@ try{
  }
  function preview(p){
   const m=p&&getCandidate(p);if(!m){hideGhost();return;}
+  if(![m.x,m.y,m.z,m.l,m.w,m.h,m.angle].every(Number.isFinite)||buildingError(m)||[m.l,m.w,m.h].some(v=>v<=0||v>100)){hideGhost();return;}
   const err=validModule(m,L,W,modules,mode==='move'?m.id:null);
   if(!ghost){ghost=modelMesh(m,true);scene.add(ghost);}
   if(![m.x,m.y,m.z,m.l,m.w,m.h,m.angle].every(Number.isFinite)){hideGhost();return;}
@@ -818,8 +998,9 @@ try{
   const patch={...m};
   for(const [field,key] of Object.entries({editX:'x',editZ:'z',editY:'y',editL:'l',editW:'w',editH:'h'}))patch[key]=$(field).valueAsNumber;
   if(isFitted(m)){patch.l=m.l;patch.w=m.w;patch.h=m.h;}
+  if(isBuilding(m))patch.params={...m.params,...readValues($('editParamFields'),'editParam_')};
   patch.angle=Number($('editAngle').value);
-  if(commitEdit(patch))hideGhost();
+  if(commitEdit(normalizeBuilding(patch)))hideGhost();
  });
  $('rotateModule').addEventListener('click',()=>{const m=current();if(m)commitEdit({...m,angle:(m.angle+90)%360});hideGhost();});
  function deleteSelected(){
@@ -828,6 +1009,8 @@ try{
  }
  $('deleteModule').addEventListener('click',deleteSelected);
  $('moduleType').addEventListener('change',updatePreset);
+ $('newParamFields').addEventListener('input',()=>{updatePresetInfo();if(lastHover)preview(lastHover);refreshConnectors();});
+ $('insertOpening').addEventListener('click',insertElement);
  for(const id of ['moduleType','placeY','placeAngle','snapModules','snapAnchors'])$(id).addEventListener('change',()=>{if(lastHover)preview(lastHover);refreshConnectors();});
  for(const id of ['connectSource','connectTarget','targetAnchor'])$(id).addEventListener('change',refreshConnectors);
  for(const id of ['showAnchors','sourceAnchor'])$(id).addEventListener('change',refreshAnchorMarkers);
