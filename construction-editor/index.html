@@ -152,7 +152,7 @@ button.wide{width:100%;margin-top:7px}
 <button id="doConnect" class="primary" type="button" disabled>Koble moduler</button>
 <p id="connectorResult" aria-live="polite">Velg to festepunkter. Kilden flyttes i X, Y og Z. Punktene må vende mot hverandre.</p>
 </section>
-<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.4.1.</p>
+<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.4.1. Tilpassede avstivere må beregnes på nytt hvis festemodulene flyttes.</p>
 </section>
 <section id="sitePanel" hidden>
 <h1>Byggeflate</h1>
@@ -433,7 +433,7 @@ try{
   const report=$('braceReport');report.className=result.error?'error':'';
   if(result.error){report.textContent=result.error;return;}
   const f=result.module.fit;
-  report.textContent='Geometrisk godkjent\\nSenterlinjelengde: '+fmt.format(f.length)+' m\\nHelning: '+fmt.format(f.slope)+'°\\nRåemne (min. geometrisk lengde): '+fmt.format(f.stockLength)+' m\\nEndekutt mot stolpe: '+fmt.format(f.sideCut*1000)+' mm\\nEndekutt mot bjelke: '+fmt.format(f.topCut*1000)+' mm';
+  report.textContent='Geometrisk godkjent\nSenterlinjelengde: '+fmt.format(f.length)+' m\nHelning: '+fmt.format(f.slope)+'°\nRåemne (min. geometrisk lengde): '+fmt.format(f.stockLength)+' m\nEndekutt mot stolpe: '+fmt.format(f.sideCut*1000)+' mm\nEndekutt mot bjelke: '+fmt.format(f.topCut*1000)+' mm';
  }
  function clearBracePreview(){
   if(fitGhost){disposeGroup(fitGhost);fitGhost=null;}
@@ -445,7 +445,7 @@ try{
   if(measuring)setMeasuring(false);setMode('select');
   if(previewOnly){
    fitGhost=modelMesh(result.module,true);transform(fitGhost,result.module);scene.add(fitGhost);
-   setStatus('Forhåndsvisning av avstiver. Opprett eller tilpass valgt avstiver for å bekrefte.');
+   setStatus('Forhåndsvisning av avstiver. Bekreft med Opprett avstiver eller Tilpass valgt avstiver på nytt.');
    return;
   }
   const m=result.module;
@@ -597,8 +597,8 @@ try{
   if(m){for(const [field,key] of Object.entries({editX:'x',editZ:'z',editY:'y',editL:'l',editW:'w',editH:'h',editAngle:'angle'}))$(field).value=String(m[key]);}
   else for(const id of ['editX','editZ','editY','editL','editW','editH'])$(id).value='';
   const matches=m?matchingConnections(m,modules):[];
-  $('connectionsInfo').textContent=!m?'Ingen modul valgt.':'Geometriske punktforbindelser: '+matches.length+(matches.length?'\\n'+matches.map(a=>a.label).join('\\n'):'');
-  if(m&&isFitted(m))$('connectionsInfo').textContent+='\\n'+checkFitStatus(m)+'\\nSenterlinje: '+fmt.format(m.fit.length)+' m · Helning: '+fmt.format(m.fit.slope)+'°';
+  $('connectionsInfo').textContent=!m?'Ingen modul valgt.':'Geometriske punktforbindelser: '+matches.length+(matches.length?'\n'+matches.map(a=>a.label).join('\n'):'');
+  if(m&&isFitted(m))$('connectionsInfo').textContent+='\n'+checkFitStatus(m)+'\nSenterlinje: '+fmt.format(m.fit.length)+' m · Helning: '+fmt.format(m.fit.slope)+'°';
   refreshConnectors();
  }
  function selectModule(id){
