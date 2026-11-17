@@ -4,138 +4,234 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#101c20">
-<title>AFTERFALL | Construction Editor CE 0.1</title>
+<title>AFTERFALL | Construction Editor CE 0.2</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:#101c20;color:#e9f0ed;font:14px system-ui,sans-serif}
-body{display:flex;flex-direction:column;min-height:100dvh;overflow:hidden}
-header{padding:12px 18px;border-bottom:1px solid #34494e;background:#16262b;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+header{padding:12px 18px;border-bottom:1px solid #34494e;background:#16262b;display:flex;align-items:center;gap:14px;flex-wrap:wrap;flex-shrink:0}
 .brand{font-weight:750;letter-spacing:2px;color:#c3e3da}.version{font:12px ui-monospace,monospace;color:#a8c2c2;border:1px solid #4c656b;padding:5px 8px;border-radius:5px}
 header small{color:#a8babb}
-main{display:grid;grid-template-columns:260px minmax(0,1fr);flex:1;min-height:0}
-aside{padding:18px;background:#142329;border-right:1px solid #34494e;overflow:auto}
-h1{font-size:17px;margin:0 0 8px}h2{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#9ab5ba;margin:23px 0 10px}
-p{color:#abc0c3;line-height:1.5;font-size:13px}
-label{display:block;margin:12px 0 5px;color:#bed1d1}
-input,button{font:inherit;color:#edf5f1;background:#21363d;border:1px solid #506970;border-radius:6px;padding:10px;max-width:100%}
-input{width:100%;font-variant-numeric:tabular-nums}
-button{cursor:pointer}button.primary{background:#b7d9cd;color:#142923;font-weight:700;border-color:#b7d9cd;width:100%;margin-top:13px}
-button:focus-visible,input:focus-visible{outline:2px solid #d4eee5;outline-offset:2px}
-#reset{width:100%;margin-top:7px}
-#viewport{position:relative;min-height:0;overflow:hidden;background:#101c20}
-canvas{display:block;width:100%;height:100%;touch-action:none}
-#overlay{position:absolute;top:12px;left:12px;padding:10px 12px;background:#14252cdd;border:1px solid #4a676d;border-radius:7px;pointer-events:none;font:12px ui-monospace,monospace;line-height:1.55}
-#overlay b{color:#c5e5d9}#legend{position:absolute;bottom:12px;left:12px;color:#bcd0d3;background:#14252cdd;padding:7px 9px;border-radius:5px;pointer-events:none;font-size:11px}
-#status{font-size:12px;color:#b7d9cd;min-height:2.7em;overflow-wrap:anywhere}
-#status.error{color:#ffb6a2}
-footer{padding:7px 14px;color:#a1b7b9;background:#16262b;border-top:1px solid #34494e;font-size:11px}
-@media(max-width:660px){header{padding:8px 12px;gap:8px}header small{display:none}main{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}aside{padding:10px 12px;border-right:0;border-bottom:1px solid #34494e;max-height:40dvh}aside h1{font-size:15px}aside p,aside h2{display:none}form{display:grid;grid-template-columns:1fr 1fr;gap:5px 8px}label{margin:0 0 4px;font-size:11px}input{padding:7px}button.primary,#reset{margin:0;padding:8px}#status{margin:5px 0 0;min-height:0}footer{font-size:10px}}
+main{display:grid;grid-template-columns:270px minmax(0,1fr);flex:1;min-height:0}
+aside{padding:16px;background:#142329;border-right:1px solid #34494e;overflow:auto;min-height:0}
+h1{font-size:17px;margin:0 0 8px}h2{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#9ab5ba;margin:18px 0 9px}
+p{color:#abc0c3;line-height:1.45;font-size:12px;margin:8px 0}
+label{display:block;margin:9px 0 5px;color:#bed1d1}
+input,button,select{font:inherit;color:#edf5f1;background:#21363d;border:1px solid #506970;border-radius:6px;padding:9px;max-width:100%}
+input[type=number],select{width:100%;font-variant-numeric:tabular-nums}
+input[type=checkbox]{accent-color:#a8dbcd}
+button{cursor:pointer}button.primary{background:#b7d9cd;color:#142923;font-weight:700;border-color:#b7d9cd;width:100%;margin-top:10px}
+button[aria-pressed=true]{background:#b7d9cd;border-color:#b7d9cd;color:#142923;font-weight:700}button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #d4eee5;outline-offset:2px}
+.fields,.buttons{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.check{display:flex;gap:6px;align-items:center;font-size:12px}
+#viewport{position:relative;min-height:0;overflow:hidden;background:#101c20;display:flex;flex-direction:column}
+#toolbar{flex:none;display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:#192b31;border-bottom:1px solid #34494e;padding:7px 9px}
+#toolbar button{font-size:12px;padding:7px 10px}#toolbar .divider{height:21px;width:1px;background:#506970}
+#stage{position:relative;min-height:0;flex:1;overflow:hidden}canvas{display:block;width:100%;height:100%;touch-action:none}
+#stage.measuring canvas{cursor:crosshair}
+#overlay{position:absolute;top:12px;left:12px;padding:10px 12px;background:#14252cdd;border:1px solid #4a676d;border-radius:7px;pointer-events:none;font:12px ui-monospace,monospace;line-height:1.5}
+#overlay b{color:#c5e5d9}
+#legend{position:absolute;bottom:10px;left:10px;color:#bcd0d3;background:#14252cdd;padding:7px 9px;border-radius:5px;pointer-events:none;font-size:11px}
+#measureLabel{position:absolute;transform:translate(-50%,-120%);background:#eac77d;color:#172226;font:700 12px ui-monospace,monospace;border:1px solid #332d23;padding:5px 7px;border-radius:4px;pointer-events:none;white-space:nowrap}
+#measureLabel[hidden]{display:none}
+#status{font-size:12px;color:#b7d9cd;overflow-wrap:anywhere}
+#status.error{color:#ffb6a2}#measureResult{white-space:pre-line;font:12px/1.55 ui-monospace,monospace;color:#eac77d;min-height:1.5em}
+footer{flex-shrink:0;padding:6px 14px;color:#a1b7b9;background:#16262b;border-top:1px solid #34494e;font-size:11px}
+@media(max-width:660px){header{padding:7px 10px;gap:7px}header small{display:none}main{grid-template-columns:1fr;grid-template-rows:minmax(0,auto) minmax(0,1fr)}aside{padding:8px 10px;border-right:0;border-bottom:1px solid #34494e;max-height:34dvh}aside h1{font-size:14px}aside h2{margin:9px 0 5px}aside .desktopHelp{display:none}label{margin:3px 0;font-size:11px}input,select,button{padding:7px}button.primary{margin-top:6px}#toolbar{padding:5px;gap:4px}#toolbar button{padding:6px 7px;font-size:11px}#toolbar .divider{display:none}#status{margin:4px 0}#overlay{top:6px;left:6px;font-size:10px;padding:5px 7px}#legend{bottom:6px;left:6px;font-size:10px}footer{font-size:10px}}
 </style>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
 </script>
 </head>
 <body>
-<header><span class="brand">AFTERFALL</span><span class="version">CE 0.1</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
+<header><span class="brand">AFTERFALL</span><span class="version">CE 0.2</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
 <main>
 <aside>
 <h1>Byggeflate</h1>
-<p>Simulert godkjent byggeplass. I spillet vil målene komme fra den planerte byggeplassen.</p>
+<p class="desktopHelp">Simulert godkjent byggeplass. I spillet vil målene komme fra den planerte byggeplassen.</p>
 <form id="dimensions">
+<div class="fields">
 <div><label for="length">Lengde X (m)</label><input id="length" type="number" min="1" max="100" step="0.25" value="12" required></div>
 <div><label for="width">Bredde Z (m)</label><input id="width" type="number" min="1" max="100" step="0.25" value="10" required></div>
+</div>
 <button class="primary" type="submit">Oppdater plate</button>
-<button id="reset" type="button">Tilbakestill kamera</button>
 </form>
+<h2>Rutenett</h2>
+<label for="gridStep">Visning</label>
+<select id="gridStep"><option value="1">1 m</option><option value="0.25">0,25 m + hovedlinjer</option><option value="0">Skjul rutenett</option></select>
+<label class="check"><input id="snap" type="checkbox" checked>Fest målepunkt til 0,25 m</label>
+<h2>Måleverktøy</h2>
+<div class="buttons"><button id="measure" type="button" aria-pressed="false">Mål avstand</button><button id="clear" type="button" disabled>Fjern mål</button></div>
+<p id="measureResult" aria-live="polite">Ingen måling.</p>
 <p id="status" role="status" aria-live="polite">Laster 3D-miljø …</p>
-<h2>Kontroller</h2>
-<p>Mus: dra for rotasjon, rull for zoom, høyreklikk og dra for panorering.<br>Berøring: ett fingerdrag for rotasjon, to fingre for zoom og panorering.</p>
-<h2>Avgrensning</h2>
-<p>1 m rutenett. 0,25 m intervaller ved endring av platemål. Ingen materialer, terreng eller bygninger endres i spillverdenen.</p>
+<h2 class="desktopHelp">Kontroller</h2>
+<p class="desktopHelp">3D: dra for rotasjon, rull for zoom, høyreklikk og dra for panorering. Ortografisk: dra for panorering. På berøringsskjerm: knip for zoom. Måling: trykk to punkter i planvisning.</p>
 </aside>
 <section id="viewport" aria-label="3D-visning av byggeflate">
-<div id="overlay"><b id="size">12 × 10 m</b><br>Areal: <span id="area">120</span> m²<br>Plan: Y = 0 m</div>
+<div id="toolbar" role="toolbar" aria-label="Kameravisninger">
+<button data-view="orbit" aria-pressed="true">3D</button><button data-view="top" aria-pressed="false">Ovenfra</button><button data-view="front" aria-pressed="false">Foran</button><button data-view="right" aria-pressed="false">Høyre</button><span class="divider"></span>
+<button id="fit">Tilpass</button><button id="zoomIn" aria-label="Zoom inn">+</button><button id="zoomOut" aria-label="Zoom ut">−</button>
+</div>
+<div id="stage">
+<div id="overlay"><b id="size">12 × 10 m</b><br>Areal: <span id="area">120</span> m²<br>Y = 0 m · <span id="viewName">3D</span></div>
+<div id="measureLabel" hidden></div>
 <div id="legend">X = lengde · Z = bredde · Y = høyde</div>
+</div>
 </section>
 </main>
-<footer>CE 0.1 · Ingen integrasjon med threejs-v050 · Testmål 1–100 m</footer>
+<footer>CE 0.2 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
 <script type="module">
-const status=document.getElementById('status');
-const viewport=document.getElementById('viewport');
-const lengthInput=document.getElementById('length');
-const widthInput=document.getElementById('width');
-const form=document.getElementById('dimensions');
+const $=id=>document.getElementById(id);
+const status=$('status'),stage=$('stage'),form=$('dimensions'),lengthInput=$('length'),widthInput=$('width');
 const fmt=new Intl.NumberFormat('nb-NO',{maximumFractionDigits:4});
+const names={orbit:'3D',top:'Ovenfra (XZ)',front:'Foran (XY)',right:'Høyre (ZY)'};
+function validDimension(n){return Number.isFinite(n)&&n>=1&&n<=100&&Math.abs(n*4-Math.round(n*4))<1e-8;}
+function snapCoordinate(value,size,snap){const v=Math.max(0,Math.min(size,value+size/2));return (snap?Math.min(size,Math.round(v*4)/4):v)-size/2;}
+function setStatus(message,error=false){status.className=error?'error':'';status.textContent=message;}
 try{
  const THREE=await import('three');
  const {OrbitControls}=await import('three/addons/controls/OrbitControls.js');
- const scene=new THREE.Scene();
- scene.background=new THREE.Color(0x101c20);
- const camera=new THREE.PerspectiveCamera(45,1,0.05,1500);
+ const scene=new THREE.Scene();scene.background=new THREE.Color(0x101c20);
  const renderer=new THREE.WebGLRenderer({antialias:true});
- renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
- viewport.prepend(renderer.domElement);
- const controls=new OrbitControls(camera,renderer.domElement);
- controls.enableDamping=true;controls.dampingFactor=0.10;
- controls.maxPolarAngle=Math.PI/2-0.035;controls.minDistance=0.5;
+ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));stage.prepend(renderer.domElement);
  scene.add(new THREE.HemisphereLight(0xe5f5ff,0x424c4d,2.1));
- const light=new THREE.DirectionalLight(0xffffff,2);
- light.position.set(12,25,8);scene.add(light);
- let plot=null,L=12,W=10;
- function lineSegments(points,color,opacity=1){
-  const geometry=new THREE.BufferGeometry();
-  geometry.setAttribute('position',new THREE.Float32BufferAttribute(points,3));
+ const light=new THREE.DirectionalLight(0xffffff,2);light.position.set(12,25,8);scene.add(light);
+ let L=12,W=10,plot=null,grid=null,camera=null,controls=null,view='orbit',aspect=1,orthoHeight=14;
+ let measuring=false,points=[],measureGroup=null,measurementCenter=null;
+ const raycaster=new THREE.Raycaster(),plane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+ function disposeGroup(group){if(!group)return;scene.remove(group);group.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose();});}
+ function lines(positions,color,opacity=1){
+  const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
   return new THREE.LineSegments(geometry,new THREE.LineBasicMaterial({color,transparent:opacity<1,opacity}));
  }
- function resetCamera(){
-  const d=Math.max(L,W,2);
-  const aspect=Math.max(camera.aspect,0.1);
-  const vertical=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
-  const fit=Math.hypot(L,W)/2/(vertical*Math.min(1,aspect))*1.2;
-  const distance=Math.max(d*1.6,fit);
-  camera.position.set(distance*0.62,distance*0.70,distance*0.62);
-  controls.target.set(0,0,0);controls.maxDistance=Math.max(100,distance*3);
-  camera.far=Math.max(1500,distance*5);camera.updateProjectionMatrix();controls.update();
+ function updateProjection(){
+  if(!camera)return;
+  if(camera.isPerspectiveCamera)camera.aspect=aspect;
+  else{camera.left=-orthoHeight*aspect/2;camera.right=orthoHeight*aspect/2;camera.top=orthoHeight/2;camera.bottom=-orthoHeight/2;}
+  camera.updateProjectionMatrix();
  }
  function resize(){
-  const w=Math.max(viewport.clientWidth,1),h=Math.max(viewport.clientHeight,1);
-  renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
+  const w=Math.max(stage.clientWidth,1),h=Math.max(stage.clientHeight,1);
+  aspect=w/h;renderer.setSize(w,h,false);updateProjection();
+ }
+ function fitCamera(){
+  if(!camera||!controls)return;
+  const radius=Math.max(Math.hypot(L,W)/2,1);
+  controls.target.set(0,0,0);camera.zoom=1;
+  if(view==='orbit'){
+   const halfV=THREE.MathUtils.degToRad(camera.fov/2),halfH=Math.atan(Math.tan(halfV)*aspect);
+   const distance=radius/Math.sin(Math.min(halfV,halfH))*1.16;
+   camera.position.copy(new THREE.Vector3(1,0.95,1).normalize().multiplyScalar(distance));
+   controls.maxDistance=Math.max(100,distance*5);
+  }else{
+   const span=view==='top'?L:view==='front'?L:W;
+   const height=view==='top'?W:Math.max(2,span*0.6);
+   orthoHeight=Math.max(height,span/aspect)*1.22;
+   if(view==='top')camera.position.set(0,radius*3+5,0);
+   else if(view==='front')camera.position.set(0,0,radius*3+5);
+   else camera.position.set(radius*3+5,0,0);
+  }
+  updateProjection();camera.lookAt(controls.target);controls.update();
+ }
+ function setView(next){
+  if(!names[next])return;
+  if(measuring&&next!=='top')setMeasuring(false);
+  if(controls)controls.dispose();
+  view=next;
+  camera=next==='orbit'?new THREE.PerspectiveCamera(45,aspect,0.03,3000):new THREE.OrthographicCamera(-1,1,1,-1,0.03,3000);
+  if(next==='top')camera.up.set(0,0,-1);
+  controls=new OrbitControls(camera,renderer.domElement);
+  controls.enableDamping=true;controls.dampingFactor=0.1;controls.screenSpacePanning=true;
+  controls.minDistance=0.3;controls.maxPolarAngle=Math.PI/2;controls.minZoom=0.05;controls.maxZoom=100;
+  controls.enableRotate=next==='orbit';
+  if(next!=='orbit'){controls.mouseButtons.LEFT=THREE.MOUSE.PAN;controls.touches.ONE=THREE.TOUCH.PAN;}
+  document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)));
+  $('viewName').textContent=names[view];fitCamera();
+ }
+ function zoom(factor){
+  if(camera.isOrthographicCamera){camera.zoom=THREE.MathUtils.clamp(camera.zoom*factor,controls.minZoom,controls.maxZoom);camera.updateProjectionMatrix();}
+  else{const v=camera.position.clone().sub(controls.target);v.setLength(THREE.MathUtils.clamp(v.length()/factor,controls.minDistance,controls.maxDistance));camera.position.copy(controls.target).add(v);}
+  controls.update();
+ }
+ function updateGrid(){
+  disposeGroup(grid);grid=new THREE.Group();scene.add(grid);
+  const step=Number($('gridStep').value);if(!step)return;
+  const minor=[],major=[],y=0.006;
+  for(let i=1;i*step<L-1e-8;i++){const d=i*step,x=-L/2+d;const target=Math.abs(d-Math.round(d))<1e-8?major:minor;target.push(x,y,-W/2,x,y,W/2);}
+  for(let i=1;i*step<W-1e-8;i++){const d=i*step,z=-W/2+d;const target=Math.abs(d-Math.round(d))<1e-8?major:minor;target.push(-L/2,y,z,L/2,y,z);}
+  if(minor.length)grid.add(lines(minor,0x384e55,0.35));if(major.length)grid.add(lines(major,0x263b41,0.85));
  }
  function updatePlate(l,w){
-  if(plot){scene.remove(plot);plot.traverse(obj=>{
-   if(obj.geometry)obj.geometry.dispose();
-   if(obj.material)obj.material.dispose();
-  });}
-  L=l;W=w;plot=new THREE.Group();
-  const slab=new THREE.Mesh(new THREE.BoxGeometry(L,0.18,W),
-   new THREE.MeshStandardMaterial({color:0x657f80,roughness:0.86}));
+  clearMeasurement();setMeasuring(false);disposeGroup(plot);L=l;W=w;plot=new THREE.Group();
+  const slab=new THREE.Mesh(new THREE.BoxGeometry(L,0.18,W),new THREE.MeshStandardMaterial({color:0x657f80,roughness:0.86}));
   slab.position.y=-0.09;plot.add(slab);
-  const grid=[];const y=0.004;
-  for(let x=1;x<L-0.00001;x+=1)grid.push(-L/2+x,y,-W/2,-L/2+x,y,W/2);
-  for(let z=1;z<W-0.00001;z+=1)grid.push(-L/2,y,-W/2+z,L/2,y,-W/2+z);
-  plot.add(lineSegments(grid,0x283f45,0.72));
-  const a=-L/2,b=L/2,c=-W/2,d=W/2,e=0.008;
-  plot.add(lineSegments([a,e,c,b,e,c,b,e,c,b,e,d,b,e,d,a,e,d,a,e,d,a,e,c],0xc4e8dc));
-  scene.add(plot);
-  document.getElementById('size').textContent=fmt.format(L)+' × '+fmt.format(W)+' m';
-  document.getElementById('area').textContent=fmt.format(L*W);
-  status.className='';status.textContent='Byggeflate oppdatert. Klar for prosjektering.';
-  resetCamera();
+  const a=-L/2,b=L/2,c=-W/2,d=W/2,e=0.012;
+  plot.add(lines([a,e,c,b,e,c,b,e,c,b,e,d,b,e,d,a,e,d,a,e,d,a,e,c],0xc4e8dc));
+  scene.add(plot);updateGrid();
+  $('size').textContent=fmt.format(L)+' × '+fmt.format(W)+' m';$('area').textContent=fmt.format(L*W);
+  setStatus('Byggeflate oppdatert.');fitCamera();
  }
- function validDimension(n){return Number.isFinite(n)&&n>=1&&n<=100&&Math.abs(n*4-Math.round(n*4))<1e-8;}
- form.addEventListener('submit',event=>{
-  event.preventDefault();
-  const l=lengthInput.valueAsNumber,w=widthInput.valueAsNumber;
-  if(!validDimension(l)||!validDimension(w)){status.className='error';status.textContent='Velg 1–100 m i intervaller på 0,25 m.';return;}
-  updatePlate(l,w);
+ function clearMeasurement(){
+  points=[];disposeGroup(measureGroup);measureGroup=null;measurementCenter=null;
+  $('measureLabel').hidden=true;$('clear').disabled=true;
+  $('measureResult').textContent=measuring?'Velg første punkt.':'Ingen måling.';
+ }
+ function setMeasuring(on){
+  measuring=on;stage.classList.toggle('measuring',on);$('measure').setAttribute('aria-pressed',String(on));
+  $('measure').textContent=on?'Avslutt måling':'Mål avstand';
+  if(on){if(view!=='top')setView('top');clearMeasurement();}
+  else if(points.length<2)clearMeasurement();
+ }
+ function addMeasurePoint(point){
+  if(points.length===2)clearMeasurement();
+  points.push(point);disposeGroup(measureGroup);measureGroup=new THREE.Group();scene.add(measureGroup);
+  const markerSize=Math.max(0.04,Math.min(0.18,Math.max(L,W)*0.008));
+  for(const p of points){const marker=new THREE.Mesh(new THREE.SphereGeometry(markerSize,12,8),new THREE.MeshBasicMaterial({color:0xffd58a,depthTest:false}));marker.position.copy(p);marker.renderOrder=3;measureGroup.add(marker);}
+  $('clear').disabled=false;
+  if(points.length===1){$('measureResult').textContent='P1: X '+fmt.format(point.x+L/2)+' · Z '+fmt.format(point.z+W/2)+' m\nVelg andre punkt.';return;}
+  const [a,b]=points,dx=b.x-a.x,dz=b.z-a.z,distance=Math.hypot(dx,dz);
+  const line=lines([a.x,a.y,a.z,b.x,b.y,b.z],0xffd58a);line.material.depthTest=false;line.renderOrder=2;measureGroup.add(line);
+  measurementCenter=a.clone().add(b).multiplyScalar(0.5);
+  $('measureLabel').textContent=fmt.format(distance)+' m';
+  $('measureResult').textContent='Avstand: '+fmt.format(distance)+' m\nΔX: '+fmt.format(dx)+' m · ΔZ: '+fmt.format(dz)+' m\nNytt trykk starter ny måling.';
+ }
+ const activePointers=new Set();let tap=null;
+ renderer.domElement.addEventListener('pointerdown',e=>{
+  activePointers.add(e.pointerId);
+  if(activePointers.size!==1){tap=null;return;}
+  tap=measuring&&view==='top'&&e.button===0?{id:e.pointerId,x:e.clientX,y:e.clientY}:null;
  });
- document.getElementById('reset').addEventListener('click',resetCamera);
- const observer=new ResizeObserver(resize);observer.observe(viewport);resize();updatePlate(12,10);
- renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();status.className='error';status.textContent='3D-kontekst mistet. Last siden på nytt.';renderer.setAnimationLoop(null);});
- renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera);});
-}catch(err){
- status.className='error';status.textContent='Kunne ikke starte 3D-miljøet. Kontroller nettforbindelse og WebGL. '+err.message;
- console.error(err);
-}
+ renderer.domElement.addEventListener('pointermove',e=>{if(tap&&tap.id===e.pointerId&&Math.hypot(e.clientX-tap.x,e.clientY-tap.y)>6)tap=null;});
+ function endPointer(e,cancelled){
+  const selected=tap;activePointers.delete(e.pointerId);tap=null;
+  if(cancelled||!selected||selected.id!==e.pointerId||activePointers.size||!measuring||view!=='top'||Math.hypot(e.clientX-selected.x,e.clientY-selected.y)>6)return;
+  const rect=renderer.domElement.getBoundingClientRect();
+  const ndc=new THREE.Vector2((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);
+  camera.updateMatrixWorld();raycaster.setFromCamera(ndc,camera);
+  const p=new THREE.Vector3();if(!raycaster.ray.intersectPlane(plane,p))return;
+  if(p.x<-L/2-1e-6||p.x>L/2+1e-6||p.z<-W/2-1e-6||p.z>W/2+1e-6){setStatus('Velg et punkt innenfor byggeflaten.',true);return;}
+  p.x=snapCoordinate(p.x,L,$('snap').checked);p.z=snapCoordinate(p.z,W,$('snap').checked);p.y=0.035;
+  setStatus('Målepunkt registrert.');addMeasurePoint(p);
+ }
+ renderer.domElement.addEventListener('pointerup',e=>endPointer(e,false));
+ renderer.domElement.addEventListener('pointercancel',e=>endPointer(e,true));
+ renderer.domElement.addEventListener('lostpointercapture',e=>{activePointers.delete(e.pointerId);if(tap&&tap.id===e.pointerId)tap=null;});
+ form.addEventListener('submit',event=>{event.preventDefault();const l=lengthInput.valueAsNumber,w=widthInput.valueAsNumber;if(!validDimension(l)||!validDimension(w)){setStatus('Velg 1–100 m i intervaller på 0,25 m.',true);return;}updatePlate(l,w);});
+ $('gridStep').addEventListener('change',updateGrid);
+ $('measure').addEventListener('click',()=>setMeasuring(!measuring));$('clear').addEventListener('click',clearMeasurement);
+ $('fit').addEventListener('click',fitCamera);$('zoomIn').addEventListener('click',()=>zoom(1.25));$('zoomOut').addEventListener('click',()=>zoom(0.8));
+ document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+ const observer=new ResizeObserver(resize);observer.observe(stage);resize();setView('orbit');updatePlate(12,10);
+ function updateLabel(){
+  const label=$('measureLabel');
+  if(!measurementCenter||view!=='top'){label.hidden=true;return;}
+  const ndc=measurementCenter.clone().project(camera);
+  if(Math.abs(ndc.x)>0.98||Math.abs(ndc.y)>0.98||ndc.z<-1||ndc.z>1){label.hidden=true;return;}
+  label.hidden=false;label.style.left=((ndc.x+1)*stage.clientWidth/2)+'px';label.style.top=((1-ndc.y)*stage.clientHeight/2)+'px';
+ }
+ renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();setStatus('3D-kontekst mistet. Last siden på nytt.',true);renderer.setAnimationLoop(null);});
+ renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera);updateLabel();});
+}catch(err){setStatus('Kunne ikke starte 3D-miljøet. Kontroller nettforbindelse og WebGL. '+err.message,true);console.error(err);}
 </script>
 </body>
 </html>
