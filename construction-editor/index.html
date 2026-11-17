@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#101c20">
-<title>AFTERFALL | Construction Editor CE 0.2</title>
+<title>AFTERFALL | Construction Editor CE 0.3</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:#101c20;color:#e9f0ed;font:14px system-ui,sans-serif}
 body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
@@ -38,15 +38,73 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 #status.error{color:#ffb6a2}#measureResult{white-space:pre-line;font:12px/1.55 ui-monospace,monospace;color:#eac77d;min-height:1.5em}
 footer{flex-shrink:0;padding:6px 14px;color:#a1b7b9;background:#16262b;border-top:1px solid #34494e;font-size:11px}
 @media(max-width:660px){header{padding:7px 10px;gap:7px}header small{display:none}main{grid-template-columns:1fr;grid-template-rows:minmax(0,auto) minmax(0,1fr)}aside{padding:8px 10px;border-right:0;border-bottom:1px solid #34494e;max-height:34dvh}aside h1{font-size:14px}aside h2{margin:9px 0 5px}aside .desktopHelp{display:none}label{margin:3px 0;font-size:11px}input,select,button{padding:7px}button.primary{margin-top:6px}#toolbar{padding:5px;gap:4px}#toolbar button{padding:6px 7px;font-size:11px}#toolbar .divider{display:none}#status{margin:4px 0}#overlay{top:6px;left:6px;font-size:10px;padding:5px 7px}#legend{bottom:6px;left:6px;font-size:10px}footer{font-size:10px}}
+
+main{grid-template-columns:300px minmax(0,1fr)}
+.panelTabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.panelTabs button{font-size:12px;padding:9px 5px}
+[hidden]{display:none!important}
+#status{margin:0;padding:7px 10px;min-height:30px;line-height:1.35;background:#142329;border-bottom:1px solid #34494e;flex:none}
+#stage.placing canvas{cursor:crosshair}
+#moduleCount,#currentMode{font-size:11px;color:#b1c9c9}
+#moduleList{min-height:36px}
+#moduleInfo{color:#eac77d;font-size:12px}
+#inspector fieldset{padding:0;margin:0;border:0;min-width:0}
+#inspector fieldset:disabled{opacity:.55}
+#inspector .fields{grid-template-columns:1fr 1fr 1fr;gap:5px}
+#inspector input{padding:7px 5px}
+#inspector label{font-size:11px}
+#deleteModule{color:#ffc1ad}
+button.wide{width:100%;margin-top:7px}
+#modebar{border-bottom:1px solid #34494e;background:#192b31;display:flex;align-items:center;gap:6px;padding:6px 9px;flex-wrap:wrap}
+#modebar button{font-size:12px;padding:7px 10px}
+@media(max-width:660px){main{grid-template-columns:1fr;grid-template-rows:minmax(0,auto) minmax(0,1fr)}aside{max-height:34dvh}.panelTabs{margin-bottom:5px}#modebar{padding:4px 5px;gap:4px}#modebar button{font-size:11px;padding:6px 7px}#status{font-size:11px;padding:4px 6px;min-height:22px}#currentMode{display:none}}
+@media(max-height:480px) and (orientation:landscape){main{grid-template-columns:240px minmax(0,1fr);grid-template-rows:minmax(0,1fr)}aside{max-height:none;border-right:1px solid #34494e}header{padding:4px 10px}footer{padding:3px 10px}#toolbar,#modebar{padding:3px 5px}#toolbar button,#modebar button{padding:4px 6px}}
 </style>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
 </script>
 </head>
 <body>
-<header><span class="brand">AFTERFALL</span><span class="version">CE 0.2</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
+<header><span class="brand">AFTERFALL</span><span class="version">CE 0.3</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
 <main>
 <aside>
+<div class="panelTabs" aria-label="Verktøypaneler"><button id="tabModules" type="button" aria-pressed="true">Moduler</button><button id="tabSite" type="button" aria-pressed="false">Byggeflate / mål</button></div>
+<section id="modulePanel">
+<h1>Modulbibliotek</h1>
+<p>Geometriske testmoduler. Ingen materialberegning eller bæreevnekontroll ennå.</p>
+<label for="moduleType">Komponent</label>
+<select id="moduleType"><option value="block">Testblokk</option><option value="post">Stolpe (test)</option><option value="beam">Bjelke (test)</option><option value="panel">Plate (test)</option></select>
+<div class="fields">
+<div><label for="placeY">Underkant Y (m)</label><input id="placeY" type="number" min="0" max="100" step="0.01" value="0"></div>
+<div><label for="placeAngle">Rotasjon</label><select id="placeAngle"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></div>
+</div>
+<label class="check"><input id="snapModules" type="checkbox" checked>Fest til 0,25 m rutenett</label>
+<label class="check"><input id="snapAnchors" type="checkbox" checked>Fest til nærliggende modulkanter</label>
+<button id="startPlace" class="primary" type="button">Plasser ny modul</button>
+<h2>Prosjekt <span id="moduleCount">0 / 300</span></h2>
+<label for="moduleList">Velg eksisterende modul</label>
+<select id="moduleList"><option value="">Ingen valgt</option></select>
+<p id="moduleInfo">Velg en modul i 3D-visningen eller listen.</p>
+<form id="inspector">
+<fieldset id="editFields" disabled>
+<div class="fields">
+<div><label for="editX">X (m)</label><input id="editX" type="number" step="any" required></div>
+<div><label for="editZ">Z (m)</label><input id="editZ" type="number" step="any" required></div>
+<div><label for="editY">Y (m)</label><input id="editY" type="number" min="0" max="100" step="any" required></div>
+<div><label for="editL">Lengde</label><input id="editL" type="number" min="0.05" max="100" step="any" required></div>
+<div><label for="editW">Bredde</label><input id="editW" type="number" min="0.05" max="100" step="any" required></div>
+<div><label for="editH">Høyde</label><input id="editH" type="number" min="0.05" max="100" step="any" required></div>
+</div>
+<label for="editAngle">Rotasjon</label>
+<select id="editAngle"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select>
+<button class="primary" type="submit">Bruk endringer</button>
+<div class="buttons" style="margin-top:6px"><button id="moveModule" type="button">Flytt</button><button id="rotateModule" type="button">Roter 90°</button></div>
+<button id="deleteModule" class="wide" type="button">Slett valgt modul</button>
+</fieldset>
+</form>
+<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.3.</p>
+</section>
+<section id="sitePanel" hidden>
 <h1>Byggeflate</h1>
 <p class="desktopHelp">Simulert godkjent byggeplass. I spillet vil målene komme fra den planerte byggeplassen.</p>
 <form id="dimensions">
@@ -63,15 +121,18 @@ footer{flex-shrink:0;padding:6px 14px;color:#a1b7b9;background:#16262b;border-to
 <h2>Måleverktøy</h2>
 <div class="buttons"><button id="measure" type="button" aria-pressed="false">Mål avstand</button><button id="clear" type="button" disabled>Fjern mål</button></div>
 <p id="measureResult" aria-live="polite">Ingen måling.</p>
-<p id="status" role="status" aria-live="polite">Laster 3D-miljø …</p>
+
 <h2 class="desktopHelp">Kontroller</h2>
 <p class="desktopHelp">3D: dra for rotasjon, rull for zoom, høyreklikk og dra for panorering. Ortografisk: dra for panorering. På berøringsskjerm: knip for zoom. Måling: trykk to punkter i planvisning.</p>
+</section>
 </aside>
 <section id="viewport" aria-label="3D-visning av byggeflate">
 <div id="toolbar" role="toolbar" aria-label="Kameravisninger">
 <button data-view="orbit" aria-pressed="true">3D</button><button data-view="top" aria-pressed="false">Ovenfra</button><button data-view="front" aria-pressed="false">Foran</button><button data-view="right" aria-pressed="false">Høyre</button><span class="divider"></span>
 <button id="fit">Tilpass</button><button id="zoomIn" aria-label="Zoom inn">+</button><button id="zoomOut" aria-label="Zoom ut">−</button>
 </div>
+<div id="modebar"><button id="selectMode" type="button" aria-pressed="true">Velg</button><button id="placeMode" type="button" aria-pressed="false">Plasser</button><button id="moveMode" type="button" aria-pressed="false" disabled>Flytt</button><button id="cancelMode" type="button" disabled>Avbryt</button><span id="currentMode">Velg en modul</span></div>
+<p id="status" role="status" aria-live="polite">Laster 3D-miljø …</p>
 <div id="stage">
 <div id="overlay"><b id="size">12 × 10 m</b><br>Areal: <span id="area">120</span> m²<br>Y = 0 m · <span id="viewName">3D</span></div>
 <div id="measureLabel" hidden></div>
@@ -79,7 +140,7 @@ footer{flex-shrink:0;padding:6px 14px;color:#a1b7b9;background:#16262b;border-to
 </div>
 </section>
 </main>
-<footer>CE 0.2 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
+<footer>CE 0.3 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
 <script type="module">
 const $=id=>document.getElementById(id);
 const status=$('status'),stage=$('stage'),form=$('dimensions'),lengthInput=$('length'),widthInput=$('width');
@@ -87,6 +148,48 @@ const fmt=new Intl.NumberFormat('nb-NO',{maximumFractionDigits:4});
 const names={orbit:'3D',top:'Ovenfra (XZ)',front:'Foran (XY)',right:'Høyre (ZY)'};
 function validDimension(n){return Number.isFinite(n)&&n>=1&&n<=100&&Math.abs(n*4-Math.round(n*4))<1e-8;}
 function snapCoordinate(value,size,snap){const v=Math.max(0,Math.min(size,value+size/2));return (snap?Math.min(size,Math.round(v*4)/4):v)-size/2;}
+const catalog={
+ block:{name:'Testblokk',l:1,w:1,h:1,color:0x8da6ac},
+ post:{name:'Stolpe',l:0.2,w:0.2,h:2.5,color:0xaf8961},
+ beam:{name:'Bjelke',l:3,w:0.2,h:0.25,color:0xc7a47a},
+ panel:{name:'Plate',l:1,w:1,h:0.15,color:0xa2b8a0}
+};
+const EPS=1e-7,MAX_MODULES=300;
+function footprint(m){return m.angle%180===0?{x:m.l/2,z:m.w/2}:{x:m.w/2,z:m.l/2};}
+function validModule(m,L,W,others=[],ignore=null){
+ if(![m.x,m.y,m.z,m.l,m.w,m.h,m.angle].every(Number.isFinite))return 'Alle mål må være gyldige tall.';
+ if(![0,90,180,270].includes(m.angle))return 'Rotasjon må være 0°, 90°, 180° eller 270°.';
+ if([m.l,m.w,m.h].some(v=>v<0.05-EPS||v>100+EPS)||m.y<-EPS||m.y+m.h>100+EPS)return 'Dimensjoner: 0,05–100 m. Total høyde: maks 100 m.';
+ const a=footprint(m);
+ if(m.x-a.x<-EPS||m.x+a.x>L+EPS||m.z-a.z<-EPS||m.z+a.z>W+EPS)return 'Modulen går utenfor byggeflaten.';
+ for(const n of others){
+  if(n.id===ignore)continue;
+  const b=footprint(n);
+  if(Math.abs(m.x-n.x)<a.x+b.x-EPS&&Math.abs(m.z-n.z)<a.z+b.z-EPS&&m.y<n.y+n.h-EPS&&m.y+m.h>n.y+EPS)return 'Modulen overlapper '+(catalog[n.type]?.name||'en annen modul')+' #'+n.id+'.';
+ }
+ return '';
+}
+function snapModule(m,others,gridSnap,anchorSnap){
+ let x=gridSnap?Math.round(m.x*4)/4:m.x,z=gridSnap?Math.round(m.z*4)/4:m.z;
+ if(!anchorSnap)return {...m,x,z};
+ const a=footprint(m);
+ // Snap centerlines or opposing edges; retain the nearest candidate per axis.
+ let bx=0.18+EPS,bz=0.18+EPS;
+ for(const n of others){
+  if(n.id===m.id)continue;
+  const b=footprint(n);
+  if(Math.abs(m.x-n.x)>a.x+b.x+0.35||Math.abs(m.z-n.z)>a.z+b.z+0.35)continue;
+  if(m.y>n.y+n.h+EPS||m.y+m.h<n.y-EPS)continue;
+  for(const candidate of [n.x,n.x-b.x-a.x,n.x+b.x+a.x,n.x-b.x+a.x,n.x+b.x-a.x]){
+   const d=Math.abs(candidate-m.x);if(d<bx){bx=d;x=candidate;}
+  }
+  for(const candidate of [n.z,n.z-b.z-a.z,n.z+b.z+a.z,n.z-b.z+a.z,n.z+b.z-a.z]){
+   const d=Math.abs(candidate-m.z);if(d<bz){bz=d;z=candidate;}
+  }
+ }
+ const round=v=>Math.round(v*1e6)/1e6;
+ return {...m,x:round(x),z:round(z)};
+}
 function setStatus(message,error=false){status.className=error?'error':'';status.textContent=message;}
 try{
  const THREE=await import('three');
@@ -98,6 +201,94 @@ try{
  const light=new THREE.DirectionalLight(0xffffff,2);light.position.set(12,25,8);scene.add(light);
  let L=12,W=10,plot=null,grid=null,camera=null,controls=null,view='orbit',aspect=1,orthoHeight=14;
  let measuring=false,points=[],measureGroup=null,measurementCenter=null;
+ let mode='select',selectedId=null,nextId=1,modules=[],ghost=null,lastHover=null;
+ const moduleGroup=new THREE.Group();scene.add(moduleGroup);
+ const meshes=new Map();
+ function showPanel(which){
+  $('modulePanel').hidden=which!=='modules';$('sitePanel').hidden=which!=='site';
+  $('tabModules').setAttribute('aria-pressed',String(which==='modules'));
+  $('tabSite').setAttribute('aria-pressed',String(which==='site'));
+ }
+ function current(){return modules.find(m=>m.id===selectedId)||null;}
+ function modelMesh(m,preview=false){
+  const geo=new THREE.BoxGeometry(1,1,1);
+  const mat=new THREE.MeshStandardMaterial({color:preview?0x8fe0b4:catalog[m.type].color,roughness:0.76,transparent:preview,opacity:preview?0.48:1,depthWrite:!preview});
+  const mesh=new THREE.Mesh(geo,mat);
+  const edge=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:preview?0xc5f3d9:0x24383b}));
+  mesh.add(edge);mesh.userData.moduleId=m.id;mesh.userData.edge=edge;
+  return mesh;
+ }
+ function transform(mesh,m){
+  mesh.position.set(m.x-L/2,m.y+m.h/2,m.z-W/2);
+  mesh.scale.set(m.l,m.h,m.w);mesh.rotation.y=-m.angle*Math.PI/180;
+  mesh.updateMatrixWorld(true);
+ }
+ function addMesh(m){const mesh=modelMesh(m);transform(mesh,m);moduleGroup.add(mesh);meshes.set(m.id,mesh);}
+ function removeMesh(id){const mesh=meshes.get(id);if(!mesh)return;moduleGroup.remove(mesh);mesh.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose();});meshes.delete(id);}
+ function refreshSelection(){
+  for(const [id,mesh] of meshes){
+   const selected=id===selectedId;
+   mesh.userData.edge.material.color.setHex(selected?0xffd58a:0x24383b);
+   mesh.material.emissive.setHex(selected?0x59401a:0x000000);
+  }
+  const m=current(),list=$('moduleList');
+  list.replaceChildren(new Option('Ingen valgt',''),...modules.map(n=>new Option(catalog[n.type].name+' #'+n.id,String(n.id))));
+  list.value=m?String(m.id):'';
+  $('moduleCount').textContent=modules.length+' / '+MAX_MODULES;
+  $('editFields').disabled=!m;$('moveMode').disabled=!m;
+  $('moduleInfo').textContent=m?catalog[m.type].name+' #'+m.id+' · '+fmt.format(m.l)+' × '+fmt.format(m.w)+' × '+fmt.format(m.h)+' m':'Velg en modul i 3D-visningen eller listen.';
+  if(m){for(const [field,key] of Object.entries({editX:'x',editZ:'z',editY:'y',editL:'l',editW:'w',editH:'h',editAngle:'angle'}))$(field).value=String(m[key]);}
+  else for(const id of ['editX','editZ','editY','editL','editW','editH'])$(id).value='';
+ }
+ function selectModule(id){selectedId=modules.some(m=>m.id===id)?id:null;refreshSelection();if(selectedId!==null)showPanel('modules');}
+ function hideGhost(){if(ghost)ghost.visible=false;}
+ function setMode(next){
+  if(next==='move'&&!current())return;
+  if(next==='place'&&modules.length>=MAX_MODULES){setStatus('Maks '+MAX_MODULES+' testmoduler.',true);return;}
+  if(measuring&&next!=='select')setMeasuring(false);
+  mode=next;lastHover=null;hideGhost();
+  stage.classList.toggle('placing',next!=='select');
+  $('selectMode').setAttribute('aria-pressed',String(next==='select'));
+  $('placeMode').setAttribute('aria-pressed',String(next==='place'));
+  $('moveMode').setAttribute('aria-pressed',String(next==='move'));
+  $('cancelMode').disabled=next==='select';
+  $('currentMode').textContent=next==='place'?'Plasser modul':next==='move'?'Flytt valgt modul':'Velg en modul';
+  if(next!=='select'){showPanel('modules');if(view!=='top')setView('top');}
+  setStatus(next==='place'?'Trykk på byggeflaten for å plassere.':next==='move'?'Trykk på ny posisjon for valgt modul.':'Velg en modul eller et verktøy.');
+ }
+ function getCandidate(p){
+  if(mode==='select')return null;
+  let m;
+  if(mode==='move'){const old=current();if(!old)return null;m={...old};}
+  else{const type=$('moduleType').value,d=catalog[type];m={id:nextId,type,l:d.l,w:d.w,h:d.h,y:$('placeY').valueAsNumber,angle:Number($('placeAngle').value)};}
+  m.x=p.x+L/2;m.z=p.z+W/2;
+  return snapModule(m,modules,$('snapModules').checked,$('snapAnchors').checked);
+ }
+ function preview(p){
+  const m=p&&getCandidate(p);if(!m){hideGhost();return;}
+  const err=validModule(m,L,W,modules,mode==='move'?m.id:null);
+  if(!ghost){ghost=modelMesh(m,true);scene.add(ghost);}
+  if(![m.x,m.y,m.z,m.l,m.w,m.h,m.angle].every(Number.isFinite)){hideGhost();return;}
+  transform(ghost,m);ghost.visible=true;
+  ghost.material.color.setHex(err?0xe86b65:0x8fe0b4);
+  ghost.userData.edge.material.color.setHex(err?0xffaca0:0xc5f3d9);
+ }
+ function commitEdit(m){
+  const original=current();if(!original)return false;
+  const err=validModule(m,L,W,modules,original.id);
+  if(err){setStatus(err,true);return false;}
+  Object.assign(original,m);transform(meshes.get(original.id),original);refreshSelection();setStatus('Modul #'+original.id+' oppdatert.');return true;
+ }
+ function placeOrMove(p){
+  const m=getCandidate(p);if(!m)return;
+  const err=validModule(m,L,W,modules,mode==='move'?m.id:null);
+  if(err){setStatus(err,true);return;}
+  if(mode==='move'){if(commitEdit(m)){setMode('select');setStatus('Modul #'+m.id+' flyttet.');}return;}
+  if(modules.length>=MAX_MODULES){setMode('select');setStatus('Maks '+MAX_MODULES+' testmoduler.',true);return;}
+  nextId++;modules.push(m);addMesh(m);selectModule(m.id);hideGhost();
+  setStatus(catalog[m.type].name+' #'+m.id+' plassert. Trykk på ny posisjon for neste modul.');
+  if(modules.length>=MAX_MODULES){setMode('select');setStatus('Maks '+MAX_MODULES+' testmoduler er nådd.');}
+ }
  const raycaster=new THREE.Raycaster(),plane=new THREE.Plane(new THREE.Vector3(0,1,0),0);
  function disposeGroup(group){if(!group)return;scene.remove(group);group.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose();});}
  function lines(positions,color,opacity=1){
@@ -116,26 +307,29 @@ try{
  }
  function fitCamera(){
   if(!camera||!controls)return;
-  const radius=Math.max(Math.hypot(L,W)/2,1);
-  controls.target.set(0,0,0);camera.zoom=1;
+  const heightMax=modules.reduce((max,m)=>Math.max(max,m.y+m.h),0);
+  const targetY=view==='top'?0:heightMax/2;
+  const radius=Math.max(Math.hypot(L,W,heightMax)/2,1);
+  controls.target.set(0,targetY,0);camera.zoom=1;
   if(view==='orbit'){
    const halfV=THREE.MathUtils.degToRad(camera.fov/2),halfH=Math.atan(Math.tan(halfV)*aspect);
    const distance=radius/Math.sin(Math.min(halfV,halfH))*1.16;
-   camera.position.copy(new THREE.Vector3(1,0.95,1).normalize().multiplyScalar(distance));
+   camera.position.copy(new THREE.Vector3(1,0.95,1).normalize().multiplyScalar(distance).add(controls.target));
    controls.maxDistance=Math.max(100,distance*5);
   }else{
    const span=view==='top'?L:view==='front'?L:W;
-   const height=view==='top'?W:Math.max(2,span*0.6);
+   const height=view==='top'?W:Math.max(2,span*0.6,heightMax+0.3);
    orthoHeight=Math.max(height,span/aspect)*1.22;
    if(view==='top')camera.position.set(0,radius*3+5,0);
-   else if(view==='front')camera.position.set(0,0,radius*3+5);
-   else camera.position.set(radius*3+5,0,0);
+   else if(view==='front')camera.position.set(0,targetY,radius*3+5);
+   else camera.position.set(radius*3+5,targetY,0);
   }
   updateProjection();camera.lookAt(controls.target);controls.update();
  }
  function setView(next){
   if(!names[next])return;
   if(measuring&&next!=='top')setMeasuring(false);
+  if(mode!=='select'&&next!=='top')setMode('select');
   if(controls)controls.dispose();
   view=next;
   camera=next==='orbit'?new THREE.PerspectiveCamera(45,aspect,0.03,3000):new THREE.OrthographicCamera(-1,1,1,-1,0.03,3000);
@@ -162,14 +356,17 @@ try{
   if(minor.length)grid.add(lines(minor,0x384e55,0.35));if(major.length)grid.add(lines(major,0x263b41,0.85));
  }
  function updatePlate(l,w){
-  clearMeasurement();setMeasuring(false);disposeGroup(plot);L=l;W=w;plot=new THREE.Group();
+  const invalid=modules.find(m=>validModule(m,l,w,[],m.id));
+  if(invalid){setStatus('Kan ikke endre byggeflaten: modul #'+invalid.id+' vil gå utenfor.',true);return false;}
+  clearMeasurement();setMeasuring(false);setMode('select');disposeGroup(plot);L=l;W=w;plot=new THREE.Group();
+  for(const m of modules)transform(meshes.get(m.id),m);
   const slab=new THREE.Mesh(new THREE.BoxGeometry(L,0.18,W),new THREE.MeshStandardMaterial({color:0x657f80,roughness:0.86}));
   slab.position.y=-0.09;plot.add(slab);
   const a=-L/2,b=L/2,c=-W/2,d=W/2,e=0.012;
   plot.add(lines([a,e,c,b,e,c,b,e,c,b,e,d,b,e,d,a,e,d,a,e,d,a,e,c],0xc4e8dc));
   scene.add(plot);updateGrid();
   $('size').textContent=fmt.format(L)+' × '+fmt.format(W)+' m';$('area').textContent=fmt.format(L*W);
-  setStatus('Byggeflate oppdatert.');fitCamera();
+  setStatus('Byggeflate oppdatert.');fitCamera();return true;
  }
  function clearMeasurement(){
   points=[];disposeGroup(measureGroup);measureGroup=null;measurementCenter=null;
@@ -177,6 +374,7 @@ try{
   $('measureResult').textContent=measuring?'Velg første punkt.':'Ingen måling.';
  }
  function setMeasuring(on){
+  if(on){setMode('select');showPanel('site');}
   measuring=on;stage.classList.toggle('measuring',on);$('measure').setAttribute('aria-pressed',String(on));
   $('measure').textContent=on?'Avslutt måling':'Mål avstand';
   if(on){if(view!=='top')setView('top');clearMeasurement();}
@@ -199,28 +397,71 @@ try{
  renderer.domElement.addEventListener('pointerdown',e=>{
   activePointers.add(e.pointerId);
   if(activePointers.size!==1){tap=null;return;}
-  tap=measuring&&view==='top'&&e.button===0?{id:e.pointerId,x:e.clientX,y:e.clientY}:null;
+  tap=e.button===0?{id:e.pointerId,x:e.clientX,y:e.clientY}:null;
  });
- renderer.domElement.addEventListener('pointermove',e=>{if(tap&&tap.id===e.pointerId&&Math.hypot(e.clientX-tap.x,e.clientY-tap.y)>6)tap=null;});
- function endPointer(e,cancelled){
-  const selected=tap;activePointers.delete(e.pointerId);tap=null;
-  if(cancelled||!selected||selected.id!==e.pointerId||activePointers.size||!measuring||view!=='top'||Math.hypot(e.clientX-selected.x,e.clientY-selected.y)>6)return;
+ renderer.domElement.addEventListener('pointermove',e=>{
+  if(tap&&tap.id===e.pointerId&&Math.hypot(e.clientX-tap.x,e.clientY-tap.y)>6)tap=null;
+  if(mode!=='select'&&view==='top'&&e.pointerType==='mouse'&&!activePointers.size){
+   setRay(e);const p=new THREE.Vector3();lastHover=raycaster.ray.intersectPlane(plane,p)?p:null;preview(lastHover);
+  }
+ });
+ renderer.domElement.addEventListener('pointerleave',()=>{lastHover=null;hideGhost();});
+ function setRay(e){
   const rect=renderer.domElement.getBoundingClientRect();
   const ndc=new THREE.Vector2((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);
   camera.updateMatrixWorld();raycaster.setFromCamera(ndc,camera);
+ }
+ function endPointer(e,cancelled){
+  const selected=tap;activePointers.delete(e.pointerId);tap=null;
+  if(cancelled||!selected||selected.id!==e.pointerId||activePointers.size||Math.hypot(e.clientX-selected.x,e.clientY-selected.y)>6)return;
+  setRay(e);
+  if(!measuring&&mode==='select'){
+   const hit=raycaster.intersectObjects([...meshes.values()],false)[0];
+   selectModule(hit?hit.object.userData.moduleId:null);
+   setStatus(hit?'Modul valgt.':'Ingen modul valgt.');return;
+  }
+  if(view!=='top')return;
   const p=new THREE.Vector3();if(!raycaster.ray.intersectPlane(plane,p))return;
+  if(mode!=='select'){placeOrMove(p);return;}
+  if(!measuring)return;
   if(p.x<-L/2-1e-6||p.x>L/2+1e-6||p.z<-W/2-1e-6||p.z>W/2+1e-6){setStatus('Velg et punkt innenfor byggeflaten.',true);return;}
   p.x=snapCoordinate(p.x,L,$('snap').checked);p.z=snapCoordinate(p.z,W,$('snap').checked);p.y=0.035;
   setStatus('Målepunkt registrert.');addMeasurePoint(p);
  }
- renderer.domElement.addEventListener('pointerup',e=>endPointer(e,false));
- renderer.domElement.addEventListener('pointercancel',e=>endPointer(e,true));
+ renderer.domElement.addEventListener('pointerup',e=>endPointer(e,false),true);
+ renderer.domElement.addEventListener('pointercancel',e=>endPointer(e,true),true);
  renderer.domElement.addEventListener('lostpointercapture',e=>{activePointers.delete(e.pointerId);if(tap&&tap.id===e.pointerId)tap=null;});
- form.addEventListener('submit',event=>{event.preventDefault();const l=lengthInput.valueAsNumber,w=widthInput.valueAsNumber;if(!validDimension(l)||!validDimension(w)){setStatus('Velg 1–100 m i intervaller på 0,25 m.',true);return;}updatePlate(l,w);});
+ form.addEventListener('submit',event=>{event.preventDefault();const l=lengthInput.valueAsNumber,w=widthInput.valueAsNumber;if(!validDimension(l)||!validDimension(w)){setStatus('Velg 1–100 m i intervaller på 0,25 m.',true);return;}if(!updatePlate(l,w)){lengthInput.value=String(L);widthInput.value=String(W);}});
  $('gridStep').addEventListener('change',updateGrid);
  $('measure').addEventListener('click',()=>setMeasuring(!measuring));$('clear').addEventListener('click',clearMeasurement);
  $('fit').addEventListener('click',fitCamera);$('zoomIn').addEventListener('click',()=>zoom(1.25));$('zoomOut').addEventListener('click',()=>zoom(0.8));
  document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+ $('tabModules').addEventListener('click',()=>{if(measuring)setMeasuring(false);showPanel('modules');});
+ $('tabSite').addEventListener('click',()=>{if(mode!=='select')setMode('select');showPanel('site');});
+ for(const id of ['startPlace','placeMode'])$(id).addEventListener('click',()=>setMode('place'));
+ for(const id of ['moveModule','moveMode'])$(id).addEventListener('click',()=>setMode('move'));
+ for(const id of ['selectMode','cancelMode'])$(id).addEventListener('click',()=>{if(measuring)setMeasuring(false);setMode('select');});
+ $('moduleList').addEventListener('change',()=>{setMode('select');selectModule(Number($('moduleList').value)||null);});
+ $('inspector').addEventListener('submit',event=>{
+  event.preventDefault();const m=current();if(!m)return;
+  const patch={...m};
+  for(const [field,key] of Object.entries({editX:'x',editZ:'z',editY:'y',editL:'l',editW:'w',editH:'h'}))patch[key]=$(field).valueAsNumber;
+  patch.angle=Number($('editAngle').value);
+  if(commitEdit(patch))hideGhost();
+ });
+ $('rotateModule').addEventListener('click',()=>{const m=current();if(m)commitEdit({...m,angle:(m.angle+90)%360});hideGhost();});
+ function deleteSelected(){
+  const m=current();if(!m)return;
+  setMode('select');removeMesh(m.id);modules=modules.filter(n=>n.id!==m.id);selectModule(null);setStatus('Modul #'+m.id+' slettet.');
+ }
+ $('deleteModule').addEventListener('click',deleteSelected);
+ for(const id of ['moduleType','placeY','placeAngle','snapModules','snapAnchors'])$(id).addEventListener('change',()=>{if(lastHover)preview(lastHover);});
+ window.addEventListener('keydown',e=>{
+  if(e.target instanceof HTMLElement&&['INPUT','SELECT','TEXTAREA','BUTTON'].includes(e.target.tagName))return;
+  if(e.key==='Escape'){if(measuring)setMeasuring(false);setMode('select');}
+  if(e.key==='Delete'&&mode==='select'&&!measuring)deleteSelected();
+ });
+ refreshSelection();
  const observer=new ResizeObserver(resize);observer.observe(stage);resize();setView('orbit');updatePlate(12,10);
  function updateLabel(){
   const label=$('measureLabel');
