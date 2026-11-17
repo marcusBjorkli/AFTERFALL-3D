@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#101c20">
-<title>AFTERFALL | Construction Editor CE 0.3</title>
+<title>AFTERFALL | Construction Editor CE 0.4</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:#101c20;color:#e9f0ed;font:14px system-ui,sans-serif}
 body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
@@ -59,21 +59,29 @@ button.wide{width:100%;margin-top:7px}
 #modebar button{font-size:12px;padding:7px 10px}
 @media(max-width:660px){main{grid-template-columns:1fr;grid-template-rows:minmax(0,auto) minmax(0,1fr)}aside{max-height:34dvh}.panelTabs{margin-bottom:5px}#modebar{padding:4px 5px;gap:4px}#modebar button{font-size:11px;padding:6px 7px}#status{font-size:11px;padding:4px 6px;min-height:22px}#currentMode{display:none}}
 @media(max-height:480px) and (orientation:landscape){main{grid-template-columns:240px minmax(0,1fr);grid-template-rows:minmax(0,1fr)}aside{max-height:none;border-right:1px solid #34494e}header{padding:4px 10px}footer{padding:3px 10px}#toolbar,#modebar{padding:3px 5px}#toolbar button,#modebar button{padding:4px 6px}}
+
+#connectorPanel{margin-top:14px;border-top:1px solid #34494e;padding-top:2px}
+#connectorPanel label{font-size:12px}
+#connectorResult{color:#b7d9cd;font-size:12px;white-space:pre-line}
+#presetInfo{font:11px/1.45 ui-monospace,monospace;color:#b6cdcd}
+#connectorPanel select{font-size:12px}
+#connectionsInfo{font-size:11px;color:#b5d4cc;white-space:pre-line}
 </style>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
 </script>
 </head>
 <body>
-<header><span class="brand">AFTERFALL</span><span class="version">CE 0.3</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
+<header><span class="brand">AFTERFALL</span><span class="version">CE 0.4</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
 <main>
 <aside>
 <div class="panelTabs" aria-label="Verktøypaneler"><button id="tabModules" type="button" aria-pressed="true">Moduler</button><button id="tabSite" type="button" aria-pressed="false">Byggeflate / mål</button></div>
 <section id="modulePanel">
 <h1>Modulbibliotek</h1>
-<p>Geometriske testmoduler. Ingen materialberegning eller bæreevnekontroll ennå.</p>
+<p>Standardmoduler med geometriske festepunkter. Bæreevne og materialbehov beregnes i senere versjoner.</p>
 <label for="moduleType">Komponent</label>
-<select id="moduleType"><option value="block">Testblokk</option><option value="post">Stolpe (test)</option><option value="beam">Bjelke (test)</option><option value="panel">Plate (test)</option></select>
+<select id="moduleType"><optgroup label="Fundamentering"><option value="stoneFoot">Punktfundament – stein</option><option value="concreteFoot">Punktfundament – betong</option><option value="stripFoot">Stripefundament – betong</option><option value="foundationBeam">Fundamentbjelke – tre</option></optgroup><optgroup label="Bærende trevirke"><option value="timberPost">Trestolpe</option><option value="timberBeam">Trebjelke</option><option value="brace">Skråavstiver</option></optgroup><optgroup label="Testmoduler fra CE 0.3"><option value="block">Testblokk</option><option value="post">Stolpe (test)</option><option value="beam">Bjelke (test)</option><option value="panel">Plate (test)</option></optgroup></select>
+<p id="presetInfo"></p>
 <div class="fields">
 <div><label for="placeY">Underkant Y (m)</label><input id="placeY" type="number" min="0" max="100" step="0.01" value="0"></div>
 <div><label for="placeAngle">Rotasjon</label><select id="placeAngle"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></div>
@@ -102,7 +110,20 @@ button.wide{width:100%;margin-top:7px}
 <button id="deleteModule" class="wide" type="button">Slett valgt modul</button>
 </fieldset>
 </form>
-<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.3.</p>
+<p id="connectionsInfo">Ingen modul valgt.</p>
+<section id="connectorPanel">
+<h2>Presise tilkoblingspunkter</h2>
+<label class="check"><input id="showAnchors" type="checkbox" checked>Vis festepunkter på valgt modul og mål</label>
+<label for="connectSource">Kildemodul</label>
+<select id="connectSource"><option value="new">Ny modul fra bibliotek</option><option value="selected">Flytt valgt modul</option></select>
+<label for="connectTarget">Målmodul</label>
+<select id="connectTarget"><option value="">Ingen målmodul</option></select>
+<label for="targetAnchor">Målets festepunkt</label><select id="targetAnchor"></select>
+<label for="sourceAnchor">Kildens festepunkt</label><select id="sourceAnchor"></select>
+<button id="doConnect" class="primary" type="button" disabled>Koble moduler</button>
+<p id="connectorResult" aria-live="polite">Velg to festepunkter. Kilden flyttes i X, Y og Z. Punktene må vende mot hverandre.</p>
+</section>
+<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.4.</p>
 </section>
 <section id="sitePanel" hidden>
 <h1>Byggeflate</h1>
@@ -140,7 +161,7 @@ button.wide{width:100%;margin-top:7px}
 </div>
 </section>
 </main>
-<footer>CE 0.3 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
+<footer>CE 0.4 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
 <script type="module">
 const $=id=>document.getElementById(id);
 const status=$('status'),stage=$('stage'),form=$('dimensions'),lengthInput=$('length'),widthInput=$('width');
@@ -149,6 +170,13 @@ const names={orbit:'3D',top:'Ovenfra (XZ)',front:'Foran (XY)',right:'Høyre (ZY)
 function validDimension(n){return Number.isFinite(n)&&n>=1&&n<=100&&Math.abs(n*4-Math.round(n*4))<1e-8;}
 function snapCoordinate(value,size,snap){const v=Math.max(0,Math.min(size,value+size/2));return (snap?Math.min(size,Math.round(v*4)/4):v)-size/2;}
 const catalog={
+ stoneFoot:{name:'Punktfundament – stein',l:0.6,w:0.6,h:0.35,color:0x858b82,material:'Stein',ground:true,role:'foundation'},
+ concreteFoot:{name:'Punktfundament – betong',l:0.5,w:0.5,h:0.4,color:0xa4a7a1,material:'Betong',ground:true,role:'foundation'},
+ stripFoot:{name:'Stripefundament – betong',l:3,w:0.5,h:0.3,color:0xa4a7a1,material:'Betong',ground:true,role:'foundation'},
+ foundationBeam:{name:'Fundamentbjelke',l:3,w:0.198,h:0.198,color:0x987b56,material:'Tre',role:'beam'},
+ timberPost:{name:'Trestolpe',l:0.148,w:0.148,h:2.4,color:0xb28d64,material:'Tre',role:'post'},
+ timberBeam:{name:'Trebjelke',l:3,w:0.098,h:0.198,color:0xc5a578,material:'Tre',role:'beam'},
+ brace:{name:'Skråavstiver',l:1.2,w:0.098,h:1.2,color:0xb88d5e,material:'Tre',role:'brace'},
  block:{name:'Testblokk',l:1,w:1,h:1,color:0x8da6ac},
  post:{name:'Stolpe',l:0.2,w:0.2,h:2.5,color:0xaf8961},
  beam:{name:'Bjelke',l:3,w:0.2,h:0.25,color:0xc7a47a},
@@ -156,16 +184,103 @@ const catalog={
 };
 const EPS=1e-7,MAX_MODULES=300;
 function footprint(m){return m.angle%180===0?{x:m.l/2,z:m.w/2}:{x:m.w/2,z:m.l/2};}
+function isBrace(m){return m.type==='brace';}
+function braceEndHeight(h){return Math.min(0.12,h*0.4);}
+function rotateVector(v,angle){
+ const cs=[1,0,-1,0],sn=[0,1,0,-1],i=angle/90;
+ return [v[0]*cs[i]-v[2]*sn[i],v[1],v[0]*sn[i]+v[2]*cs[i]];
+}
+function pointToWorld(m,v){
+ const p=rotateVector(v,m.angle);return [p[0]+m.x,p[1]+m.y,p[2]+m.z];
+}
+function cross(a,b){return [a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];}
+function dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
+function solid(m){
+ const t=braceEndHeight(m.h);
+ const polygon=isBrace(m)?[[-m.l/2,0], [m.l/2,m.h-t],[m.l/2,m.h],[-m.l/2,t]]:
+  [[-m.l/2,0],[m.l/2,0],[m.l/2,m.h],[-m.l/2,m.h]];
+ const localEdges=isBrace(m)?[[m.l,m.h-t,0],[0,1,0],[0,0,1]]:[[1,0,0],[0,1,0],[0,0,1]];
+ const localNormals=isBrace(m)?[[1,0,0],[-(m.h-t),m.l,0],[0,0,1]]:[[1,0,0],[0,1,0],[0,0,1]];
+ return {vertices:polygon.flatMap(([x,y])=>[-m.w/2,m.w/2].map(z=>pointToWorld(m,[x,y,z]))),
+ edges:localEdges.map(v=>rotateVector(v,m.angle)),normals:localNormals.map(v=>rotateVector(v,m.angle))};
+}
+function solidOverlap(m,n){
+ const a=footprint(m),b=footprint(n);
+ if(Math.abs(m.x-n.x)>=a.x+b.x-EPS||Math.abs(m.z-n.z)>=a.z+b.z-EPS||m.y>=n.y+n.h-EPS||m.y+m.h<=n.y+EPS)return false;
+ if(!isBrace(m)&&!isBrace(n))return true;
+ // Separating-axis test for the convex rectangular and diagonal prisms.
+ const A=solid(m),B=solid(n),axes=[...A.normals,...B.normals];
+ for(const a of A.edges)for(const b of B.edges)axes.push(cross(a,b));
+ for(const axis of axes){
+  const mag=Math.hypot(...axis);if(mag<EPS)continue;
+  const unit=axis.map(v=>v/mag),p=A.vertices.map(v=>dot(v,unit)),q=B.vertices.map(v=>dot(v,unit));
+  if(Math.max(...p)<=Math.min(...q)+EPS||Math.max(...q)<=Math.min(...p)+EPS)return false;
+ }
+ return true;
+}
+function anchors(m){
+ const points=[];
+ const add=(id,label,p,n)=>points.push({id,label,p:pointToWorld(m,p),n:rotateVector(n,m.angle)});
+ if(isBrace(m)){
+  const t=braceEndHeight(m.h);
+  add('low','Nedre ende',[-m.l/2,t/2,0],[-1,0,0]);
+  add('high','Øvre ende',[m.l/2,m.h-t/2,0],[1,0,0]);
+  return points;
+ }
+ add('bottom','Underkant – sentrum',[0,0,0],[0,-1,0]);
+ add('top','Overkant – sentrum',[0,m.h,0],[0,1,0]);
+ add('left','Ende −X',[-m.l/2,m.h/2,0],[-1,0,0]);
+ add('right','Ende +X',[m.l/2,m.h/2,0],[1,0,0]);
+ add('back','Side −Z',[0,m.h/2,-m.w/2],[0,0,-1]);
+ add('front','Side +Z',[0,m.h/2,m.w/2],[0,0,1]);
+ const role=catalog[m.type]?.role;
+ if(role==='beam'||m.type==='beam'||m.type==='stripFoot'){
+  const d=m.l/2-Math.min(0.15,m.l/4);
+  for(const [suffix,x] of [['−X',-d],['+X',d]]){
+   add('bottom'+suffix,'Underkant ved '+suffix,[x,0,0],[0,-1,0]);
+   add('top'+suffix,'Overkant ved '+suffix,[x,m.h,0],[0,1,0]);
+  }
+ }
+ if(role==='post'||m.type==='post'){
+  const h=Math.min(0.15,m.h/4);
+  for(const [suffix,y] of [['nedre',h],['øvre',m.h-h]]){
+   for(const [id,x,z,n] of [['−X',-m.l/2,0,[-1,0,0]],['+X',m.l/2,0,[1,0,0]],['−Z',0,-m.w/2,[0,0,-1]],['+Z',0,m.w/2,[0,0,1]]]){
+    add(id+suffix,id+' – '+suffix,[x,y,z],n);
+   }
+  }
+ }
+ return points;
+}
+function aligned(m,sourceId,target,targetId){
+ const a=anchors(m).find(p=>p.id===sourceId),b=anchors(target).find(p=>p.id===targetId);
+ if(!a||!b)return {error:'Velg gyldige festepunkter.'};
+ if(dot(a.n,b.n)>-0.9999)return {error:'Festepunktene må vende mot hverandre. Roter kilden eller velg et annet punkt.'};
+ const round=v=>Math.round(v*1e10)/1e10;
+ return {module:{...m,x:round(m.x+b.p[0]-a.p[0]),y:round(m.y+b.p[1]-a.p[1]),z:round(m.z+b.p[2]-a.p[2])}};
+}
+function matchingConnections(m,others){
+ const result=[],own=anchors(m);
+ for(const n of others){
+  if(n.id===m.id)continue;
+  const a=footprint(m),b=footprint(n);
+  if(Math.abs(m.x-n.x)>a.x+b.x+0.001||Math.abs(m.z-n.z)>a.z+b.z+0.001||m.y>n.y+n.h+0.001||m.y+m.h<n.y-0.001)continue;
+  for(const p of own)for(const q of anchors(n)){
+   if(dot(p.n,q.n)<-0.9999&&Math.hypot(p.p[0]-q.p[0],p.p[1]-q.p[1],p.p[2]-q.p[2])<0.001)result.push({id:n.id,source:p.id,target:q.id,label:p.label+' ↔ #'+n.id+' '+q.label});
+  }
+ }
+ return result;
+}
 function validModule(m,L,W,others=[],ignore=null){
+ if(!catalog[m.type])return 'Ukjent modultype.';
  if(![m.x,m.y,m.z,m.l,m.w,m.h,m.angle].every(Number.isFinite))return 'Alle mål må være gyldige tall.';
  if(![0,90,180,270].includes(m.angle))return 'Rotasjon må være 0°, 90°, 180° eller 270°.';
  if([m.l,m.w,m.h].some(v=>v<0.05-EPS||v>100+EPS)||m.y<-EPS||m.y+m.h>100+EPS)return 'Dimensjoner: 0,05–100 m. Total høyde: maks 100 m.';
+ if(catalog[m.type].ground&&Math.abs(m.y)>EPS)return 'Dette fundamentet må stå på byggeplaten (Y = 0).';
  const a=footprint(m);
  if(m.x-a.x<-EPS||m.x+a.x>L+EPS||m.z-a.z<-EPS||m.z+a.z>W+EPS)return 'Modulen går utenfor byggeflaten.';
  for(const n of others){
   if(n.id===ignore)continue;
-  const b=footprint(n);
-  if(Math.abs(m.x-n.x)<a.x+b.x-EPS&&Math.abs(m.z-n.z)<a.z+b.z-EPS&&m.y<n.y+n.h-EPS&&m.y+m.h>n.y+EPS)return 'Modulen overlapper '+(catalog[n.type]?.name||'en annen modul')+' #'+n.id+'.';
+  if(solidOverlap(m,n))return 'Modulen overlapper '+(catalog[n.type]?.name||'en annen modul')+' #'+n.id+'.';
  }
  return '';
 }
@@ -204,6 +319,84 @@ try{
  let mode='select',selectedId=null,nextId=1,modules=[],ghost=null,lastHover=null;
  const moduleGroup=new THREE.Group();scene.add(moduleGroup);
  const meshes=new Map();
+ let anchorGroup=null;
+ function newModule(){
+  const type=$('moduleType').value,d=catalog[type];
+  return {id:nextId,type,x:0,z:0,l:d.l,w:d.w,h:d.h,y:$('placeY').valueAsNumber,angle:Number($('placeAngle').value)};
+ }
+ function sourceModule(){
+  const m=$('connectSource').value==='selected'?current():newModule();
+  return m&&Number.isFinite(m.y)?m:null;
+ }
+ function updatePreset(){
+  const d=catalog[$('moduleType').value];
+  $('presetInfo').textContent=[fmt.format(d.l),fmt.format(d.w),fmt.format(d.h)].join(' × ')+' m · '+(d.material||'Testmodul')+(d.ground?' · Y = 0':'');
+  if(d.ground)$('placeY').value='0';
+  $('placeY').disabled=!!d.ground;
+ }
+ function fillOptions(select,items,previous){
+  select.replaceChildren(...items.map(item=>new Option(item.label,item.id)));
+  if(items.some(item=>String(item.id)===previous))select.value=previous;
+ }
+ function refreshConnectors(){
+  const source=sourceModule(),targetSelect=$('connectTarget');
+  const items=modules.filter(n=>!source||source.id!==n.id).map(n=>({id:n.id,label:catalog[n.type].name+' #'+n.id}));
+  const oldTarget=targetSelect.value;
+  fillOptions(targetSelect,[{id:'',label:'Velg målmodul'},...items],oldTarget);
+  const target=modules.find(n=>String(n.id)===targetSelect.value);
+  const t=$('targetAnchor'),s=$('sourceAnchor');
+  const oldT=t.value,oldS=s.value;
+  fillOptions(t,target?anchors(target):[],oldT);
+  // Prefer a top-to-bottom connection by default.
+  if(target&&!anchors(target).some(a=>a.id===oldT)&&anchors(target).some(a=>a.id==='top'))t.value='top';
+  const targetPoint=target&&anchors(target).find(a=>a.id===t.value);
+  const choices=source?anchors(source).filter(a=>!targetPoint||dot(a.n,targetPoint.n)<-0.9999):[];
+  fillOptions(s,choices,oldS);
+  t.disabled=!target;s.disabled=!source||!choices.length;
+  $('doConnect').disabled=!source||!target||!choices.length||($('connectSource').value==='new'&&modules.length>=MAX_MODULES);
+  refreshAnchorMarkers();
+ }
+ function refreshAnchorMarkers(){
+  disposeGroup(anchorGroup);anchorGroup=null;
+  if(!$('showAnchors').checked)return;
+  anchorGroup=new THREE.Group();scene.add(anchorGroup);
+  const target=modules.find(n=>String(n.id)===$('connectTarget').value),selected=current();
+  const r=Math.max(.035,Math.min(.10,Math.max(L,W)*.004));
+  for(const [m,color,chosen] of [[selected,0xffd58a,$('connectSource').value==='selected'?$('sourceAnchor').value:null],[target,0x82e4fa,$('targetAnchor').value]]){
+   if(!m)continue;
+   for(const a of anchors(m)){
+    const mark=new THREE.Mesh(new THREE.SphereGeometry(a.id===chosen?r*1.55:r,10,7),new THREE.MeshBasicMaterial({color:a.id===chosen?0xffffff:color,depthTest:false}));
+    mark.position.set(a.p[0]-L/2+a.n[0]*.008,a.p[1]+a.n[1]*.008,a.p[2]-W/2+a.n[2]*.008);
+    mark.renderOrder=5;anchorGroup.add(mark);
+   }
+  }
+ }
+ function geometryFor(m){
+  if(!isBrace(m))return new THREE.BoxGeometry(1,1,1);
+  const t=braceEndHeight(m.h)/m.h;
+  const shape=new THREE.Shape();
+  shape.moveTo(-.5,-.5);shape.lineTo(.5,.5-t);shape.lineTo(.5,.5);shape.lineTo(-.5,-.5+t);shape.closePath();
+  const geo=new THREE.ExtrudeGeometry(shape,{depth:1,bevelEnabled:false});geo.translate(0,0,-.5);
+  return geo;
+ }
+ function geometryKey(m){return isBrace(m)?'brace:'+braceEndHeight(m.h)/m.h:'box';}
+ function connectModules(){
+  const source=sourceModule(),target=modules.find(n=>String(n.id)===$('connectTarget').value);
+  const report=$('connectorResult');
+  if(!source||!target||source.id===target.id)return;
+  const result=aligned(source,$('sourceAnchor').value,target,$('targetAnchor').value);
+  const error=result.error||validModule(result.module,L,W,modules,source.id);
+  if(error){report.textContent=error;setStatus(error,true);return;}
+  if($('connectSource').value==='selected'){
+   if(!commitEdit(result.module))return;
+  }else{
+   if(modules.length>=MAX_MODULES)return;
+   const m=result.module;nextId++;modules.push(m);addMesh(m);selectModule(m.id);
+  }
+  if(measuring)setMeasuring(false);
+  setMode('select');report.textContent='Koblet geometrisk til modul #'+target.id+'. Ingen fysisk bæreevne er vurdert.';
+  setStatus('Festepunkter sammenfaller. Modul #'+source.id+' oppdatert.');
+ }
  function showPanel(which){
   $('modulePanel').hidden=which!=='modules';$('sitePanel').hidden=which!=='site';
   $('tabModules').setAttribute('aria-pressed',String(which==='modules'));
@@ -211,14 +404,19 @@ try{
  }
  function current(){return modules.find(m=>m.id===selectedId)||null;}
  function modelMesh(m,preview=false){
-  const geo=new THREE.BoxGeometry(1,1,1);
+  const geo=geometryFor(m);
   const mat=new THREE.MeshStandardMaterial({color:preview?0x8fe0b4:catalog[m.type].color,roughness:0.76,transparent:preview,opacity:preview?0.48:1,depthWrite:!preview});
   const mesh=new THREE.Mesh(geo,mat);
   const edge=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:preview?0xc5f3d9:0x24383b}));
-  mesh.add(edge);mesh.userData.moduleId=m.id;mesh.userData.edge=edge;
+  mesh.add(edge);mesh.userData.moduleId=m.id;mesh.userData.edge=edge;mesh.userData.geometryKey=geometryKey(m);
   return mesh;
  }
  function transform(mesh,m){
+  const key=geometryKey(m);
+  if(mesh.userData.geometryKey!==key){
+   mesh.geometry.dispose();mesh.userData.edge.geometry.dispose();
+   mesh.geometry=geometryFor(m);mesh.userData.edge.geometry=new THREE.EdgesGeometry(mesh.geometry);mesh.userData.geometryKey=key;
+  }
   mesh.position.set(m.x-L/2,m.y+m.h/2,m.z-W/2);
   mesh.scale.set(m.l,m.h,m.w);mesh.rotation.y=-m.angle*Math.PI/180;
   mesh.updateMatrixWorld(true);
@@ -239,6 +437,9 @@ try{
   $('moduleInfo').textContent=m?catalog[m.type].name+' #'+m.id+' · '+fmt.format(m.l)+' × '+fmt.format(m.w)+' × '+fmt.format(m.h)+' m':'Velg en modul i 3D-visningen eller listen.';
   if(m){for(const [field,key] of Object.entries({editX:'x',editZ:'z',editY:'y',editL:'l',editW:'w',editH:'h',editAngle:'angle'}))$(field).value=String(m[key]);}
   else for(const id of ['editX','editZ','editY','editL','editW','editH'])$(id).value='';
+  const matches=m?matchingConnections(m,modules):[];
+  $('connectionsInfo').textContent=!m?'Ingen modul valgt.':'Geometriske punktforbindelser: '+matches.length+(matches.length?'\\n'+matches.map(a=>a.label).join('\\n'):'');
+  refreshConnectors();
  }
  function selectModule(id){selectedId=modules.some(m=>m.id===id)?id:null;refreshSelection();if(selectedId!==null)showPanel('modules');}
  function hideGhost(){if(ghost)ghost.visible=false;}
@@ -260,7 +461,7 @@ try{
   if(mode==='select')return null;
   let m;
   if(mode==='move'){const old=current();if(!old)return null;m={...old};}
-  else{const type=$('moduleType').value,d=catalog[type];m={id:nextId,type,l:d.l,w:d.w,h:d.h,y:$('placeY').valueAsNumber,angle:Number($('placeAngle').value)};}
+  else m=newModule();
   m.x=p.x+L/2;m.z=p.z+W/2;
   return snapModule(m,modules,$('snapModules').checked,$('snapAnchors').checked);
  }
@@ -366,7 +567,7 @@ try{
   plot.add(lines([a,e,c,b,e,c,b,e,c,b,e,d,b,e,d,a,e,d,a,e,d,a,e,c],0xc4e8dc));
   scene.add(plot);updateGrid();
   $('size').textContent=fmt.format(L)+' × '+fmt.format(W)+' m';$('area').textContent=fmt.format(L*W);
-  setStatus('Byggeflate oppdatert.');fitCamera();return true;
+  refreshAnchorMarkers();setStatus('Byggeflate oppdatert.');fitCamera();return true;
  }
  function clearMeasurement(){
   points=[];disposeGroup(measureGroup);measureGroup=null;measurementCenter=null;
@@ -455,7 +656,12 @@ try{
   setMode('select');removeMesh(m.id);modules=modules.filter(n=>n.id!==m.id);selectModule(null);setStatus('Modul #'+m.id+' slettet.');
  }
  $('deleteModule').addEventListener('click',deleteSelected);
- for(const id of ['moduleType','placeY','placeAngle','snapModules','snapAnchors'])$(id).addEventListener('change',()=>{if(lastHover)preview(lastHover);});
+ $('moduleType').addEventListener('change',updatePreset);
+ for(const id of ['moduleType','placeY','placeAngle','snapModules','snapAnchors'])$(id).addEventListener('change',()=>{if(lastHover)preview(lastHover);refreshConnectors();});
+ for(const id of ['connectSource','connectTarget','targetAnchor'])$(id).addEventListener('change',refreshConnectors);
+ for(const id of ['showAnchors','sourceAnchor'])$(id).addEventListener('change',refreshAnchorMarkers);
+ $('doConnect').addEventListener('click',connectModules);
+ updatePreset();
  window.addEventListener('keydown',e=>{
   if(e.target instanceof HTMLElement&&['INPUT','SELECT','TEXTAREA','BUTTON'].includes(e.target.tagName))return;
   if(e.key==='Escape'){if(measuring)setMeasuring(false);setMode('select');}
