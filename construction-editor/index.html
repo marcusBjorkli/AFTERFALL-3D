@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#101c20">
-<title>AFTERFALL | Construction Editor CE 0.5</title>
+<title>AFTERFALL | Construction Editor CE 0.5.1</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:#101c20;color:#e9f0ed;font:14px system-ui,sans-serif}
 body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
@@ -80,13 +80,21 @@ button.wide{width:100%;margin-top:7px}
 .paramBox summary{cursor:pointer;font-weight:700;font-size:12px;color:#cfe3dc}
 .paramBox .fields{margin-top:5px}.paramBox label{font-size:11px}.paramBox input{padding:7px 5px}
 .paramBox p{font-size:11px}#insertPanel{border-top:1px solid #486269;margin-top:12px;padding-top:3px}
+
+#wallFitPanel{margin:10px 0;padding:10px;border:1px solid #527572;border-radius:8px;background:#192f34}
+#wallFitPanel summary{font-weight:700;color:#c9e6d9;cursor:pointer}
+#wallFitPanel p{font-size:12px}
+#wallFitReport{white-space:pre-line;color:#c2e3d7}
+#wallFitReport.error{color:#ffb6a2}
+#wallFitPanel .buttons{margin-top:8px}
+#wallFitPanel select{font-size:12px}
 </style>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
 </script>
 </head>
 <body>
-<header><span class="brand">AFTERFALL</span><span class="version">CE 0.5</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
+<header><span class="brand">AFTERFALL</span><span class="version">CE 0.5.1</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
 <main>
 <aside>
 <div class="panelTabs" aria-label="Verktøypaneler"><button id="tabModules" type="button" aria-pressed="true">Moduler</button><button id="tabSite" type="button" aria-pressed="false">Byggeflate / mål</button></div>
@@ -104,6 +112,19 @@ button.wide{width:100%;margin-top:7px}
 <label class="check"><input id="snapModules" type="checkbox" checked>Fest til 0,25 m rutenett</label>
 <label class="check"><input id="snapAnchors" type="checkbox" checked>Fest til nærliggende modulkanter</label>
 <button id="startPlace" class="primary" type="button">Plasser ny modul</button>
+<details id="wallFitPanel">
+<summary>Vegg langs gulv – automatisk hjørnetilpasning</summary>
+<p>Velg et gulv og én av fire ytterkanter. Veggen settes på gulvets overside, og forkortes mot eksisterende tverrvegger. Første vegg beholder full kantlengde.</p>
+<label for="wallFitSource">Vegg</label>
+<select id="wallFitSource"><option value="new">Ny vegg fra modulbibliotek</option><option value="selected">Tilpass valgt eksisterende vegg</option></select>
+<label for="wallFitFloor">Gulvmodul</label>
+<select id="wallFitFloor"><option value="">Velg gulv</option></select>
+<label for="wallFitSide">Ytterkant (gulvets lokale akser)</label>
+<select id="wallFitSide"><option value="north">−Z – langs X</option><option value="east">+X – langs Z</option><option value="south">+Z – langs X</option><option value="west">−X – langs Z</option></select>
+<div class="buttons"><button id="wallFitPreview" type="button" disabled>Forhåndsvis</button><button id="wallFitApply" type="button" disabled>Plasser / tilpass</button></div>
+<p id="wallFitReport" aria-live="polite">Velg gulv og vegg. Alle mål kontrolleres før plassering.</p>
+<p>Åpninger beholder bredde, høyde og valgt sideforskyvning relativt til veggens nye sentrum. Det er ingen materialbruk i editoren.</p>
+</details>
 <details id="bracePanel">
 <summary>Tilpasset skråavstiver – to punkter</summary>
 <p>Velg stolpens side og bjelkens underside i samme vertikalplan. Lengde, helning og endekutt beregnes automatisk.</p>
@@ -159,7 +180,7 @@ button.wide{width:100%;margin-top:7px}
 <button id="doConnect" class="primary" type="button" disabled>Koble moduler</button>
 <p id="connectorResult" aria-live="polite">Velg to festepunkter. Kilden flyttes i X, Y og Z. Punktene må vende mot hverandre.</p>
 </section>
-<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.5. Tilpassede avstivere må beregnes på nytt hvis festemodulene flyttes.</p>
+<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.5.1. Tilpassede avstivere må beregnes på nytt hvis festemodulene flyttes.</p>
 </section>
 <section id="sitePanel" hidden>
 <h1>Byggeflate</h1>
@@ -188,7 +209,7 @@ button.wide{width:100%;margin-top:7px}
 <button data-view="orbit" aria-pressed="true">3D</button><button data-view="top" aria-pressed="false">Ovenfra</button><button data-view="front" aria-pressed="false">Foran</button><button data-view="right" aria-pressed="false">Høyre</button><span class="divider"></span>
 <button id="fit">Tilpass</button><button id="zoomIn" aria-label="Zoom inn">+</button><button id="zoomOut" aria-label="Zoom ut">−</button>
 </div>
-<div id="modebar"><button id="selectMode" type="button" aria-pressed="true">Velg</button><button id="placeMode" type="button" aria-pressed="false">Plasser</button><button id="moveMode" type="button" aria-pressed="false" disabled>Flytt</button><button id="cancelMode" type="button" disabled>Avbryt</button><span id="currentMode">Velg en modul</span></div>
+<div id="modebar"><button id="selectMode" type="button" aria-pressed="true">Velg</button><button id="placeMode" type="button" aria-pressed="false">Plasser</button><button id="moveMode" type="button" aria-pressed="false" disabled>Flytt</button><button id="cancelMode" type="button" disabled>Avbryt</button><button id="wallFitQuick" type="button">Veggtilpasning</button><span id="currentMode">Velg en modul</span></div>
 <p id="status" role="status" aria-live="polite">Laster 3D-miljø …</p>
 <div id="stage">
 <div id="overlay"><b id="size">12 × 10 m</b><br>Areal: <span id="area">120</span> m²<br>Y = 0 m · <span id="viewName">3D</span></div>
@@ -197,7 +218,7 @@ button.wide{width:100%;margin-top:7px}
 </div>
 </section>
 </main>
-<footer>CE 0.5 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
+<footer>CE 0.5.1 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
 <script type="module">
 const $=id=>document.getElementById(id);
 const status=$('status'),stage=$('stage'),form=$('dimensions'),lengthInput=$('length'),widthInput=$('width');
@@ -497,6 +518,71 @@ function validModule(m,L,W,others=[],ignore=null){
  }
  return '';
 }
+const edgeNames={north:'−Z (langs X)',east:'+X (langs Z)',south:'+Z (langs X)',west:'−X (langs Z)'};
+function fitWallType(m){return !!m&&['wallFrame','cladding','solidWall','doorWall','windowWall'].includes(m.type);}
+function fitFloorType(m){return !!m&&m.type==='floorDeck';}
+function floorLocal(f,m){
+ const v=rotateVector([m.x-f.x,m.y-f.y,m.z-f.z],(360-f.angle)%360);
+ return {...m,x:v[0],y:v[1],z:v[2],angle:(m.angle-f.angle+360)%360};
+}
+function edgeSpec(floor,side,thickness){
+ const alongX=side==='north'||side==='south',sign=side==='north'||side==='west'?-1:1;
+ const half=(alongX?floor.l:floor.w)/2,depth=(alongX?floor.w:floor.l)/2;
+ const center=sign*(depth-thickness/2);
+ return {alongX,half,depth,center,v0:center-thickness/2,v1:center+thickness/2,angle:(floor.angle+(alongX?0:90))%360};
+}
+function wallSupported(wall,floor){
+ const n=floorLocal(floor,wall),b=footprint(n);
+ return Math.abs(n.y-floor.h)<=EPS&&n.x-b.x>=-floor.l/2-EPS&&n.x+b.x<=floor.l/2+EPS&&n.z-b.z>=-floor.w/2-EPS&&n.z+b.z<=floor.w/2+EPS;
+}
+function samePlacement(a,b){
+ return a.angle===b.angle&&['x','y','z','l','w','h'].every(k=>Math.abs(a[k]-b[k])<=EPS);
+}
+function containsOpeningInsert(wall,m){
+ if(!isOpening(wall)||!['doorLeaf','windowUnit'].includes(m.type))return false;
+ const n=floorLocal(wall,m),b=footprint(n),o=openingOf(wall);
+ return n.x-b.x>=o.x0-EPS&&n.x+b.x<=o.x1+EPS&&n.y>=o.y0-EPS&&n.y+n.h<=o.y1+EPS&&n.z-b.z>=-wall.w/2-EPS&&n.z+b.z<=wall.w/2+EPS;
+}
+function fitWallOnEdge(source,floor,side,others,L,W){
+ const fail=error=>({error});
+ if(!fitWallType(source)||!fitFloorType(floor)||!Object.hasOwn(edgeNames,side))return fail('Velg en veggtype, gulvmodul og ytterkant.');
+ if(![source.w,source.h].every(Number.isFinite)||source.w<.02-EPS||source.h<.02-EPS||source.h>100||source.w>100)return fail('Kontroller veggtykkelse og vegghøyde.');
+ const e=edgeSpec(floor,side,source.w);
+ if(source.w>e.depth*2+EPS)return fail('Veggen er tykkere enn gulvets bredde på tvers.');
+ let start=-e.half,end=e.half;const startIds=[],endIds=[];
+ const wallY=floor.h;
+ // Work entirely in the floor's local coordinate system. Only perpendicular
+ // wall modules that cover the complete new wall band and height can form a butt joint.
+ for(const n of others){
+  if(n.id===source.id||!fitWallType(n))continue;
+  const local=floorLocal(floor,n),perpendicular=e.alongX?local.angle%180===90:local.angle%180===0;
+  if(!perpendicular)continue;
+  const b=footprint(local),u=e.alongX?local.x:local.z,v=e.alongX?local.z:local.x,bu=e.alongX?b.x:b.z,bv=e.alongX?b.z:b.x;
+  const lo=u-bu,hi=u+bu,vlo=v-bv,vhi=v+bv;
+  if(vlo>e.v0+EPS||vhi<e.v1-EPS||local.y>wallY+EPS||local.y+local.h<wallY+source.h-EPS)continue;
+  // Do not use a wall outside the floor or at an unrelated interior location as a corner.
+  if(!wallSupported(n,floor))continue;
+  if(Math.abs(lo+e.half)<=EPS&&hi>-e.half+EPS){
+   if(hi>start+EPS){start=hi;startIds.length=0;}
+   if(Math.abs(hi-start)<=EPS)startIds.push(n.id);
+  }
+  if(Math.abs(hi-e.half)<=EPS&&lo<e.half-EPS){
+   if(lo<end-EPS){end=lo;endIds.length=0;}
+   if(Math.abs(lo-end)<=EPS)endIds.push(n.id);
+  }
+ }
+ if(end-start<.02-EPS)return fail('Det er ikke nok plass mellom hjørneveggene.');
+ const u=(start+end)/2,localX=e.alongX?u:e.center,localZ=e.alongX?e.center:u;
+ const [x,y,z]=pointToWorld(floor,[localX,floor.h,localZ]);
+ const m=normalizeBuilding({...source,x,y,z,l:end-start,angle:e.angle,edgeFit:{floorId:floor.id,side,startTrim:start+e.half,endTrim:e.half-end,startIds,endIds}});
+ if(!wallSupported(m,floor))return fail('Veggen vil ikke stå helt oppå gulvet.');
+ const geometryError=validModule(m,L,W,others,source.id);
+ if(geometryError)return fail(geometryError+' Kontroller vegghøyde, åpning eller tilstøtende vegg.');
+ // Opening elements are separate objects. Do not silently leave them behind.
+ const previous=others.find(n=>n.id===source.id);
+ if(previous&&!samePlacement(previous,m)&&others.some(n=>n.id!==previous.id&&containsOpeningInsert(previous,n)))return fail('Veggen har en innsatt dør eller et vindu. Fjern elementet først, tilpass veggen og sett det inn på nytt.');
+ return {module:m,fullLength:2*e.half,startTrim:start+e.half,endTrim:e.half-end,startIds,endIds};
+}
 function snapModule(m,others,gridSnap,anchorSnap){
  let x=gridSnap?Math.round(m.x*4)/4:m.x,z=gridSnap?Math.round(m.z*4)/4:m.z;
  if(!anchorSnap)return {...m,x,z};
@@ -534,6 +620,65 @@ try{
  const moduleGroup=new THREE.Group();scene.add(moduleGroup);
  const meshes=new Map();
  let anchorGroup=null;
+ function wallFitInputs(){
+  const source=$('wallFitSource').value==='selected'?current():newModule();
+  const floor=modules.find(m=>String(m.id)===$('wallFitFloor').value);
+  return {source,floor,side:$('wallFitSide').value};
+ }
+ function refreshWallFitOptions(){
+  const target=$('wallFitFloor'),old=target.value,floors=modules.filter(fitFloorType);
+  fillOptions(target,[{id:'',label:'Velg gulvmodul'},...floors.map(m=>({id:m.id,label:catalog[m.type].name+' #'+m.id+' ('+fmt.format(m.l)+' × '+fmt.format(m.w)+' m)'}))],old);
+  if(!target.value&&fitFloorType(current()))target.value=String(current().id);
+  if(!target.value&&floors.length===1)target.value=String(floors[0].id);
+  if($('wallFitSource').value==='selected'&&!fitWallType(current()))$('wallFitSource').value='new';
+  const {source,floor}=wallFitInputs(),ready=fitWallType(source)&&!!floor;
+  $('wallFitPreview').disabled=!ready;$('wallFitApply').disabled=!ready||($('wallFitSource').value==='new'&&modules.length>=MAX_MODULES);
+ }
+ function clearWallReport(){
+  clearBracePreview();$('wallFitReport').className='';$('wallFitReport').textContent='Forhåndsvis for å beregne vegglengde og hjørneskjøter.';
+ }
+ function wallReport(r){
+  const p=$('wallFitReport');p.className=r.error?'error':'';
+  if(r.error){p.textContent=r.error;return;}
+  const trim=(n,ids)=>fmt.format(n*1000)+' mm'+(ids.length?' mot #'+ids.join(', #'):'');
+  p.textContent='Geometrisk godkjent – står helt på gulvet.\nKantlengde: '+fmt.format(r.fullLength)+' m\nVegglengde: '+fmt.format(r.module.l)+' m\nFratrekk start: '+trim(r.startTrim,r.startIds)+'\nFratrekk slutt: '+trim(r.endTrim,r.endIds)+'\nGulvnivå Y: '+fmt.format(r.module.y)+' m';
+ }
+ function calculateWallFit(previewOnly){
+  const {source,floor,side}=wallFitInputs(),r=fitWallOnEdge(source,floor,side,modules,L,W);
+  clearBracePreview();wallReport(r);
+  if(r.error){setStatus(r.error,true);return;}
+  if(measuring)setMeasuring(false); setMode('select');
+  if(previewOnly){
+   fitGhost=modelMesh(r.module,true);transform(fitGhost,r.module);scene.add(fitGhost);
+   $('wallFitPanel').open=true;
+   setStatus('Forhåndsvisning: '+fmt.format(r.module.l)+' m vegg. Bekreft med Plasser / tilpass.');
+   return;
+  }
+  if($('wallFitSource').value==='selected'){
+   if(!commitEdit(r.module))return;
+  }else{
+   if(modules.length>=MAX_MODULES)return;
+   nextId++;modules.push(r.module);addMesh(r.module);selectModule(r.module.id);
+  }
+  wallReport(r);refreshAnchorMarkers();setStatus('Vegg #'+r.module.id+' tilpasset '+fmt.format(r.module.l)+' m. Buttskjøter og gulvplassering kontrollert.');
+ }
+ function openWallFit(){
+  if(measuring)setMeasuring(false);setMode('select');showPanel('modules');
+  if(fitWallType(current()))$('wallFitSource').value='selected';
+  else {
+   $('wallFitSource').value='new';
+   if(!fitWallType({type:$('moduleType').value})){$('moduleType').value='solidWall';updatePreset();}
+  }
+  $('wallFitPanel').open=true;refreshWallFitOptions();refreshAnchorMarkers();$('wallFitPanel').scrollIntoView({block:'start',behavior:'instant'});
+ }
+ function edgeFitStatus(m){
+  if(!m.edgeFit)return '';
+  const f=modules.find(n=>n.id===m.edgeFit.floorId);
+  if(!fitFloorType(f))return 'Opprinnelig gulv finnes ikke lenger.';
+  const r=fitWallOnEdge(m,f,m.edgeFit.side,modules,L,W);
+  if(r.error||!samePlacement(r.module,m))return 'Gulv eller hjørne er endret. Tilpass veggen på nytt.';
+  return 'Tilpasset gulv #'+f.id+' · '+edgeNames[m.edgeFit.side]+' · geometrisk kontakt.';
+ }
  const paramMeta={member:['Bord/stenderbredde (m)',.025,.3,.001],spacing:['Senteravstand, maks (m)',.25,2,.01],openingW:['Åpningsbredde (m)',.2,20,.01],openingH:['Åpningshøyde (m)',.2,20,.01],sill:['Brystningshøyde (m)',.05,20,.01],offset:['Sideforskyvning (m)',-50,50,.01],rim:['Karmbredde (m)',.02,.3,.005],pitch:['Takvinkel (°)',5,60,1],thickness:['Tykkelse (m)',.05,.5,.005]};
  function makeFields(container,prefix,defs,values){
   container.replaceChildren();const row=document.createElement('div');row.className='fields';container.append(row);
@@ -677,7 +822,7 @@ try{
   fillOptions(s,choices,oldS);
   t.disabled=!target;s.disabled=!source||!choices.length;
   $('doConnect').disabled=!source||!target||!choices.length||($('connectSource').value==='new'&&modules.length>=MAX_MODULES);
-  refreshBraceOptions();refreshAnchorMarkers();
+  refreshBraceOptions();refreshWallFitOptions();refreshAnchorMarkers();
  }
  function refreshAnchorMarkers(){
   disposeGroup(anchorGroup);anchorGroup=null;
@@ -686,6 +831,15 @@ try{
   const target=modules.find(n=>String(n.id)===$('connectTarget').value),selected=current();
   const r=Math.max(.035,Math.min(.10,Math.max(L,W)*.004));
   const [post,beam]=braceTargets();
+  if($('wallFitPanel').open){
+   const {floor,side}=wallFitInputs();
+   if(fitFloorType(floor)&&Object.hasOwn(edgeNames,side)){
+    const e=edgeSpec(floor,side,0),a=e.alongX?[-e.half,floor.h+.012,e.center]:[e.center,floor.h+.012,-e.half],b=e.alongX?[e.half,floor.h+.012,e.center]:[e.center,floor.h+.012,e.half];
+    const pts=[pointToWorld(floor,a),pointToWorld(floor,b)].map(p=>new THREE.Vector3(p[0]-L/2,p[1],p[2]-W/2));
+    const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0x82e4fa,depthTest:false}));line.renderOrder=6;anchorGroup.add(line);
+    for(const pt of pts){const mark=new THREE.Mesh(new THREE.SphereGeometry(r*1.4,10,7),new THREE.MeshBasicMaterial({color:0x82e4fa,depthTest:false}));mark.position.copy(pt);mark.renderOrder=6;anchorGroup.add(mark);}
+   }
+  }
   const targets=[[selected,0xffd58a,$('connectSource').value==='selected'?$('sourceAnchor').value:null,null],[target,0x82e4fa,$('targetAnchor').value,null]];
   if($('bracePanel').open){
    targets.push([post,0xffd58a,$('bracePostPoint').value,p=>Math.abs(p.n[1])<EPS],[beam,0x82e4fa,$('braceBeamPoint').value,p=>p.n[1]<-.999]);
@@ -719,7 +873,10 @@ try{
   if(!source||!target||source.id===target.id)return;
   const result=aligned(source,$('sourceAnchor').value,target,$('targetAnchor').value);
   const error=result.error||validModule(result.module,L,W,modules,source.id);
-  if(error){report.textContent=error;setStatus(error,true);return;}
+  if(error){
+   const help=fitWallType(source)&&fitFloorType(target)?' Bruk Veggtilpasning for å få hele veggen innenfor gulvets ytterkant.':'';
+   report.textContent=error+help;setStatus(error+help,true);return;
+  }
   if($('connectSource').value==='selected'){
    if(!commitEdit(result.module))return;
   }else{
@@ -777,6 +934,7 @@ try{
   else for(const id of ['editX','editZ','editY','editL','editW','editH'])$(id).value='';
   const matches=m?matchingConnections(m,modules):[];
   $('connectionsInfo').textContent=!m?'Ingen modul valgt.':'Geometriske punktforbindelser: '+matches.length+(matches.length?'\n'+matches.map(a=>a.label).join('\n'):'');
+  if(m&&m.edgeFit)$('connectionsInfo').textContent+='\n'+edgeFitStatus(m);
   if(m&&isFitted(m))$('connectionsInfo').textContent+='\n'+checkFitStatus(m)+'\nSenterlinje: '+fmt.format(m.fit.length)+' m · Helning: '+fmt.format(m.fit.slope)+'°';
   refreshConnectors();
  }
@@ -1008,9 +1166,14 @@ try{
   setMode('select');removeMesh(m.id);modules=modules.filter(n=>n.id!==m.id);selectModule(null);setStatus('Modul #'+m.id+' slettet.');
  }
  $('deleteModule').addEventListener('click',deleteSelected);
- $('moduleType').addEventListener('change',updatePreset);
- $('newParamFields').addEventListener('input',()=>{updatePresetInfo();if(lastHover)preview(lastHover);refreshConnectors();});
+ $('moduleType').addEventListener('change',()=>{clearWallReport();updatePreset();});
+ $('newParamFields').addEventListener('input',()=>{clearWallReport();updatePresetInfo();if(lastHover)preview(lastHover);refreshConnectors();});
  $('insertOpening').addEventListener('click',insertElement);
+ $('wallFitQuick').addEventListener('click',openWallFit);
+ $('wallFitPreview').addEventListener('click',()=>calculateWallFit(true));
+ $('wallFitApply').addEventListener('click',()=>calculateWallFit(false));
+ $('wallFitPanel').addEventListener('toggle',()=>{refreshWallFitOptions();refreshAnchorMarkers();if(!$('wallFitPanel').open)clearBracePreview();});
+ for(const id of ['wallFitSource','wallFitFloor','wallFitSide'])$(id).addEventListener('change',()=>{clearWallReport();refreshWallFitOptions();refreshAnchorMarkers();});
  for(const id of ['moduleType','placeY','placeAngle','snapModules','snapAnchors'])$(id).addEventListener('change',()=>{if(lastHover)preview(lastHover);refreshConnectors();});
  for(const id of ['connectSource','connectTarget','targetAnchor'])$(id).addEventListener('change',refreshConnectors);
  for(const id of ['showAnchors','sourceAnchor'])$(id).addEventListener('change',refreshAnchorMarkers);
