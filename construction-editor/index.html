@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#101c20">
-<title>AFTERFALL | Construction Editor CE 0.5.2</title>
+<title>AFTERFALL | Construction Editor CE 0.6</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:#101c20;color:#e9f0ed;font:14px system-ui,sans-serif}
 body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
@@ -97,16 +97,42 @@ button.wide{width:100%;margin-top:7px}
 #roofFitPanel .buttons{margin-top:8px}
 #roofFitPanel select{font-size:12px}
 #roofFitPanel input,#roofFitPanel .fields>*{min-width:0}
+
+.panelTabs{grid-template-columns:repeat(3,minmax(0,1fr))}
+#materialPanel{min-width:0;overflow-wrap:anywhere}
+#materialPanel .matSummary{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}
+#materialPanel .matMetric{border:1px solid #486269;background:#192b31;border-radius:6px;padding:9px;min-width:0}
+.matMetric span{display:block;font-size:11px;color:#abc0c3}
+.matMetric strong{display:block;font-size:17px;color:#d5ece2;font-variant-numeric:tabular-nums}
+.matRow{padding:9px 0;border-bottom:1px solid #34494e;min-width:0}
+.matRow strong{font-size:13px;color:#d5e6df}
+.matRow p{margin:4px 0;font-variant-numeric:tabular-nums}
+.matRow small{display:block;font-size:11px;color:#abc0c3}
+.matDetails{border:1px solid #486269;border-radius:7px;padding:9px;margin:9px 0}
+.matDetails summary{font-weight:700;font-size:12px;color:#d2e6df;cursor:pointer;padding:3px 0}
+#materialDensityFields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+#materialDensityFields label{font-size:11px}
+#materialDensityFields input{min-width:0;font-size:16px}
+#materialNotice{color:#eac77d}
+#materialPanel select{font-size:16px}
+main.materials-open{grid-template-columns:minmax(320px,42%) minmax(0,1fr)}
+@media(max-width:660px) and (orientation:portrait){
+ main.materials-open{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr)}
+ main.materials-open aside{max-height:none;border:0}
+ main.materials-open #viewport{display:none}
+ main.materials-open .panelTabs{position:sticky;top:0;z-index:2;background:#142329;padding:6px 0}
+}
+@media(max-height:480px) and (orientation:landscape){main.materials-open{grid-template-columns:minmax(260px,48%) minmax(0,1fr)}main.materials-open aside{max-height:none}}
 </style>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
 </script>
 </head>
 <body>
-<header><span class="brand">AFTERFALL</span><span class="version">CE 0.5.2</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
+<header><span class="brand">AFTERFALL</span><span class="version">CE 0.6</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
 <main>
 <aside>
-<div class="panelTabs" aria-label="Verktøypaneler"><button id="tabModules" type="button" aria-pressed="true">Moduler</button><button id="tabSite" type="button" aria-pressed="false">Byggeflate / mål</button></div>
+<div class="panelTabs" aria-label="Verktøypaneler"><button id="tabModules" type="button" aria-pressed="true">Moduler</button><button id="tabSite" type="button" aria-pressed="false">Byggeflate / mål</button><button id="tabMaterials" type="button" aria-pressed="false">Materialer</button></div>
 <section id="modulePanel">
 <h1>Modulbibliotek</h1>
 <p>Standardmoduler med geometriske festepunkter. Bæreevne og materialbehov beregnes i senere versjoner.</p>
@@ -211,7 +237,7 @@ button.wide{width:100%;margin-top:7px}
 <button id="doConnect" class="primary" type="button" disabled>Koble moduler</button>
 <p id="connectorResult" aria-live="polite">Velg to festepunkter. Kilden flyttes i X, Y og Z. Punktene må vende mot hverandre.</p>
 </section>
-<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.5.2. Tilpassede avstivere må beregnes på nytt hvis festemodulene flyttes.</p>
+<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.6. Tilpassede avstivere må beregnes på nytt hvis festemodulene flyttes.</p>
 </section>
 <section id="sitePanel" hidden>
 <h1>Byggeflate</h1>
@@ -234,13 +260,29 @@ button.wide{width:100%;margin-top:7px}
 <h2 class="desktopHelp">Kontroller</h2>
 <p class="desktopHelp">3D: dra for rotasjon, rull for zoom, høyreklikk og dra for panorering. Ortografisk: dra for panorering. På berøringsskjerm: knip for zoom. Måling: trykk to punkter i planvisning.</p>
 </section>
+<section id="materialPanel" hidden>
+<h1>Materialer og mengdeuttak</h1>
+<p>Netto = faktisk modellert materiale. Råmengde = geometrisk råemne før utsparing og kutt. Ingen materialer trekkes fra inventaret.</p>
+<label for="materialScope">Mengdeuttak for</label><select id="materialScope"><option value="all">Hele prosjektet</option></select>
+<div class="matSummary" id="materialMetrics" aria-live="polite"></div>
+<p id="materialNotice" role="status"></p>
+<h2>Materialliste</h2><div id="materialTotals"></div>
+<h2>Arealer etter formål</h2><div id="materialAreas"></div>
+<details class="matDetails" open><summary>Komponentliste – moduler</summary><div id="materialModules"></div></details>
+<details class="matDetails"><summary>Stykkliste og råemner</summary>
+<p>Like deler grupperes. Løpemeter er for trevirkeformede deler; råemnelengde inkluderer geometrisk endekutt. Takflater og veggpaneler oppgis som modellerte seksjoner, ikke ferdig bestillingsliste.</p>
+<div id="materialParts"></div></details>
+<details class="matDetails"><summary>Densiteter (kg/m³)</summary><p>Justerbare antakelser for spillmodellen. Taket er ett sammensatt modellemne; testmoduler uten valgt densitet får ukjent masse. Verdiene er ikke materialsertifikater.</p><div id="materialDensityFields"></div><button id="resetDensities" type="button" class="wide">Tilbakestill densiteter</button></details>
+<p>Ingen tillegg for festemidler, fukt, standard lagerlengder, sagspor eller øvrig kappsvinn. Vegg med åpning regnes foreløpig som ett massivt panel med utsparing. Lagrede byggeprosjekter og eksport kommer senere.</p>
+<button id="materialBack" class="wide" type="button">Tilbake til moduler</button>
+</section>
 </aside>
 <section id="viewport" aria-label="3D-visning av byggeflate">
 <div id="toolbar" role="toolbar" aria-label="Kameravisninger">
 <button data-view="orbit" aria-pressed="true">3D</button><button data-view="top" aria-pressed="false">Ovenfra</button><button data-view="front" aria-pressed="false">Foran</button><button data-view="right" aria-pressed="false">Høyre</button><span class="divider"></span>
 <button id="fit">Tilpass</button><button id="zoomIn" aria-label="Zoom inn">+</button><button id="zoomOut" aria-label="Zoom ut">−</button>
 </div>
-<div id="modebar"><button id="selectMode" type="button" aria-pressed="true">Velg</button><button id="placeMode" type="button" aria-pressed="false">Plasser</button><button id="moveMode" type="button" aria-pressed="false" disabled>Flytt</button><button id="cancelMode" type="button" disabled>Avbryt</button><button id="wallFitQuick" type="button">Veggtilpasning</button><button id="roofFitQuick" type="button">Taktilpasning</button><span id="currentMode">Velg en modul</span></div>
+<div id="modebar"><button id="selectMode" type="button" aria-pressed="true">Velg</button><button id="placeMode" type="button" aria-pressed="false">Plasser</button><button id="moveMode" type="button" aria-pressed="false" disabled>Flytt</button><button id="cancelMode" type="button" disabled>Avbryt</button><button id="wallFitQuick" type="button">Veggtilpasning</button><button id="roofFitQuick" type="button">Taktilpasning</button><button id="materialsQuick" type="button">Mengder</button><span id="currentMode">Velg en modul</span></div>
 <p id="status" role="status" aria-live="polite">Laster 3D-miljø …</p>
 <div id="stage">
 <div id="overlay"><b id="size">12 × 10 m</b><br>Areal: <span id="area">120</span> m²<br>Y = 0 m · <span id="viewName">3D</span></div>
@@ -249,7 +291,7 @@ button.wide{width:100%;margin-top:7px}
 </div>
 </section>
 </main>
-<footer>CE 0.5.2 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
+<footer>CE 0.6 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
 <script type="module">
 const $=id=>document.getElementById(id);
 const status=$('status'),stage=$('stage'),form=$('dimensions'),lengthInput=$('length'),widthInput=$('width');
@@ -403,6 +445,125 @@ function openingInsert(wall,id){
  const o=openingOf(wall),gap=.005,type=wall.type==='doorWall'?'doorLeaf':'windowUnit',d=catalog[type],l=o.x1-o.x0-2*gap,h=o.y1-o.y0-2*gap;
  const [x,y,z]=pointToWorld(wall,[(o.x0+o.x1)/2,o.y0+gap,0]);
  return {module:normalizeBuilding({id,type,x,y,z,l,w:Math.min(wall.w,d.w),h,angle:wall.angle,params:type==='windowUnit'?{rim:Math.min(.05,l/4,h/4)}:{}})};
+}
+const materialCatalog={
+ wood:{name:'Trevirke',density:450},
+ concrete:{name:'Betong',density:2400},
+ stone:{name:'Stein',density:2600},
+ glass:{name:'Glass',density:2500},
+ roof:{name:'Takmateriale (modellert kompositt)',density:500},
+ test:{name:'Uspesifisert testmateriale',density:null}
+};
+const areaLabels={floor:'Gulv – netto flate',wall:'Vegg – netto sideflate',frame:'Veggramme – projisert treflate',door:'Dør – sideflate',glass:'Glass – synlig flate',roof:'Tak – skrå / dekkende flate',foundation:'Fundament – grunnflate',test:'Testplate – flate'};
+const defaultDensities=()=>Object.fromEntries(Object.entries(materialCatalog).map(([k,v])=>[k,v.density]));
+function polygonArea(poly){
+ if(poly.length<3)return 0;
+ const [x,y]=poly[0];let twice=0;
+ for(let i=1;i<poly.length-1;i++){
+  const a=poly[i],b=poly[i+1];twice+=(a[0]-x)*(b[1]-y)-(a[1]-y)*(b[0]-x);
+ }
+ return Math.abs(twice)/2;
+}
+function pieceVolume(p){return polygonArea(p.polygon)*(p.z1-p.z0);}
+function pieceBounds(p){
+ const x=p.polygon.map(v=>v[0]),y=p.polygon.map(v=>v[1]);
+ return [Math.max(...x)-Math.min(...x),p.z1-p.z0,Math.max(...y)-Math.min(...y)];
+}
+function projectionExtent(poly,u){const proj=poly.map(p=>p[0]*u[0]+p[1]*u[1]);return Math.max(...proj)-Math.min(...proj);}
+function quantityRows(m){
+ const parts=piecesOf(m),vol=parts.reduce((v,p)=>v+pieceVolume(p),0),out=[];
+ const dim=[m.l,m.w,m.h];
+ const add=(label,material,net,raw,dimensions,extra={})=>{
+  if(![net,raw,...dimensions].every(Number.isFinite)||net<-EPS||raw<net-EPS)throw Error('Ugyldig mengde for modul #'+m.id+' '+label);
+  out.push({moduleId:m.id,type:m.type,label,material,net:Math.max(0,net),raw:Math.max(net,raw),dimensions,...extra});
+ };
+ const member=(p,label,index,axis,material='wood')=>{
+  const [l,w,h]=pieceBounds(p),len=axis==='x'?l:axis==='z'?w:h,section=axis==='x'?[w,h]:axis==='z'?[l,h]:[l,w];
+  add(label,material,pieceVolume(p),pieceVolume(p),[len,...section],{length:len,rawLength:len,dimKind:'member',pieceIndex:index});
+ };
+ if(m.type==='floorFrame'){
+  parts.forEach((p,i)=>member(p,i<2?'Kantbjelke – tvers':i<4?'Kantbjelke – langs':'Gulvbjelke',i,i<2?'z':'x'));return out;
+ }
+ if(m.type==='wallFrame'){
+  parts.forEach((p,i)=>{
+   member(p,i===0?'Bunnsvill':i===1?'Toppsvill':'Stender',i,i<2?'x':'y');
+   out[out.length-1].area=polygonArea(p.polygon);out[out.length-1].areaKind='frame';
+  });return out;
+ }
+ if(m.type==='windowUnit'){
+  parts.forEach((p,i)=>{
+   if(p.kind==='glass')add('Glassrute','glass',pieceVolume(p),pieceVolume(p),pieceBounds(p),{area:polygonArea(p.polygon),areaKind:'glass'});
+   else member(p,'Vinduskarm',i,i<2?'y':'x');
+  });return out;
+ }
+ if(isBrace(m)){
+  const p=profileOf(m),t=isFitted(m)?m.fit.thickness:braceEndHeight(m.h)*Math.cos(Math.atan2(m.h-braceEndHeight(m.h),m.l));
+  const slope=isFitted(m)?m.fit.slope:Math.atan2(m.h-braceEndHeight(m.h),m.l)*180/Math.PI;
+  const rad=slope*Math.PI/180,u=[Math.cos(rad),Math.sin(rad)];
+  const len=isFitted(m)?m.fit.length:Math.hypot(m.l,m.h-braceEndHeight(m.h)),rawLength=projectionExtent(p,u);
+  const raw=Math.max(vol,rawLength*t*m.w);
+  add(catalog[m.type].name,'wood',vol,raw,[rawLength,m.w,t],{length:len,rawLength,dimKind:'member',slope,shape:p});return out;
+ }
+ if(m.type==='rafter'){
+  const rad=m.params.pitch*Math.PI/180,p=parts[0].polygon,len=m.l/Math.cos(rad),rawLength=projectionExtent(p,[Math.cos(rad),Math.sin(rad)]);
+  add('Taksperre','wood',vol,rawLength*m.w*m.params.thickness,[rawLength,m.w,m.params.thickness],{length:len,rawLength,dimKind:'member',slope:m.params.pitch,shape:p});return out;
+ }
+ if(['flatRoof','shedRoof','gableRoof'].includes(m.type)){
+  const angle=m.type==='flatRoof'?0:m.params.pitch,half=m.type==='gableRoof',sides=half?[-1,1]:[0];
+  for(const side of sides){
+   const subset=half?parts.filter(p=>side*p.polygon.reduce((v,q)=>v+q[0],0)>0):parts;
+   const net=subset.reduce((v,p)=>v+pieceVolume(p),0),len=(half?m.l/2:m.l)/Math.cos(angle*Math.PI/180),area=len*m.w;
+   const label=half?(side<0?'Saltak – fallflate −X':'Saltak – fallflate +X'):catalog[m.type].name;
+   add(label,'roof',net,area*m.params.thickness,[len,m.w,m.params.thickness],{area,areaKind:'roof',slope:angle,dimKind:'roof',shape:subset.map(p=>p.polygon)});
+  }return out;
+ }
+ const role=catalog[m.type].role;
+ if(role==='post'||role==='beam'||m.type==='post'||m.type==='beam'){
+  const axis=(role==='post'||m.type==='post')?'y':'x';
+  member(parts[0],catalog[m.type].name,0,axis,catalog[m.type].material?'wood':'test');return out;
+ }
+ if(role==='foundation'){
+  add(catalog[m.type].name,m.type==='stoneFoot'?'stone':'concrete',vol,vol,dim,{area:m.l*m.w,areaKind:'foundation'});return out;
+ }
+ if(isOpening(m)){
+  const o=openingOf(m),area=m.l*m.h-(o.x1-o.x0)*(o.y1-o.y0);
+  add(catalog[m.type].name,'wood',vol,m.l*m.w*m.h,dim,{area,areaKind:'wall',shape:[o.x0,o.x1,o.y0,o.y1]});return out;
+ }
+ if(m.type==='floorDeck'||m.type==='panel'){
+  add(catalog[m.type].name,m.type==='panel'?'test':'wood',vol,vol,dim,{area:m.l*m.w,areaKind:m.type==='panel'?'test':'floor'});return out;
+ }
+ if(['solidWall','cladding','doorLeaf'].includes(m.type)){
+  add(catalog[m.type].name,'wood',vol,vol,dim,{area:m.l*m.h,areaKind:m.type==='doorLeaf'?'door':'wall'});return out;
+ }
+ add(catalog[m.type].name,'test',vol,vol,dim);return out;
+}
+function quantitySummary(modules,densities=defaultDensities()){
+ const parts=[],moduleRows=[],byMaterial={},areaTotals={};
+ let net=0,raw=0,mass=0,rawMass=0,unknownVolume=0,unknownRaw=0;
+ for(const m of modules){
+  const rows=quantityRows(m);parts.push(...rows);
+  const sum={id:m.id,name:catalog[m.type].name,count:rows.length,net:0,raw:0,mass:0,rawMass:0,unknown:0};
+  for(const p of rows){
+   const density=densities[p.material],known=Number.isFinite(density)&&density>0;
+   const a=byMaterial[p.material]??={key:p.material,count:0,net:0,raw:0,mass:0,rawMass:0,unknown:0,unknownRaw:0,length:0,rawLength:0,areas:{}};
+   a.count++;a.net+=p.net;a.raw+=p.raw;sum.net+=p.net;sum.raw+=p.raw;
+   net+=p.net;raw+=p.raw;
+   if(known){const km=p.net*density,kr=p.raw*density;a.mass+=km;a.rawMass+=kr;sum.mass+=km;sum.rawMass+=kr;mass+=km;rawMass+=kr;}
+   else{a.unknown+=p.net;a.unknownRaw+=p.raw;sum.unknown+=p.net;unknownVolume+=p.net;unknownRaw+=p.raw;}
+   if(p.length!==undefined){a.length+=p.length;a.rawLength+=p.rawLength;}
+   if(p.areaKind){a.areas[p.areaKind]=(a.areas[p.areaKind]||0)+p.area;areaTotals[p.areaKind]=(areaTotals[p.areaKind]||0)+p.area;}
+  }
+  moduleRows.push(sum);
+ }
+ const groups=new Map();
+ const q=v=>typeof v==='number'?Number(v.toFixed(9)):v;
+ for(const p of parts){
+  // Geometry-sensitive grouping; identical part dimensions alone are insufficient for cut pieces.
+  const signature=JSON.stringify([p.material,p.label,p.dimKind,p.dimensions,p.net,p.raw,p.area,p.areaKind,p.length,p.rawLength,p.slope,p.shape],(k,v)=>q(v));
+  if(!groups.has(signature))groups.set(signature,{...p,count:0,ids:new Set()});
+  const g=groups.get(signature);g.count++;g.ids.add(p.moduleId);
+ }
+ return {moduleCount:modules.length,partCount:parts.length,parts,moduleRows,materials:Object.values(byMaterial),areas:areaTotals,groups:[...groups.values()].map(g=>({...g,ids:[...g.ids]})),net,raw,mass,rawMass,unknownVolume,unknownRaw};
 }
 function solid(m,piece=null){
  const part=piece||{polygon:profileOf(m),z0:-m.w/2,z1:m.w/2};
@@ -659,7 +820,7 @@ function roofWallPair(floor,direction,others){
   if(Math.abs(x1-half)<=EPS&&x0>=-EPS)high.push(s);
  }
  if(!low.length||!high.length)return {error:'Det kreves to motstående yttervegger oppå valgt gulv. Kontroller takretning og veggplassering.'};
- if(low.length!==1||high.length!==1)return {error:'Flere vegger funnet på samme takside. CE 0.5.2 støtter én sammenhengende vegg per motsatt ytterkant.'};
+ if(low.length!==1||high.length!==1)return {error:'Flere vegger funnet på samme takside. CE 0.6 støtter én sammenhengende vegg per motsatt ytterkant.'};
  if(Math.min(low[0].z1,high[0].z1)-Math.max(low[0].z0,high[0].z0)<=EPS)return {error:'Motstående vegger må overlappe i takets lengderetning.'};
  return {angle,span,depth,low:low[0],high:high[0]};
 }
@@ -739,6 +900,78 @@ try{
  const moduleGroup=new THREE.Group();scene.add(moduleGroup);
  const meshes=new Map();
  let anchorGroup=null;
+ let materialDensities=defaultDensities();
+ const quantityFmt=new Intl.NumberFormat('nb-NO',{maximumFractionDigits:6});
+ function qty(n){return quantityFmt.format(Math.abs(n)<1e-10?0:n);}
+ function materialText(parent,tag,text,cls){
+  const el=document.createElement(tag);el.textContent=text;if(cls)el.className=cls;parent.append(el);return el;
+ }
+ function initMaterialDensities(){
+  const host=$('materialDensityFields');host.replaceChildren();
+  for(const [key,m] of Object.entries(materialCatalog)){
+   const wrap=document.createElement('div'),lab=document.createElement('label'),input=document.createElement('input');
+   input.id='density_'+key;lab.htmlFor=input.id;lab.textContent=m.name;
+   input.type='number';input.step='any';input.min='1';input.max='20000';input.placeholder='Ukjent';input.value=materialDensities[key]??'';
+   input.addEventListener('change',()=>{
+    const val=input.valueAsNumber;
+    if(input.value.trim()==='')materialDensities[key]=null;
+    else if(Number.isFinite(val)&&val>=1&&val<=20000)materialDensities[key]=val;
+    else {input.value=materialDensities[key]??'';setStatus('Densitet må være 1–20 000 kg/m³, eller tom for ukjent.',true);}
+    renderMaterials();
+   });
+   wrap.append(lab,input);host.append(wrap);
+  }
+ }
+ function openMaterials(){
+  if(measuring)setMeasuring(false);if(mode!=='select')setMode('select');showPanel('materials');document.querySelector('aside').scrollTop=0;
+ }
+ function renderMaterials(){
+  if($('materialPanel').hidden)return;
+  const selector=$('materialScope'),old=selector.value;
+  fillOptions(selector,[{id:'all',label:'Hele prosjektet'},...modules.map(m=>({id:m.id,label:catalog[m.type].name+' #'+m.id}))],old||'all');
+  const selection=selector.value==='all'?modules:modules.filter(m=>String(m.id)===selector.value);
+  const s=quantitySummary(selection,materialDensities),metrics=$('materialMetrics'),totals=$('materialTotals'),areas=$('materialAreas'),mods=$('materialModules'),parts=$('materialParts');
+  for(const el of [metrics,totals,areas,mods,parts])el.replaceChildren();
+  const metric=(label,value)=>{const box=document.createElement('div');box.className='matMetric';materialText(box,'span',label);materialText(box,'strong',value);metrics.append(box);};
+  const massLabel=(kg,unknown)=>qty(kg)+' kg'+(unknown>EPS?' + ukjent':'');
+  metric('Moduler / deler',s.moduleCount+' / '+s.partCount);
+  metric('Nettovolum',qty(s.net)+' m³');
+  metric('Råmengde',qty(s.raw)+' m³');
+  metric('Netto masse (anslag)',massLabel(s.mass,s.unknownVolume));
+  metric('Rå masse (anslag)',massLabel(s.rawMass,s.unknownRaw));
+  metric('Geometrisk avkapp',qty(Math.max(0,s.raw-s.net))+' m³');
+  $('materialNotice').textContent=!selection.length?'Ingen monterte moduler i utvalget. Forhåndsvisninger telles ikke.':s.unknownVolume>EPS?'Masse er ufullstendig: '+qty(s.unknownVolume)+' m³ netto har ukjent densitet.':'Mengder beregnet fra plasserte moduler. Masse er et spillanslag, ikke en kontroll av konstruksjonen.';
+  for(const a of s.materials){
+   const el=document.createElement('div');el.className='matRow';
+   materialText(el,'strong',materialCatalog[a.key].name+' · '+a.count+' deler');
+   materialText(el,'p','Netto '+qty(a.net)+' m³ · rå '+qty(a.raw)+' m³');
+   materialText(el,'p','Netto '+massLabel(a.mass,a.unknown)+' · rå '+massLabel(a.rawMass,a.unknownRaw));
+   if(a.length>EPS)materialText(el,'p','Lengde: '+qty(a.length)+' lm · rå '+qty(a.rawLength)+' lm');
+   if(a.unknown>EPS)materialText(el,'small','Ukjent masse for '+qty(a.unknown)+' m³ netto.');
+   else materialText(el,'small','Densitet: '+qty(materialDensities[a.key])+' kg/m³');
+   totals.append(el);
+  }
+  for(const [k,v] of Object.entries(s.areas)){
+   const el=document.createElement('div');el.className='matRow';materialText(el,'strong',areaLabels[k]);materialText(el,'p',qty(v)+' m²');areas.append(el);
+  }
+  if(!Object.keys(s.areas).length)materialText(areas,'p','Ingen flater i utvalget.');
+  for(const m of s.moduleRows){
+   const el=document.createElement('div');el.className='matRow';materialText(el,'strong',m.name+' #'+m.id+' · '+m.count+' deler');
+   materialText(el,'p','Netto '+qty(m.net)+' m³ · rå '+qty(m.raw)+' m³ · '+massLabel(m.mass,m.unknown));mods.append(el);
+  }
+  for(const g of s.groups){
+   const el=document.createElement('div');el.className='matRow';materialText(el,'strong',g.count+' × '+g.label);
+   materialText(el,'small',materialCatalog[g.material].name+' · moduler #'+g.ids.join(', #'));
+   const dim=g.dimensions.map(v=>qty(v*1000)).join(' × ')+' mm';
+   materialText(el,'p',(g.dimKind==='member'?'Råemne L × B × T: ':g.dimKind==='roof'?'Skrå lengde × bredde × tykkelse: ':'L × B × H: ')+dim);
+   materialText(el,'p','Netto '+qty(g.net*g.count)+' m³ · rå '+qty(g.raw*g.count)+' m³');
+   if(g.length!==undefined)materialText(el,'small','Lengde '+qty(g.length*g.count)+' lm · rå '+qty(g.rawLength*g.count)+' lm');
+   if(g.areaKind)materialText(el,'small',areaLabels[g.areaKind]+': '+qty(g.area*g.count)+' m²');
+   if(g.slope!==undefined)materialText(el,'small','Helning: '+qty(g.slope)+'°');
+   const density=materialDensities[g.material];materialText(el,'small','Netto masse: '+(Number.isFinite(density)&&density>0?qty(g.net*g.count*density)+' kg':'ukjent'));
+   parts.append(el);
+  }
+ }
  function roofFitInputs(){
   const existing=$('roofFitSource').value==='selected'?current():null,type=$('roofFitType').value,d=catalog[type];
   const source={...(existing||{id:nextId,x:0,y:0,z:0,angle:0}),type,l:d.l,w:d.w,h:d.h,params:{...d.params}};
@@ -1090,9 +1323,11 @@ try{
   setStatus('Festepunkter sammenfaller. Modul #'+source.id+' oppdatert.');
  }
  function showPanel(which){
-  $('modulePanel').hidden=which!=='modules';$('sitePanel').hidden=which!=='site';
+  $('modulePanel').hidden=which!=='modules';$('sitePanel').hidden=which!=='site';$('materialPanel').hidden=which!=='materials';
   $('tabModules').setAttribute('aria-pressed',String(which==='modules'));
-  $('tabSite').setAttribute('aria-pressed',String(which==='site'));
+  $('tabSite').setAttribute('aria-pressed',String(which==='site'));$('tabMaterials').setAttribute('aria-pressed',String(which==='materials'));
+  document.querySelector('main').classList.toggle('materials-open',which==='materials');
+  if(which==='materials')renderMaterials();
  }
  function current(){return modules.find(m=>m.id===selectedId)||null;}
  function modelMesh(m,preview=false){
@@ -1139,7 +1374,7 @@ try{
   if(m&&m.roofFit)$('connectionsInfo').textContent+='\n'+roofFitStatus(m);
   if(m&&m.edgeFit)$('connectionsInfo').textContent+='\n'+edgeFitStatus(m);
   if(m&&isFitted(m))$('connectionsInfo').textContent+='\n'+checkFitStatus(m)+'\nSenterlinje: '+fmt.format(m.fit.length)+' m · Helning: '+fmt.format(m.fit.slope)+'°';
-  refreshConnectors();
+  refreshConnectors();renderMaterials();
  }
  function selectModule(id){
   selectedId=modules.some(m=>m.id===id)?id:null;refreshSelection();
@@ -1351,6 +1586,11 @@ try{
  document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
  $('tabModules').addEventListener('click',()=>{if(measuring)setMeasuring(false);showPanel('modules');});
  $('tabSite').addEventListener('click',()=>{if(mode!=='select')setMode('select');showPanel('site');});
+ for(const id of ['tabMaterials','materialsQuick'])$(id).addEventListener('click',openMaterials);
+ $('materialBack').addEventListener('click',()=>showPanel('modules'));
+ $('materialScope').addEventListener('change',renderMaterials);
+ $('resetDensities').addEventListener('click',()=>{materialDensities=defaultDensities();initMaterialDensities();renderMaterials();});
+ initMaterialDensities();
  for(const id of ['startPlace','placeMode'])$(id).addEventListener('click',()=>setMode('place'));
  for(const id of ['moveModule','moveMode'])$(id).addEventListener('click',()=>setMode('move'));
  for(const id of ['selectMode','cancelMode'])$(id).addEventListener('click',()=>{if(measuring)setMeasuring(false);setMode('select');});
