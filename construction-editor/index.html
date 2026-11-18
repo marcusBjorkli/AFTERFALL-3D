@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#101c20">
-<title>AFTERFALL | Construction Editor CE 0.6</title>
+<title>AFTERFALL | Construction Editor CE 0.7</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:#101c20;color:#e9f0ed;font:14px system-ui,sans-serif}
 body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
@@ -123,16 +123,31 @@ main.materials-open{grid-template-columns:minmax(320px,42%) minmax(0,1fr)}
  main.materials-open .panelTabs{position:sticky;top:0;z-index:2;background:#142329;padding:6px 0}
 }
 @media(max-height:480px) and (orientation:landscape){main.materials-open{grid-template-columns:minmax(260px,48%) minmax(0,1fr)}main.materials-open aside{max-height:none}}
+
+.panelTabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+#structPanel{min-width:0;overflow-wrap:anywhere}
+#structPanel .structMetrics{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}
+.structMetric{padding:8px;border:1px solid #486269;border-radius:6px;background:#192b31}
+.structMetric span{display:block;font-size:11px;color:#abc0c3}
+.structMetric strong{display:block;font-size:17px;color:#d5ece2;font-variant-numeric:tabular-nums}
+.structRow{padding:8px 0;border-bottom:1px solid #34494e}
+.structRow p{margin:3px 0;font-variant-numeric:tabular-nums}
+.structRow button{font-size:12px;padding:5px 8px;margin-top:5px}
+.structError{color:#ff9d91}.structWarn{color:#eac77d}.structOK{color:#b7d9cd}
+#structPanel select{font-size:16px}
+#structPanel summary{font-weight:700;font-size:12px;cursor:pointer}
+#structPanel details{margin:12px 0}
+#structLegend{font-size:11px;color:#abc0c3}
 </style>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
 </script>
 </head>
 <body>
-<header><span class="brand">AFTERFALL</span><span class="version">CE 0.6</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
+<header><span class="brand">AFTERFALL</span><span class="version">CE 0.7</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
 <main>
 <aside>
-<div class="panelTabs" aria-label="Verktøypaneler"><button id="tabModules" type="button" aria-pressed="true">Moduler</button><button id="tabSite" type="button" aria-pressed="false">Byggeflate / mål</button><button id="tabMaterials" type="button" aria-pressed="false">Materialer</button></div>
+<div class="panelTabs" aria-label="Verktøypaneler"><button id="tabModules" type="button" aria-pressed="true">Moduler</button><button id="tabSite" type="button" aria-pressed="false">Byggeflate / mål</button><button id="tabMaterials" type="button" aria-pressed="false">Materialer</button><button id="tabStructure" type="button" aria-pressed="false">Konstruksjon</button></div>
 <section id="modulePanel">
 <h1>Modulbibliotek</h1>
 <p>Standardmoduler med geometriske festepunkter. Bæreevne og materialbehov beregnes i senere versjoner.</p>
@@ -237,7 +252,7 @@ main.materials-open{grid-template-columns:minmax(320px,42%) minmax(0,1fr)}
 <button id="doConnect" class="primary" type="button" disabled>Koble moduler</button>
 <p id="connectorResult" aria-live="polite">Velg to festepunkter. Kilden flyttes i X, Y og Z. Punktene må vende mot hverandre.</p>
 </section>
-<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.6. Tilpassede avstivere må beregnes på nytt hvis festemodulene flyttes.</p>
+<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.7. Tilpassede avstivere må beregnes på nytt hvis festemodulene flyttes.</p>
 </section>
 <section id="sitePanel" hidden>
 <h1>Byggeflate</h1>
@@ -276,13 +291,31 @@ main.materials-open{grid-template-columns:minmax(320px,42%) minmax(0,1fr)}
 <p>Ingen tillegg for festemidler, fukt, standard lagerlengder, sagspor eller øvrig kappsvinn. Vegg med åpning regnes foreløpig som ett massivt panel med utsparing. Lagrede byggeprosjekter og eksport kommer senere.</p>
 <button id="materialBack" class="wide" type="button">Tilbake til moduler</button>
 </section>
+<section id="structPanel" hidden>
+<h1>Konstruksjonskontroll</h1>
+<p>Spillmodell for egenlast og geometrisk understøttelse. Ikke en statisk beregning, byggegodkjenning eller dokumentasjon av sikkerhet.</p>
+<div class="structMetrics" id="structMetrics" aria-live="polite"></div>
+<p id="structNotice" role="status"></p>
+<label class="check"><input type="checkbox" id="structColors">Vis kontrollstatus i 3D</label>
+<p id="structLegend">Rød: feil / manglende lastvei. Gul: usikkerhet eller forenklet kontroll. Grønn: ingen utslag i de utførte spillkontrollene.</p>
+<div class="buttons"><button id="structRefresh" type="button">Beregn på nytt</button><button id="structBack" type="button">Vis modellen</button></div>
+<label for="structFilter">Vis moduler</label><select id="structFilter"><option value="all">Alle</option><option value="issues">Feil og advarsler</option><option value="errors">Bare feil</option></select>
+<h2>Lastvei og modulkontroll</h2><div id="structRows"></div>
+<details class="matDetails" open><summary>Stabilitet per sammenhengende konstruksjon</summary><div id="structAssemblies"></div></details>
+<details class="matDetails"><summary>Konstruksjonsgraf – lastforbindelser</summary><div id="structGraph"></div></details>
+<details class="matDetails"><summary>Beregningsregler / avgrensning</summary>
+<p>Tyngdeakselerasjon 9,81 m/s². Kun egenlast fra CE 0.6. Last fordeles etter areal av horisontale kontaktflater; festede dører/vinduer og tilpassede avstivere kan ha idealiserte forbindelser. Ingen momentlikevekt eller stivhetsberegning.</p>
+<p>Spillgrenser: grunntrykk 0,15 MPa; trykk ved kontakt: tre 1, betong 3, stein 1,5, takkompositt 0,5 MPa; for trestolper nominelt aksialtrykk 4 MPa og lengde / minste tverrmål maks 30; for trebjelker nominell bøyespenning 6 MPa, spenn / høyde maks 25. Disse er konstruerte spillparametere, ikke standardverdier.</p>
+<p>Spenn i gulv og tak er overordnede projiserte støtteavstander, ikke individuelle statiske beregninger. Mulig avstiving sjekkes i X og Z via sammenhengende veggpaneler og tilpassede avstivere. Kontakt gir ikke dokumentert innfesting. Vind, snø, nyttelast, jord, fundamentsetninger, knekking, brudd, deformasjon og forbindelseskapasitet er ikke beregnet.</p>
+</details>
+</section>
 </aside>
 <section id="viewport" aria-label="3D-visning av byggeflate">
 <div id="toolbar" role="toolbar" aria-label="Kameravisninger">
 <button data-view="orbit" aria-pressed="true">3D</button><button data-view="top" aria-pressed="false">Ovenfra</button><button data-view="front" aria-pressed="false">Foran</button><button data-view="right" aria-pressed="false">Høyre</button><span class="divider"></span>
 <button id="fit">Tilpass</button><button id="zoomIn" aria-label="Zoom inn">+</button><button id="zoomOut" aria-label="Zoom ut">−</button>
 </div>
-<div id="modebar"><button id="selectMode" type="button" aria-pressed="true">Velg</button><button id="placeMode" type="button" aria-pressed="false">Plasser</button><button id="moveMode" type="button" aria-pressed="false" disabled>Flytt</button><button id="cancelMode" type="button" disabled>Avbryt</button><button id="wallFitQuick" type="button">Veggtilpasning</button><button id="roofFitQuick" type="button">Taktilpasning</button><button id="materialsQuick" type="button">Mengder</button><span id="currentMode">Velg en modul</span></div>
+<div id="modebar"><button id="selectMode" type="button" aria-pressed="true">Velg</button><button id="placeMode" type="button" aria-pressed="false">Plasser</button><button id="moveMode" type="button" aria-pressed="false" disabled>Flytt</button><button id="cancelMode" type="button" disabled>Avbryt</button><button id="wallFitQuick" type="button">Veggtilpasning</button><button id="roofFitQuick" type="button">Taktilpasning</button><button id="materialsQuick" type="button">Mengder</button><button id="structureQuick" type="button">Kontroll</button><span id="currentMode">Velg en modul</span></div>
 <p id="status" role="status" aria-live="polite">Laster 3D-miljø …</p>
 <div id="stage">
 <div id="overlay"><b id="size">12 × 10 m</b><br>Areal: <span id="area">120</span> m²<br>Y = 0 m · <span id="viewName">3D</span></div>
@@ -291,7 +324,7 @@ main.materials-open{grid-template-columns:minmax(320px,42%) minmax(0,1fr)}
 </div>
 </section>
 </main>
-<footer>CE 0.6 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
+<footer>CE 0.7 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
 <script type="module">
 const $=id=>document.getElementById(id);
 const status=$('status'),stage=$('stage'),form=$('dimensions'),lengthInput=$('length'),widthInput=$('width');
@@ -565,6 +598,255 @@ function quantitySummary(modules,densities=defaultDensities()){
  }
  return {moduleCount:modules.length,partCount:parts.length,parts,moduleRows,materials:Object.values(byMaterial),areas:areaTotals,groups:[...groups.values()].map(g=>({...g,ids:[...g.ids]})),net,raw,mass,rawMass,unknownVolume,unknownRaw};
 }
+// CE 0.7: game-only structural analysis based on the same solid pieces as CE 0.6.
+const STRUCT_TOL=1e-5,CONTACT_MIN=1e-7,GRAVITY=9.81;
+const gameBearing={wood:1e6,concrete:3e6,stone:1.5e6,roof:.5e6};
+function signedArea2(p){let a=0;for(let i=0;i<p.length;i++){const q=p[i],r=p[(i+1)%p.length];a+=q[0]*r[1]-r[0]*q[1];}return a/2;}
+function centroid2(p){
+ let a=0,x=0,y=0;for(let i=0;i<p.length;i++){const q=p[i],r=p[(i+1)%p.length],v=q[0]*r[1]-r[0]*q[1];a+=v;x+=(q[0]+r[0])*v;y+=(q[1]+r[1])*v;}
+ return Math.abs(a)>EPS?[x/(3*a),y/(3*a)]:p[0];
+}
+function ccw(p){return signedArea2(p)<0?p.slice().reverse():p;}
+function bounds2(p){return [Math.min(...p.map(v=>v[0])),Math.max(...p.map(v=>v[0])),Math.min(...p.map(v=>v[1])),Math.max(...p.map(v=>v[1]))];}
+function clipConvex(subject,clip){
+ let out=ccw(subject);clip=ccw(clip);
+ for(let i=0;i<clip.length&&out.length;i++){
+  const a=clip[i],b=clip[(i+1)%clip.length],side=p=>(b[0]-a[0])*(p[1]-a[1])-(b[1]-a[1])*(p[0]-a[0]);
+  const input=out;out=[];
+  for(let j=0;j<input.length;j++){
+   const p=input[j],q=input[(j+1)%input.length],sp=side(p),sq=side(q),pin=sp>=-1e-10,qin=sq>=-1e-10;
+   if(pin)out.push(p);
+   if(pin!==qin&&Math.abs(sp-sq)>1e-15){const t=sp/(sp-sq);out.push([p[0]+t*(q[0]-p[0]),p[1]+t*(q[1]-p[1])]);}
+  }
+ }
+ return out;
+}
+function faceAxes(axis){return axis===0?[1,2]:axis===1?[0,2]:[0,1];}
+function pieceFaces(m,p){
+ const poly=ccw(p.polygon),faces=[];
+ const add=(vs,n)=>{
+  const normal=rotateVector(n,m.angle),len=Math.hypot(...normal);
+  if(len<EPS)return;
+  const axis=normal.findIndex(v=>Math.abs(v)/len>1-1e-10);
+  if(axis<0)return; // sloped faces do not transfer gravity by this model
+  const w=vs.map(v=>pointToWorld(m,v)),axes=faceAxes(axis);
+  const polygon=ccw(w.map(v=>[v[axes[0]],v[axes[1]]]));
+  if(polygonArea(polygon)<=CONTACT_MIN)return;
+  faces.push({axis,sign:Math.sign(normal[axis]),plane:w[0][axis],polygon,bounds:bounds2(polygon)});
+ };
+ add(poly.map(q=>[...q,p.z0]),[0,0,-1]);add(poly.map(q=>[...q,p.z1]),[0,0,1]);
+ for(let i=0;i<poly.length;i++){
+  const a=poly[i],b=poly[(i+1)%poly.length];
+  add([[...a,p.z0],[...b,p.z0],[...b,p.z1],[...a,p.z1]],[b[1]-a[1],a[0]-b[0],0]);
+ }
+ return faces;
+}
+function contactPatch(a,b){
+ if(a.axis!==b.axis||a.sign===b.sign||Math.abs(a.plane-b.plane)>STRUCT_TOL)return null;
+ const p=a.bounds,q=b.bounds;
+ if(Math.min(p[1],q[1])-Math.max(p[0],q[0])<=STRUCT_TOL||Math.min(p[3],q[3])-Math.max(p[2],q[2])<=STRUCT_TOL)return null;
+ const polygon=clipConvex(a.polygon,b.polygon),area=polygonArea(polygon);
+ return area>CONTACT_MIN?{area,polygon,center:centroid2(polygon),plane:(a.plane+b.plane)/2,axis:a.axis}:null;
+}
+function structuralMaterial(m){
+ if(m.type==='windowUnit')return 'wood';
+ if(['flatRoof','shedRoof','gableRoof'].includes(m.type))return 'roof';
+ return quantityRows(m)[0]?.material||'test';
+}
+function massCenter(m,densities){
+ let weight=0,x=0,z=0;const material=structuralMaterial(m);
+ for(const p of piecesOf(m)){
+  const d=densities[p.kind==='glass'?'glass':material],v=pieceVolume(p)*(Number.isFinite(d)&&d>0?d:1),q=centroid2(p.polygon);
+  const a=pointToWorld(m,[q[0],q[1],(p.z0+p.z1)/2]);weight+=v;x+=a[0]*v;z+=a[2]*v;
+ }
+ return weight>EPS?[x/weight,z/weight]:[m.x,m.z];
+}
+function hull2(points){
+ const p=points.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]).filter((q,i,a)=>!i||Math.hypot(q[0]-a[i-1][0],q[1]-a[i-1][1])>STRUCT_TOL);
+ const turn=(a,b,c)=>(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
+ if(p.length<3)return p;
+ const half=arr=>{const h=[];for(const v of arr){while(h.length>1&&turn(h[h.length-2],h[h.length-1],v)<=1e-10)h.pop();h.push(v);}return h;};
+ const a=half(p),b=half(p.slice().reverse());return a.slice(0,-1).concat(b.slice(0,-1));
+}
+function inHull(p,h){
+ if(h.length<3)return false;
+ return h.every((a,i)=>{const b=h[(i+1)%h.length];return (b[0]-a[0])*(p[1]-a[1])-(b[1]-a[1])*(p[0]-a[0])>=-STRUCT_TOL*Math.hypot(b[0]-a[0],b[1]-a[1]);});
+}
+function supportSpan(m,links){
+ const axis=m.angle%180===0?0:1;
+ const ranges=links.filter(e=>e.kind==='bearing'||e.kind==='ground').flatMap(e=>e.patches.map(p=>{
+  const q=p.polygon.map(v=>v[axis]);return [Math.min(...q),Math.max(...q)];
+ })).sort((a,b)=>a[0]-b[0]);
+ if(!ranges.length)return null;
+ const merged=[];for(const r of ranges){const last=merged.at(-1);if(last&&r[0]<=last[1]+STRUCT_TOL)last[1]=Math.max(last[1],r[1]);else merged.push(r.slice());}
+ const center=axis===0?m.x:m.z,lo=center-m.l/2,hi=center+m.l/2;
+ let span=0;for(let i=1;i<merged.length;i++)span=Math.max(span,merged[i][0]-merged[i-1][1]);
+ const left=Math.max(0,merged[0][0]-lo),right=Math.max(0,hi-merged.at(-1)[1]),overhang=Math.max(left,right);
+ return {span,overhang,effective:Math.max(span,2*overhang),zones:merged.length};
+}
+function structureAnalysis(modules,densities=defaultDensities()){
+ const quantities=quantitySummary(modules,densities),massById=new Map(quantities.moduleRows.map(m=>[m.id,m]));
+ const nodes=new Map(),edges=[],sideEdges=[];
+ for(const m of modules){
+  const mass=massById.get(m.id),own=mass.mass*GRAVITY,center=massCenter(m,densities),faces=piecesOf(m).flatMap(p=>pieceFaces(m,p));
+  const f=footprint(m);
+  nodes.set(m.id,{id:m.id,m,name:catalog[m.type].name,material:structuralMaterial(m),faces,box:[m.x-f.x,m.x+f.x,m.y,m.y+m.h,m.z-f.z,m.z+f.z],
+   own,received:0,total:own,moment:[own*center[0],own*center[1]],center,unknown:mass.unknown>EPS,ownUnknown:mass.unknown>EPS,links:[],incoming:[],neighbors:new Set(),issues:[],grounded:false,processed:false,span:null,utilization:[]});
+ }
+ const issue=(n,level,code,message)=>{if(!n.issues.some(a=>a.code===code))n.issues.push({level,code,message});};
+ const link=(from,to,patches,kind,area=patches.reduce((s,p)=>s+p.area,0))=>{
+  const e={from:from.id,to:to?.id??null,patches,kind,area,force:0,unknown:false};
+  edges.push(e);from.links.push(e);if(to){to.incoming.push(e);from.neighbors.add(to.id);to.neighbors.add(from.id);}return e;
+ };
+ const list=[...nodes.values()];
+ for(const n of list){
+  const patches=n.faces.filter(f=>f.axis===1&&f.sign===-1&&Math.abs(f.plane)<=STRUCT_TOL).map(f=>({axis:1,plane:0,polygon:f.polygon,area:polygonArea(f.polygon),center:centroid2(f.polygon)}));
+  if(patches.length)link(n,null,patches,'ground');
+ }
+ for(let i=0;i<list.length;i++)for(let j=i+1;j<list.length;j++){
+  const a=list[i],b=list[j],A=a.box,B=b.box;
+  if([0,2,4].some(k=>A[k]>B[k+1]+STRUCT_TOL||B[k]>A[k+1]+STRUCT_TOL))continue;
+  const ab=[],ba=[],sides=[];
+  for(const p of a.faces)for(const q of b.faces){
+   const patch=contactPatch(p,q);if(!patch)continue;
+   if(p.axis===1)(p.sign===-1?ab:ba).push(patch);else sides.push(patch);
+  }
+  if(ab.length)link(a,b,ab,'bearing');if(ba.length)link(b,a,ba,'bearing');
+  if(sides.length){
+   a.neighbors.add(b.id);b.neighbors.add(a.id);
+   sideEdges.push({a:a.id,b:b.id,patches:sides,area:sides.reduce((v,p)=>v+p.area,0)});
+  }
+ }
+ // Insertion clearance is intentional; model a mounting connection, not a contact patch.
+ for(const n of list){
+  if(['doorLeaf','windowUnit'].includes(n.m.type)&&!n.links.length){
+   const hosts=list.filter(a=>containsOpeningInsert(a.m,n.m)&&((a.m.type==='doorWall')===(n.m.type==='doorLeaf')));
+   if(hosts.length===1){link(n,hosts[0],[],'insert',1);issue(n,'warn','insert','Innfesting i åpning er idealisert; beslag og karmforbindelser er ikke beregnet.');}
+  }
+  if(isFitted(n.m)){
+   const m=n.m,post=nodes.get(m.fit.postId),beam=nodes.get(m.fit.beamId);
+   const side=post&&sideEdges.find(e=>((e.a===n.id&&e.b===post.id)||(e.b===n.id&&e.a===post.id)));
+   const own=anchors(m),pa=post&&anchors(post.m).find(p=>p.id===m.fit.postPoint),pb=beam&&anchors(beam.m).find(p=>p.id===m.fit.beamPoint);
+   const match=(p,q)=>p&&q&&dot(p.n,q.n)<-.9999&&Math.hypot(...p.p.map((v,i)=>v-q.p[i]))<STRUCT_TOL;
+   if(side&&match(own[0],pa)&&match(own[1],pb)){
+    const e=link(n,post,side.patches,'brace',side.area);e.braceAngle=m.fit.slope;
+    issue(n,'warn','brace','Avstiverens sideforbindelse er idealisert. Horisontalkraft og skjøtekapasitet er ikke beregnet.');
+   }else issue(n,'error','brace-fit','Tilpasset avstiver har mistet ett eller begge opprinnelige festepunkter.');
+  }
+ }
+ // Reachability is calculated independently of load distribution.
+ const queue=list.filter(n=>n.links.some(e=>e.kind==='ground'));queue.forEach(n=>n.grounded=true);
+ for(let i=0;i<queue.length;i++)for(const e of queue[i].incoming){const a=nodes.get(e.from);if(!a.grounded){a.grounded=true;queue.push(a);}}
+ for(const n of list){
+  if(!n.grounded)issue(n,'error','no-ground','Ingen sammenhengende lastvei til byggegrunnen.');
+  if(!n.links.length)issue(n,'error','no-support','Ingen understøttende flate eller definert monteringsforbindelse.');
+  if(n.ownUnknown)issue(n,'warn','unknown-mass','Deler av egenlasten er ukjent. Angi densitet i Materialer.');
+  if(n.links.some(e=>e.kind==='ground')&&catalog[n.m.type].role!=='foundation')issue(n,'warn','direct-ground','Står direkte på byggeplaten uten egen fundamentmodul.');
+ }
+ // A topological pass transfers each known weight once; cyclic graphs are not solved.
+ const pending=new Map(list.map(n=>[n.id,n.incoming.length])),ready=list.filter(n=>pending.get(n.id)===0);
+ let groundForce=0,unresolvedForce=0,groundUnknown=false,unresolvedUnknown=false;
+ for(let i=0;i<ready.length;i++){
+  const n=ready[i];n.processed=true;n.total=n.own+n.received;
+  if(n.unknown&&!n.ownUnknown)issue(n,'warn','unknown-above','Ukjent last mottatt fra en overliggende modul.');
+  if(n.total>EPS)n.center=n.moment.map(v=>v/n.total);
+  if(!n.links.length){unresolvedForce+=n.total;unresolvedUnknown||=n.unknown;continue;}
+  const physical=n.links.filter(e=>e.kind==='bearing'||e.kind==='ground');
+  const ideal=n.links.filter(e=>e.kind==='brace'||e.kind==='insert');
+  if(physical.length&&!ideal.length&&!n.unknown&&n.total>EPS){
+   const hull=hull2(physical.flatMap(e=>e.patches.flatMap(p=>p.polygon)));
+   if(!inHull(n.center,hull))issue(n,'error','eccentric','Forenklet lastresultant ligger utenfor understøttelsens konvekse omriss. Fare for utkraging / velting i spillmodellen.');
+  }
+  const supported=n.links.filter(e=>e.to===null||nodes.get(e.to).grounded);
+  // If a ground path exists, do not distribute through floating supports.
+  const active=supported.length?supported:n.links;
+  if(active.length<n.links.length)issue(n,'warn','floating-support','En mulig understøttelse mangler lastvei og er utelatt fra lastfordelingen.');
+  const totalArea=active.reduce((s,e)=>s+e.area,0);
+  for(const e of n.links){
+   const use=active.includes(e),force=use?n.total*e.area/totalArea:0;
+   e.force=force;e.unknown=use&&n.unknown;
+   if(e.kind==='bearing'||e.kind==='ground'){
+    const target=e.to===null?null:nodes.get(e.to);
+    const cap=e.kind==='ground'?.15e6:Math.min(gameBearing[n.material]??Infinity,gameBearing[target.material]??Infinity);
+    const known=e.kind==='ground'||(gameBearing[n.material]!==undefined&&gameBearing[target.material]!==undefined);
+    e.pressure=force/e.area;
+    if(use&&known&&!n.unknown){e.utilization=e.pressure/cap;n.utilization.push({name:e.kind==='ground'?'Grunntrykk':'Kontakttrykk mot #'+e.to,value:e.utilization});
+     if(e.utilization>1+EPS)issue(n,'error','bearing-'+e.to,'Spillgrense for '+(e.kind==='ground'?'grunntrykk':'kontakttrykk mot #'+e.to)+' overskredet.');
+    }else if(use&&!known)issue(n,'warn','bearing-material','Kontaktkapasitet kan ikke vurderes for uspesifisert materiale.');
+   }
+   if(e.to===null){groundForce+=force;groundUnknown||=e.unknown;continue;}
+   const target=nodes.get(e.to);
+   target.received+=force;target.unknown||=e.unknown;
+   let center=[n.m.x,n.m.z];
+   if(e.kind==='bearing')center=[0,1].map(k=>e.patches.reduce((s,p)=>s+p.center[k]*p.area,0)/e.area);
+   else if(e.kind==='brace'&&isFitted(n.m)){const a=anchors(n.m)[0].p;center=[a[0],a[2]];}
+   target.moment[0]+=force*center[0];target.moment[1]+=force*center[1];
+   pending.set(target.id,pending.get(target.id)-1);if(pending.get(target.id)===0)ready.push(target);
+  }
+ }
+ // Account for the weight of unprocessed cyclic nodes plus load already delivered to them.
+ for(const n of list)if(!n.processed){n.total=n.own+n.received;unresolvedForce+=n.total;unresolvedUnknown||=n.unknown;issue(n,'error','cycle','Sirkulær lastgraf eller lastvei etter en slik sløyfe. Lastfordeling ikke løst.');}
+ for(const n of list){
+  const m=n.m,beam=['timberBeam','foundationBeam','beam'].includes(m.type),post=['timberPost','post'].includes(m.type);
+  if(beam||['floorDeck','floorFrame','flatRoof','shedRoof','gableRoof','rafter'].includes(m.type)){
+   n.span=supportSpan(m,n.links.filter(e=>e.kind==='ground'||(e.to!==null&&nodes.get(e.to).grounded)));
+   const depth=m.type==='rafter'?m.params.thickness:['flatRoof','shedRoof','gableRoof'].includes(m.type)?m.params.thickness:m.h;
+   if(n.span&&n.span.effective>EPS){
+    const ratio=n.span.effective/depth,limit=m.type==='floorDeck'?35:25;n.span.ratio=ratio;n.span.limit=limit;
+    if(ratio>limit+EPS)issue(n,'warn','span','Effektivt, projisert spenn / konstruksjonshøyde overskrider spillgrensen '+limit+'.');
+    if(beam&&m.type!=='beam'&&n.processed&&!n.unknown){
+     // Uniformly distributed equivalent load over the member; simply supported or cantilever approximation.
+     const q=n.total/m.l,M=Math.max(q*n.span.span**2/8,q*n.span.overhang**2/2),Z=m.w*m.h*m.h/6;
+     const u=M/Z/6e6;n.utilization.push({name:'Nominell bøyning (jevnt fordelt last)',value:u});
+     if(u>1+EPS)issue(n,'error','bending','Spillgrense for nominell bøyespenning overskredet.');
+    }else if(!beam)issue(n,'warn','span-model','Spenn er et overordnet geometrisk anslag; individuell lastdeling og opplegg for delene er ikke beregnet.');
+   }
+  }
+  if(post){
+   const slender=m.h/Math.min(m.l,m.w);
+   n.slenderness=slender;
+   if(slender>30)issue(n,'warn','slender','Stolpens høyde / minste tverrmål overskrider spillgrensen 30. Knekking er ikke beregnet.');
+   if(m.type==='timberPost'&&!n.unknown&&n.processed){
+    const u=n.total/(m.l*m.w*4e6);n.utilization.push({name:'Nominelt aksialtrykk',value:u});
+    if(u>1+EPS)issue(n,'error','compression','Spillgrense for nominelt aksialtrykk overskredet.');
+   }
+  }
+  if(n.material==='test')issue(n,'warn','test-material','Testmodul har ingen definert mekanisk kapasitet.');
+ }
+ // Connected assemblies. Only grounded continuous wall panels and fitted braces
+ // with both original connections are candidates for directional bracing.
+ const assemblies=[],seen=new Set();
+ for(const root of list){
+  if(seen.has(root.id))continue;
+  const members=[root];seen.add(root.id);
+  for(let i=0;i<members.length;i++)for(const id of members[i].neighbors)if(!seen.has(id)){seen.add(id);members.push(nodes.get(id));}
+  const elevated=members.some(n=>n.m.y+n.m.h>1+EPS&&(catalog[n.m.type].role!=='foundation'));
+  const dirs={X:[],Z:[]};
+  for(const n of members){
+   const m=n.m;
+   const panel=['solidWall','doorWall','windowWall'].includes(m.type)&&m.l>=.5&&m.h>=.5;
+   const brace=isFitted(m)&&n.links.some(e=>e.kind==='brace')&&!n.issues.some(i=>i.code==='brace-fit');
+   if(n.grounded&&(panel||brace))dirs[m.angle%180===0?'X':'Z'].push(n.id);
+  }
+  const groundPatches=members.flatMap(n=>n.links.filter(e=>e.kind==='ground').flatMap(e=>e.patches));
+  const weight=members.reduce((s,n)=>s+n.own,0),unknown=members.some(n=>n.ownUnknown);
+  const center=weight>EPS?[0,1].map(k=>members.reduce((s,n)=>s+n.own*massCenter(n.m,densities)[k],0)/weight):null;
+  const hull=groundPatches.length?hull2(groundPatches.flatMap(p=>p.polygon)):[];
+  const stable=center&&!unknown&&hull.length>=3?inHull(center,hull):null;
+  const warnings=[];
+  if(!groundPatches.length)warnings.push('Ingen kontakt med byggegrunnen.');
+  if(stable===false){warnings.push('Samlet egenlastresultant utenfor grunnkontaktens omriss.');for(const n of members)issue(n,'error','assembly-eccentric','Samlet egenlastresultant ligger utenfor byggegrunnens kontaktomriss.');}
+  if(elevated&&(!dirs.X.length||!dirs.Z.length)){
+   warnings.push('Mulig manglende sideavstiving i '+[!dirs.X.length?'X':null,!dirs.Z.length?'Z':null].filter(Boolean).join(' og ')+'-retning.');
+   for(const n of members.filter(n=>n.m.y+n.m.h>1))issue(n,'warn','lateral','Sammenhengende konstruksjon mangler registrert avstivingskandidat i én eller begge retninger.');
+  }
+  if(elevated&&dirs.X.length&&dirs.Z.length)warnings.push('Avstivingskandidater finnes i begge retninger; forbindelser og forankring er ikke kontrollert.');
+  if(unknown)warnings.push('Ukjent egenlast i konstruksjonen.');
+  assemblies.push({ids:members.map(n=>n.id),dirs,elevated,stable,warnings,groundArea:groundPatches.reduce((s,p)=>s+p.area,0)});
+ }
+ for(const n of list){n.status=n.issues.some(i=>i.level==='error')?'error':n.issues.length?'warn':'ok';}
+ return {nodes:list,edges,sideEdges,assemblies,ownForce:quantities.mass*GRAVITY,unknownVolume:quantities.unknownVolume,groundForce,unresolvedForce,groundUnknown,unresolvedUnknown,errors:list.filter(n=>n.status==='error').length,warnings:list.filter(n=>n.status==='warn').length,cycles:list.filter(n=>!n.processed).length};
+}
 function solid(m,piece=null){
  const part=piece||{polygon:profileOf(m),z0:-m.w/2,z1:m.w/2};
  const polygon=part.polygon;
@@ -820,7 +1102,7 @@ function roofWallPair(floor,direction,others){
   if(Math.abs(x1-half)<=EPS&&x0>=-EPS)high.push(s);
  }
  if(!low.length||!high.length)return {error:'Det kreves to motstående yttervegger oppå valgt gulv. Kontroller takretning og veggplassering.'};
- if(low.length!==1||high.length!==1)return {error:'Flere vegger funnet på samme takside. CE 0.6 støtter én sammenhengende vegg per motsatt ytterkant.'};
+ if(low.length!==1||high.length!==1)return {error:'Flere vegger funnet på samme takside. CE 0.7 støtter én sammenhengende vegg per motsatt ytterkant.'};
  if(Math.min(low[0].z1,high[0].z1)-Math.max(low[0].z0,high[0].z0)<=EPS)return {error:'Motstående vegger må overlappe i takets lengderetning.'};
  return {angle,span,depth,low:low[0],high:high[0]};
 }
@@ -901,6 +1183,70 @@ try{
  const meshes=new Map();
  let anchorGroup=null;
  let materialDensities=defaultDensities();
+ let structuralCache=null,structuralKey='';
+ const structFmt=new Intl.NumberFormat('nb-NO',{maximumFractionDigits:3});
+ const skn=v=>structFmt.format(v/1000)+' kN';
+ function structuralResult(){
+  const key=JSON.stringify([modules,materialDensities]);
+  if(!structuralCache||key!==structuralKey){structuralCache=structureAnalysis(modules,materialDensities);structuralKey=key;}
+  return structuralCache;
+ }
+ function structuralColors(){
+  const active=$('structColors').checked;
+  const statuses=active?new Map(structuralResult().nodes.map(n=>[n.id,n.status])):null;
+  for(const [id,mesh] of meshes){
+   const color=statuses?.get(id),selected=id===selectedId;
+   mesh.userData.edge.material.color.setHex(color==='error'?0xff8178:color==='warn'?0xeac77d:color==='ok'?0x80d9ad:selected?0xffd58a:0x24383b);
+   mesh.material.emissive.setHex(color==='error'?0x6b1815:color==='warn'?0x4a3510:color==='ok'?0x123922:selected?0x59401a:0x000000);
+  }
+ }
+ function renderStructure(){
+  if($('structPanel').hidden){if($('structColors').checked)structuralColors();return;}
+  const s=structuralResult(),metrics=$('structMetrics'),rows=$('structRows'),groups=$('structAssemblies'),graph=$('structGraph');
+  for(const el of [metrics,rows,groups,graph])el.replaceChildren();
+  function metric(label,value,cls){const box=document.createElement('div');box.className='structMetric';materialText(box,'span',label);materialText(box,'strong',value,cls);metrics.append(box);}
+  const unknown=(v,u)=>skn(v)+(u?' + ukjent':'');
+  metric('Feil / advarsler',s.errors+' / '+s.warnings,s.errors?'structError':s.warnings?'structWarn':'structOK');
+  metric('Med lastvei',s.nodes.filter(n=>n.grounded).length+' / '+s.nodes.length);
+  metric('Kjent egenlast',unknown(s.ownForce,s.unknownVolume>EPS));
+  metric('Til byggegrunn',unknown(s.groundForce,s.groundUnknown));
+  metric('Ufordelt last',unknown(s.unresolvedForce,s.unresolvedUnknown));
+  metric('Lastforbindelser',String(s.edges.length));
+  $('structNotice').textContent=!s.nodes.length?'Ingen plasserte moduler.':s.errors?'Feil funnet. Rett lastvei, plassering eller spillgrense før videre bygging.':s.warnings?'Ingen registrerte feil, men advarsler og modellbegrensninger gjenstår.':'Ingen utslag i de utførte spillkontrollene. Ikke en sikkerhetsgodkjenning.';
+  const filter=$('structFilter').value;
+  for(const n of s.nodes.filter(n=>filter==='all'||(filter==='errors'?n.status==='error':n.status!=='ok')).sort((a,b)=>({error:0,warn:1,ok:2}[a.status]-{error:0,warn:1,ok:2}[b.status]||a.id-b.id))){
+   const el=document.createElement('div');el.className='structRow';
+   materialText(el,'strong','#'+n.id+' '+n.name+' · '+({error:'Feil',warn:'Advarsel',ok:'Ingen utslag'}[n.status]),{error:'structError',warn:'structWarn',ok:'structOK'}[n.status]);
+   materialText(el,'p','Egenlast '+unknown(n.own,n.ownUnknown)+' · mottatt '+skn(n.received)+' · sum '+unknown(n.total,n.unknown));
+   materialText(el,'p','Lastvei: '+(n.grounded?'til byggegrunn':'mangler')+' · '+(n.links.map(e=>e.to===null?'grunn':('#'+e.to)).join(', ')||'ingen'));
+   if(n.span)materialText(el,'p','Fritt spenn '+structFmt.format(n.span.span)+' m · utkraging '+structFmt.format(n.span.overhang)+' m · effektivt '+structFmt.format(n.span.effective)+' m');
+   if(n.slenderness!==undefined)materialText(el,'p','Høyde / tverrmål: '+structFmt.format(n.slenderness));
+   for(const u of n.utilization)materialText(el,'p',u.name+': '+structFmt.format(u.value*100)+' % av spillgrense',u.value>1?'structError':'');
+   for(const issue of n.issues)materialText(el,'p',issue.message,issue.level==='error'?'structError':'structWarn');
+   const b=materialText(el,'button','Velg i 3D');b.type='button';b.addEventListener('click',()=>{selectModule(n.id);showPanel('modules');});rows.append(el);
+  }
+  if(!rows.childElementCount)materialText(rows,'p','Ingen moduler i utvalget.');
+  for(const [i,a] of s.assemblies.entries()){
+   const el=document.createElement('div');el.className='structRow';materialText(el,'strong','Konstruksjon '+(i+1)+' · '+a.ids.length+' moduler');
+   materialText(el,'p','Grunnkontakt '+structFmt.format(a.groundArea)+' m² · moduler #'+a.ids.join(', #'));
+   if(a.elevated)materialText(el,'p','Avstivingskandidater X: '+(a.dirs.X.join(', ')||'ingen')+' · Z: '+(a.dirs.Z.join(', ')||'ingen'));
+   for(const message of a.warnings)materialText(el,'p',message,'structWarn');groups.append(el);
+  }
+  for(const e of s.edges){
+   const el=document.createElement('div');el.className='structRow';
+   materialText(el,'strong','#'+e.from+' → '+(e.to===null?'byggegrunn':'#'+e.to)+' · '+({bearing:'flatekontakt',ground:'grunnkontakt',insert:'idealisert innfesting',brace:'idealisert avstiver'}[e.kind]));
+   materialText(el,'p',unknown(e.force,e.unknown)+' · '+(e.kind==='insert'?'ingen modellert kontaktflate':structFmt.format(e.area)+' m²'));
+   if(e.pressure!==undefined)materialText(el,'p','Nominelt trykk '+structFmt.format(e.pressure/1e6)+' MPa');
+   if(!s.nodes.find(n=>n.id===e.from)?.processed)materialText(el,'p','Ikke løst i lastgrafen.','structError');
+   graph.append(el);
+  }
+  if(!s.edges.length)materialText(graph,'p','Ingen lastforbindelser.');
+  materialText(graph,'p','Sidekontakter (uten automatisk vertikal lastoverføring): '+s.sideEdges.length);
+  structuralColors();
+ }
+ function openStructure(){
+  if(measuring)setMeasuring(false);if(mode!=='select')setMode('select');showPanel('structure');document.querySelector('aside').scrollTop=0;
+ }
  const quantityFmt=new Intl.NumberFormat('nb-NO',{maximumFractionDigits:6});
  function qty(n){return quantityFmt.format(Math.abs(n)<1e-10?0:n);}
  function materialText(parent,tag,text,cls){
@@ -917,7 +1263,7 @@ try{
     if(input.value.trim()==='')materialDensities[key]=null;
     else if(Number.isFinite(val)&&val>=1&&val<=20000)materialDensities[key]=val;
     else {input.value=materialDensities[key]??'';setStatus('Densitet må være 1–20 000 kg/m³, eller tom for ukjent.',true);}
-    renderMaterials();
+    renderMaterials();renderStructure();
    });
    wrap.append(lab,input);host.append(wrap);
   }
@@ -1323,11 +1669,12 @@ try{
   setStatus('Festepunkter sammenfaller. Modul #'+source.id+' oppdatert.');
  }
  function showPanel(which){
-  $('modulePanel').hidden=which!=='modules';$('sitePanel').hidden=which!=='site';$('materialPanel').hidden=which!=='materials';
+  $('modulePanel').hidden=which!=='modules';$('sitePanel').hidden=which!=='site';$('materialPanel').hidden=which!=='materials';$('structPanel').hidden=which!=='structure';
   $('tabModules').setAttribute('aria-pressed',String(which==='modules'));
   $('tabSite').setAttribute('aria-pressed',String(which==='site'));$('tabMaterials').setAttribute('aria-pressed',String(which==='materials'));
-  document.querySelector('main').classList.toggle('materials-open',which==='materials');
-  if(which==='materials')renderMaterials();
+  $('tabStructure').setAttribute('aria-pressed',String(which==='structure'));
+  document.querySelector('main').classList.toggle('materials-open',which==='materials'||which==='structure');
+  if(which==='materials')renderMaterials();if(which==='structure')renderStructure();
  }
  function current(){return modules.find(m=>m.id===selectedId)||null;}
  function modelMesh(m,preview=false){
@@ -1374,7 +1721,7 @@ try{
   if(m&&m.roofFit)$('connectionsInfo').textContent+='\n'+roofFitStatus(m);
   if(m&&m.edgeFit)$('connectionsInfo').textContent+='\n'+edgeFitStatus(m);
   if(m&&isFitted(m))$('connectionsInfo').textContent+='\n'+checkFitStatus(m)+'\nSenterlinje: '+fmt.format(m.fit.length)+' m · Helning: '+fmt.format(m.fit.slope)+'°';
-  refreshConnectors();renderMaterials();
+  refreshConnectors();renderMaterials();renderStructure();
  }
  function selectModule(id){
   selectedId=modules.some(m=>m.id===id)?id:null;refreshSelection();
@@ -1589,8 +1936,13 @@ try{
  for(const id of ['tabMaterials','materialsQuick'])$(id).addEventListener('click',openMaterials);
  $('materialBack').addEventListener('click',()=>showPanel('modules'));
  $('materialScope').addEventListener('change',renderMaterials);
- $('resetDensities').addEventListener('click',()=>{materialDensities=defaultDensities();initMaterialDensities();renderMaterials();});
+ $('resetDensities').addEventListener('click',()=>{materialDensities=defaultDensities();initMaterialDensities();renderMaterials();renderStructure();});
  initMaterialDensities();
+ for(const id of ['tabStructure','structureQuick'])$(id).addEventListener('click',openStructure);
+ $('structBack').addEventListener('click',()=>showPanel('modules'));
+ $('structRefresh').addEventListener('click',()=>{structuralCache=null;renderStructure();});
+ $('structFilter').addEventListener('change',renderStructure);
+ $('structColors').addEventListener('change',structuralColors);
  for(const id of ['startPlace','placeMode'])$(id).addEventListener('click',()=>setMode('place'));
  for(const id of ['moveModule','moveMode'])$(id).addEventListener('click',()=>setMode('move'));
  for(const id of ['selectMode','cancelMode'])$(id).addEventListener('click',()=>{if(measuring)setMeasuring(false);setMode('select');});
