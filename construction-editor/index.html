@@ -751,16 +751,17 @@ function structureAnalysis(modules,densities=defaultDensities()){
   if(n.unknown&&!n.ownUnknown)issue(n,'warn','unknown-above','Ukjent last mottatt fra en overliggende modul.');
   if(n.total>EPS)n.center=n.moment.map(v=>v/n.total);
   if(!n.links.length){unresolvedForce+=n.total;unresolvedUnknown||=n.unknown;continue;}
-  const physical=n.links.filter(e=>e.kind==='bearing'||e.kind==='ground');
-  const ideal=n.links.filter(e=>e.kind==='brace'||e.kind==='insert');
-  if(physical.length&&!ideal.length&&!n.unknown&&n.total>EPS){
-   const hull=hull2(physical.flatMap(e=>e.patches.flatMap(p=>p.polygon)));
-   if(!inHull(n.center,hull))issue(n,'error','eccentric','Forenklet lastresultant ligger utenfor understøttelsens konvekse omriss. Fare for utkraging / velting i spillmodellen.');
-  }
   const supported=n.links.filter(e=>e.to===null||nodes.get(e.to).grounded);
   // If a ground path exists, do not distribute through floating supports.
   const active=supported.length?supported:n.links;
   if(active.length<n.links.length)issue(n,'warn','floating-support','En mulig understøttelse mangler lastvei og er utelatt fra lastfordelingen.');
+  const physical=active.filter(e=>e.kind==='bearing'||e.kind==='ground');
+  const ideal=active.filter(e=>e.kind==='brace'||e.kind==='insert');
+  if(physical.length&&!ideal.length&&!n.unknown&&n.total>EPS){
+   const hull=hull2(physical.flatMap(e=>e.patches.flatMap(p=>p.polygon)));
+   if(!inHull(n.center,hull))issue(n,'error','eccentric','Forenklet lastresultant ligger utenfor understøttelsens konvekse omriss. Fare for utkraging / velting i spillmodellen.');
+  }
+  
   const totalArea=active.reduce((s,e)=>s+e.area,0);
   for(const e of n.links){
    const use=active.includes(e),force=use?n.total*e.area/totalArea:0;
