@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#101c20">
-<title>AFTERFALL | Construction Editor CE 0.5.1</title>
+<title>AFTERFALL | Construction Editor CE 0.5.2</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:#101c20;color:#e9f0ed;font:14px system-ui,sans-serif}
 body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
@@ -88,13 +88,22 @@ button.wide{width:100%;margin-top:7px}
 #wallFitReport.error{color:#ffb6a2}
 #wallFitPanel .buttons{margin-top:8px}
 #wallFitPanel select{font-size:12px}
+
+#roofFitPanel{margin:10px 0;padding:10px;border:1px solid #527572;border-radius:8px;background:#192f34}
+#roofFitPanel summary{font-weight:700;color:#c9e6d9;cursor:pointer}
+#roofFitPanel p{font-size:12px}
+#roofFitReport{white-space:pre-line;color:#c2e3d7;overflow-wrap:anywhere}
+#roofFitReport.error{color:#ffb6a2}
+#roofFitPanel .buttons{margin-top:8px}
+#roofFitPanel select{font-size:12px}
+#roofFitPanel input,#roofFitPanel .fields>*{min-width:0}
 </style>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
 </script>
 </head>
 <body>
-<header><span class="brand">AFTERFALL</span><span class="version">CE 0.5.1</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
+<header><span class="brand">AFTERFALL</span><span class="version">CE 0.5.2</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
 <main>
 <aside>
 <div class="panelTabs" aria-label="Verktøypaneler"><button id="tabModules" type="button" aria-pressed="true">Moduler</button><button id="tabSite" type="button" aria-pressed="false">Byggeflate / mål</button></div>
@@ -124,6 +133,28 @@ button.wide{width:100%;margin-top:7px}
 <div class="buttons"><button id="wallFitPreview" type="button" disabled>Forhåndsvis</button><button id="wallFitApply" type="button" disabled>Plasser / tilpass</button></div>
 <p id="wallFitReport" aria-live="polite">Velg gulv og vegg. Alle mål kontrolleres før plassering.</p>
 <p>Åpninger beholder bredde, høyde og valgt sideforskyvning relativt til veggens nye sentrum. Det er ingen materialbruk i editoren.</p>
+</details>
+<details id="roofFitPanel">
+<summary>Tak over bygg – automatisk sentrering</summary>
+<p>Velg én gulvmodul og taktype. Taket sentreres over gulvet og tilpasses to motstående yttervegger, uten å flytte veggene.</p>
+<label for="roofFitSource">Tak</label>
+<select id="roofFitSource"><option value="new">Nytt tak</option><option value="selected">Tilpass valgt eksisterende tak</option></select>
+<label for="roofFitFloor">Gulvmodul</label><select id="roofFitFloor"><option value="">Velg gulv</option></select>
+<label for="roofFitType">Taktype</label>
+<select id="roofFitType"><option value="gableRoof">Saltak</option><option value="shedRoof">Pulttak</option><option value="flatRoof">Flatt tak</option></select>
+<label for="roofFitDirection">Stigningsretning / møneretning (lokalt på gulvet)</label>
+<select id="roofFitDirection"><option value="0">Stigning +X · møne langs Z</option><option value="90">Stigning +Z · møne langs X</option><option value="180">Stigning −X · møne langs Z</option><option value="270">Stigning −Z · møne langs X</option></select>
+<div class="fields">
+<div><label for="roofFitEave">Utstikk ved sidevegger (m)</label><input id="roofFitEave" type="number" min="0" max="1" step="any" value="0.3"></div>
+<div><label for="roofFitGable">Utstikk ved ender (m)</label><input id="roofFitGable" type="number" min="0" max="1" step="any" value="0.3"></div>
+<div><label for="roofFitPitch">Takvinkel (°)</label><input id="roofFitPitch" type="number" min="5" max="60" step="any" value="30"></div>
+<div><label for="roofFitThickness">Taktykkelse (m)</label><input id="roofFitThickness" type="number" min="0.05" max="0.5" step="any" value="0.12"></div>
+</div>
+<label class="check"><input id="roofFitAutoPitch" type="checkbox">Pulttak: beregn vinkel fra vegghøydene</label>
+<div class="buttons"><button id="roofFitPreview" type="button" disabled>Forhåndsvis tak</button><button id="roofFitApply" type="button" disabled>Plasser / tilpass</button></div>
+<button id="roofFitDetach" class="wide" type="button" hidden>Frikoble valgt tak fra tilpasning</button>
+<p id="roofFitReport" aria-live="polite">Velg gulv og taktype. Forhåndsvis for å kontrollere kontaktflatene.</p>
+<p>Forenklet geometrisk anlegg mot to motstående vegger. Gavlvegger, bæreevne og reelle konstruksjonsberegninger inngår ikke.</p>
 </details>
 <details id="bracePanel">
 <summary>Tilpasset skråavstiver – to punkter</summary>
@@ -180,7 +211,7 @@ button.wide{width:100%;margin-top:7px}
 <button id="doConnect" class="primary" type="button" disabled>Koble moduler</button>
 <p id="connectorResult" aria-live="polite">Velg to festepunkter. Kilden flyttes i X, Y og Z. Punktene må vende mot hverandre.</p>
 </section>
-<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.5.1. Tilpassede avstivere må beregnes på nytt hvis festemodulene flyttes.</p>
+<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.5.2. Tilpassede avstivere må beregnes på nytt hvis festemodulene flyttes.</p>
 </section>
 <section id="sitePanel" hidden>
 <h1>Byggeflate</h1>
@@ -209,7 +240,7 @@ button.wide{width:100%;margin-top:7px}
 <button data-view="orbit" aria-pressed="true">3D</button><button data-view="top" aria-pressed="false">Ovenfra</button><button data-view="front" aria-pressed="false">Foran</button><button data-view="right" aria-pressed="false">Høyre</button><span class="divider"></span>
 <button id="fit">Tilpass</button><button id="zoomIn" aria-label="Zoom inn">+</button><button id="zoomOut" aria-label="Zoom ut">−</button>
 </div>
-<div id="modebar"><button id="selectMode" type="button" aria-pressed="true">Velg</button><button id="placeMode" type="button" aria-pressed="false">Plasser</button><button id="moveMode" type="button" aria-pressed="false" disabled>Flytt</button><button id="cancelMode" type="button" disabled>Avbryt</button><button id="wallFitQuick" type="button">Veggtilpasning</button><span id="currentMode">Velg en modul</span></div>
+<div id="modebar"><button id="selectMode" type="button" aria-pressed="true">Velg</button><button id="placeMode" type="button" aria-pressed="false">Plasser</button><button id="moveMode" type="button" aria-pressed="false" disabled>Flytt</button><button id="cancelMode" type="button" disabled>Avbryt</button><button id="wallFitQuick" type="button">Veggtilpasning</button><button id="roofFitQuick" type="button">Taktilpasning</button><span id="currentMode">Velg en modul</span></div>
 <p id="status" role="status" aria-live="polite">Laster 3D-miljø …</p>
 <div id="stage">
 <div id="overlay"><b id="size">12 × 10 m</b><br>Areal: <span id="area">120</span> m²<br>Y = 0 m · <span id="viewName">3D</span></div>
@@ -218,7 +249,7 @@ button.wide{width:100%;margin-top:7px}
 </div>
 </section>
 </main>
-<footer>CE 0.5.1 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
+<footer>CE 0.5.2 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
 <script type="module">
 const $=id=>document.getElementById(id);
 const status=$('status'),stage=$('stage'),form=$('dimensions'),lengthInput=$('length'),widthInput=$('width');
@@ -292,6 +323,11 @@ function buildingError(m){
  const p=m.params||{};
  for(const k of Object.keys(catalog[m.type].params))if(!Number.isFinite(p[k]))return 'Ugyldig bygningsparameter: '+k;
  if(isRoof(m)){
+  if(m.roofFit){
+   const f=m.roofFit;
+   if(!['flatRoof','shedRoof','gableRoof'].includes(m.type)||f.type!==m.type||![f.l,f.w,f.pitch,f.thickness].every(Number.isFinite)||Math.abs(f.l-m.l)>EPS||Math.abs(f.w-m.w)>EPS||Math.abs(f.thickness-p.thickness)>EPS||Math.abs(f.pitch-(m.type==='flatRoof'?0:p.pitch))>EPS)return 'Dimensjoner på tilpasset tak endres via Taktilpasning. Frikoble for fri redigering.';
+   if(!Array.isArray(f.seats)||f.seats.length!==2||f.seats.some(s=>![s.x0,s.x1,s.cut0,s.cut1,s.y,s.z].every(Number.isFinite)||s.x1-s.x0<=EPS||s.cut0>s.x0+EPS||s.cut1<s.x1-EPS||s.cut0<-m.l/2-EPS||s.cut1>m.l/2+EPS||Math.abs(s.z)>m.w/2+EPS||s.y<Math.max(roofUnderside(m,s.cut0),roofUnderside(m,s.cut1))-EPS||s.y>Math.min(roofUnderside(m,s.cut0),roofUnderside(m,s.cut1))+roofThickness(m)-.02+EPS)||f.seats[0].cut1>f.seats[1].cut0+EPS||(m.type==='gableRoof'&&(f.seats[0].cut1>EPS||f.seats[1].cut0<-EPS)))return 'Takets anleggsflater er ugyldige. Tilpass taket på nytt.';
+  }
   if(p.thickness<.05-EPS||p.thickness>.5+EPS)return 'Taktykkelse må være 0,05–0,50 m.';
   if(m.type!=='flatRoof'&&(p.pitch<5||p.pitch>60))return 'Takvinkel må være 5–60°.';
   if(Math.abs(m.h-roofRise(m)-roofThickness(m))>EPS)return 'Takhøyde må beregnes fra parametere.';
@@ -308,6 +344,22 @@ function buildingError(m){
  return '';
 }
 function rectPiece(x0,x1,y0,y1,z0,z1,kind='body'){return {polygon:[[x0,y0],[x1,y0],[x1,y1],[x0,y1]],z0,z1,kind};}
+function roofUnderside(m,x){
+ if(m.type==='flatRoof')return 0;
+ const slope=Math.tan(m.params.pitch*Math.PI/180);
+ return (m.type==='gableRoof'?m.l/2-Math.abs(x):x+m.l/2)*slope;
+}
+function fittedRoofPieces(m){
+ const half=m.l/2,z=m.w/2,t=roofThickness(m),seats=m.roofFit.seats;
+ const breaks=[-half,half,...(m.type==='gableRoof'?[0]:[]),...seats.flatMap(s=>[s.cut0,s.cut1])].sort((a,b)=>a-b).filter((v,i,a)=>!i||v-a[i-1]>EPS);
+ const pieces=[];
+ for(let i=0;i<breaks.length-1;i++){
+  const a=breaks[i],b=breaks[i+1],mid=(a+b)/2,seat=seats.find(s=>mid>s.cut0-EPS&&mid<s.cut1+EPS);
+  const lo=roofUnderside(m,a),hi=roofUnderside(m,b);
+  pieces.push({polygon:[[a,seat?seat.y:lo],[b,seat?seat.y:hi],[b,hi+t],[a,lo+t]],z0:-z,z1:z,kind:'body'});
+ }
+ return pieces;
+}
 function piecesOf(m){
  const x=m.l/2,z=m.w/2,h=m.h,p=m.params||{},pieces=[];
  const box=(a,b,c,d,e=-z,f=z,kind='body')=>{if(b-a>EPS&&d-c>EPS&&f-e>EPS)pieces.push(rectPiece(a,b,c,d,e,f,kind));};
@@ -330,6 +382,7 @@ function piecesOf(m){
   const t=p.rim;box(-x,-x+t,0,h);box(x-t,x,0,h);box(-x+t,x-t,0,t);box(-x+t,x-t,h-t,h);
   box(-x+t,x-t,t,h-t,-Math.min(z,.006),Math.min(z,.006),'glass');return pieces;
  }
+ if(m.roofFit?.seats?.length)return fittedRoofPieces(m);
  if(isRoof(m)&&m.type!=='flatRoof'){
   const rise=roofRise(m),t=roofThickness(m);
   if(m.type==='gableRoof')pieces.push({polygon:[[-x,0],[0,rise],[0,rise+t],[-x,t]],z0:-z,z1:z,kind:'body'},{polygon:[[0,rise],[x,0],[x,t],[0,rise+t]],z0:-z,z1:z,kind:'body'});
@@ -338,7 +391,7 @@ function piecesOf(m){
  }
  return [{polygon:profileOf(m),z0:-z,z1:z,kind:'body'}];
 }
-function usesPieces(m){return isBrace(m)||['floorFrame','wallFrame','doorWall','windowWall','windowUnit','rafter','shedRoof','gableRoof'].includes(m.type);}
+function usesPieces(m){return !!m.roofFit?.seats?.length||isBrace(m)||['floorFrame','wallFrame','doorWall','windowWall','windowUnit','rafter','shedRoof','gableRoof'].includes(m.type);}
 function pointOnPiece(p,q){
  if(q[2]<p.z0-EPS||q[2]>p.z1+EPS)return false;
  const poly=p.polygon;let positive=false,negative=false;
@@ -380,6 +433,12 @@ function convexOverlap(A,B){
 function anchors(m){
  const points=[];
  const add=(id,label,p,n)=>points.push({id,label,p:pointToWorld(m,p),n:rotateVector(n,m.angle)});
+ if(m.roofFit?.seats?.length){
+  for(const [i,s] of m.roofFit.seats.entries())add('seat'+i,'Anleggsflate – vegg #'+s.wallId,[(s.x0+s.x1)/2,s.y,s.z],[0,-1,0]);
+  if(m.type==='flatRoof'){add('top','Overkant – sentrum',[0,m.h,0],[0,1,0]);return points;}
+  const l=m.l/2,t=roofThickness(m),rise=roofRise(m),gable=m.type==='gableRoof';
+  add('ridge','Øvre takreferanse',[gable?0:l,rise+t,0],[0,1,0]);return points;
+ }
  if(isRoof(m)&&m.type!=='flatRoof'){
   const l=m.l/2,t=roofThickness(m),rise=roofRise(m),gable=m.type==='gableRoof';
   add('eaveLow','Nedre takkant – referanse',[-l,0,0],[0,-1,0]);
@@ -583,6 +642,66 @@ function fitWallOnEdge(source,floor,side,others,L,W){
  if(previous&&!samePlacement(previous,m)&&others.some(n=>n.id!==previous.id&&containsOpeningInsert(previous,n)))return fail('Veggen har en innsatt dør eller et vindu. Fjern elementet først, tilpass veggen og sett det inn på nytt.');
  return {module:m,fullLength:2*e.half,startTrim:start+e.half,endTrim:e.half-end,startIds,endIds};
 }
+const completeRoofTypes=['flatRoof','shedRoof','gableRoof'];
+function fitRoofType(m){return !!m&&completeRoofTypes.includes(m.type);}
+function roofWallType(m){return !!m&&['solidWall','doorWall','windowWall','wallFrame'].includes(m.type);}
+function roofWallPair(floor,direction,others){
+ if(!fitFloorType(floor)||![0,90,180,270].includes(direction))return {error:'Velg en gulvmodul og gyldig takretning.'};
+ const angle=(floor.angle+direction)%360,span=direction%180===0?floor.l:floor.w,depth=direction%180===0?floor.w:floor.l;
+ const basis={...floor,angle},half=span/2,low=[],high=[];
+ for(const n of others){
+  if(!roofWallType(n)||!wallSupported(n,floor))continue;
+  const b=floorLocal(basis,n),f=footprint(b);if(b.angle%180!==90)continue;
+  const x0=b.x-f.x,x1=b.x+f.x,z0=b.z-f.z,z1=b.z+f.z;
+  if(z1-z0<=EPS)continue;
+  const s={wallId:n.id,x0,x1,z0,z1,z:b.z,top:n.y+n.h};
+  if(Math.abs(x0+half)<=EPS&&x1<=EPS)low.push(s);
+  if(Math.abs(x1-half)<=EPS&&x0>=-EPS)high.push(s);
+ }
+ if(!low.length||!high.length)return {error:'Det kreves to motstående yttervegger oppå valgt gulv. Kontroller takretning og veggplassering.'};
+ if(low.length!==1||high.length!==1)return {error:'Flere vegger funnet på samme takside. CE 0.5.2 støtter én sammenhengende vegg per motsatt ytterkant.'};
+ if(Math.min(low[0].z1,high[0].z1)-Math.max(low[0].z0,high[0].z0)<=EPS)return {error:'Motstående vegger må overlappe i takets lengderetning.'};
+ return {angle,span,depth,low:low[0],high:high[0]};
+}
+function fitRoofOnFloor(source,floor,options,others,L,W){
+ const fail=error=>({error});
+ if(!fitRoofType(source))return fail('Velg et komplett flatt tak, pulttak eller saltak.');
+ const {direction,eave,gable,thickness,autoPitch}=options;let pitch=source.type==='flatRoof'?0:options.pitch;
+ if(![eave,gable,thickness].every(Number.isFinite)||[eave,gable].some(v=>v<0||v>1)||thickness<.05-EPS||thickness>.5+EPS)return fail('Takutstikk må være 0–1 m og tykkelse 0,05–0,50 m.');
+ const pair=roofWallPair(floor,direction,others);if(pair.error)return pair;
+ const {low,high,span,depth,angle}=pair,l=span+2*eave,w=depth+2*gable;
+ if(source.type==='shedRoof'&&autoPitch)pitch=Math.atan2(high.top-low.top,high.x1-low.x1)*180/Math.PI;
+ if(source.type!=='flatRoof'&&(!Number.isFinite(pitch)||pitch<5-EPS||pitch>60+EPS))return fail('Takvinkel må være 5–60°. Pulttak krever en høyere vegg i stigningsretningen. Bytt retning eller endre vegghøyde.');
+ pitch=Math.min(60,Math.max(source.type==='flatRoof'?0:5,pitch));
+ if(source.type==='flatRoof'&&Math.abs(low.top-high.top)>EPS)return fail('Flatt tak krever to like høye veggtopper.');
+ let m=normalizeBuilding({...source,roofFit:null,x:floor.x,z:floor.z,y:0,l,w,angle,params:source.type==='flatRoof'?{thickness}:{pitch,thickness}});
+ const supports=[low,high],maxima=supports.map(s=>Math.max(roofUnderside(m,s.x0),roofUnderside(m,s.x1)));
+ const y=Math.min(low.top-maxima[0],high.top-maxima[1]),t=roofThickness(m);
+ const seats=supports.map((s,i)=>{
+  const level=s.top-y;let cut0=s.x0,cut1=s.x1;
+  // Extend the cut towards the ridge to meet the uncut underside where it is
+  // lower than the wall top. Also clears end-wall corners of differing thickness.
+  if(m.type==='gableRoof'){
+   const slope=Math.tan(pitch*Math.PI/180);
+   if(i===0)cut1=Math.max(cut1,Math.min(0,-l/2+level/slope));
+   else cut0=Math.min(cut0,Math.max(0,l/2-level/slope));
+  }
+  return {wallId:s.wallId,x0:s.x0,x1:s.x1,cut0,cut1,z:s.z,y:level};
+ });
+ const residual=seats.map(s=>Math.min(roofUnderside(m,s.cut0),roofUnderside(m,s.cut1))+t-s.y);
+ if(residual.some(r=>r<.02-EPS)){
+  const suggested=low.top+maxima[1]-maxima[0];
+  return fail('Takvinkel og tykkelse passer ikke begge vegghøydene. Øk tykkelsen, reduser vinkelen eller juster veggene. Ønsket motsatt veggtopp ved denne vinkelen: Y ≈ '+suggested.toFixed(3)+' m. Minst 20 mm vertikal taktykkelse må gjenstå ved anlegget (spillregel).');
+ }
+ m={...m,y,roofFit:{floorId:floor.id,type:m.type,direction,eave,gable,autoPitch:!!autoPitch,pitch,thickness,l,w,seats}};
+ const error=validModule(m,L,W,others,source.id);if(error)return fail(error+' Kontroller takutstikk, vegghøyder og andre konstruksjoner.');
+ return {module:m,pair,pitch,residual,ridge:y+m.h,contactAreas:supports.map(s=>(s.x1-s.x0)*(s.z1-s.z0))};
+}
+function sameRoofFit(a,b){
+ return !!(a&&b&&samePlacement(a,b)&&a.roofFit&&b.roofFit&&a.type===b.type&&Math.abs(a.roofFit.pitch-b.roofFit.pitch)<=EPS&&Math.abs(a.roofFit.thickness-b.roofFit.thickness)<=EPS&&a.roofFit.seats.every((s,i)=>{
+  const q=b.roofFit.seats[i];return q&&s.wallId===q.wallId&&['x0','x1','cut0','cut1','y','z'].every(k=>Math.abs(s[k]-q[k])<=EPS);
+ }));
+}
 function snapModule(m,others,gridSnap,anchorSnap){
  let x=gridSnap?Math.round(m.x*4)/4:m.x,z=gridSnap?Math.round(m.z*4)/4:m.z;
  if(!anchorSnap)return {...m,x,z};
@@ -620,6 +739,78 @@ try{
  const moduleGroup=new THREE.Group();scene.add(moduleGroup);
  const meshes=new Map();
  let anchorGroup=null;
+ function roofFitInputs(){
+  const existing=$('roofFitSource').value==='selected'?current():null,type=$('roofFitType').value,d=catalog[type];
+  const source={...(existing||{id:nextId,x:0,y:0,z:0,angle:0}),type,l:d.l,w:d.w,h:d.h,params:{...d.params}};
+  const floor=modules.find(m=>String(m.id)===$('roofFitFloor').value);
+  const options={direction:Number($('roofFitDirection').value),eave:$('roofFitEave').valueAsNumber,gable:$('roofFitGable').valueAsNumber,pitch:$('roofFitPitch').valueAsNumber,thickness:$('roofFitThickness').valueAsNumber,autoPitch:type==='shedRoof'&&$('roofFitAutoPitch').checked};
+  return {source,floor,options,existing};
+ }
+ function updateRoofControls(){
+  const target=$('roofFitFloor'),old=target.value,floors=modules.filter(fitFloorType);
+  fillOptions(target,[{id:'',label:'Velg gulvmodul'},...floors.map(m=>({id:m.id,label:catalog[m.type].name+' #'+m.id+' ('+fmt.format(m.l)+' × '+fmt.format(m.w)+' m)'}))],old);
+  if(!target.value&&fitFloorType(current()))target.value=String(current().id);
+  if(!target.value&&floors.length===1)target.value=String(floors[0].id);
+  if($('roofFitSource').value==='selected'&&!fitRoofType(current()))$('roofFitSource').value='new';
+  const {source,floor,existing,options}=roofFitInputs();
+  $('roofFitAutoPitch').disabled=source.type!=='shedRoof';$('roofFitPitch').disabled=source.type==='flatRoof'||options.autoPitch;
+  $('roofFitPreview').disabled=!floor||(!existing&&modules.length>=MAX_MODULES);
+  $('roofFitApply').disabled=!floor||(!existing&&modules.length>=MAX_MODULES);
+  $('roofFitDetach').hidden=!current()?.roofFit;
+ }
+ function loadRoofFit(m){
+  if(!fitRoofType(m))return;
+  $('roofFitType').value=m.type;$('roofFitPitch').value=String(m.params.pitch||30);$('roofFitThickness').value=String(m.params.thickness);
+  const f=m.roofFit;
+  if(f){
+   $('roofFitFloor').value=String(f.floorId);$('roofFitDirection').value=String(f.direction);
+   $('roofFitEave').value=String(f.eave);$('roofFitGable').value=String(f.gable);$('roofFitAutoPitch').checked=f.autoPitch;
+  }else $('roofFitAutoPitch').checked=false;
+ }
+ function clearRoofReport(){
+  clearBracePreview();$('roofFitReport').className='';$('roofFitReport').textContent='Forhåndsvis for å kontrollere takgeometri og anleggsflater.';
+ }
+ function reportRoof(r){
+  const p=$('roofFitReport');p.className=r.error?'error':'';
+  if(r.error){p.textContent=r.error;return;}
+  const m=r.module;
+  p.textContent='Sentrert over gulv #'+m.roofFit.floorId+' – geometrisk godkjent.\nTakmål: '+fmt.format(m.l)+' × '+fmt.format(m.w)+' m\nTakvinkel: '+fmt.format(r.pitch)+'°\nTakets øvre punkt Y: '+fmt.format(r.ridge)+' m\nKontakt med vegg #'+r.pair.low.wallId+': '+fmt.format(r.contactAreas[0])+' m²\nKontakt med vegg #'+r.pair.high.wallId+': '+fmt.format(r.contactAreas[1])+' m²\nMin. gjenværende vertikal tykkelse: '+fmt.format(Math.min(...r.residual)*1000)+' mm\nIngen bæreevne vurdert.';
+ }
+ function calculateRoofFit(previewOnly){
+  const {source,floor,options,existing}=roofFitInputs(),r=fitRoofOnFloor(source,floor,options,modules,L,W);
+  clearBracePreview();reportRoof(r);
+  if(r.error){setStatus(r.error,true);return;}
+  if(measuring)setMeasuring(false);setMode('select');
+  if(previewOnly){
+   fitGhost=modelMesh(r.module,true);transform(fitGhost,r.module);scene.add(fitGhost);
+   $('roofFitPanel').open=true;setStatus('Forhåndsvisning: sentrert tak. Bekreft med Plasser / tilpass.');return;
+  }
+  if(existing){if(!commitEdit(r.module))return;}
+  else{if(modules.length>=MAX_MODULES)return;nextId++;modules.push(r.module);addMesh(r.module);selectModule(r.module.id);}
+  reportRoof(r);refreshAnchorMarkers();setStatus('Tak #'+r.module.id+' sentrert og tilpasset to veggflater.');
+ }
+ function openRoofFit(){
+  if(measuring)setMeasuring(false);setMode('select');showPanel('modules');
+  const m=current();updateRoofControls();$('roofFitSource').value=fitRoofType(m)?'selected':'new';
+  if(fitRoofType(m))loadRoofFit(m);
+  else if(completeRoofTypes.includes($('moduleType').value))loadRoofFit(newModule());
+  if(fitFloorType(m))$('roofFitFloor').value=String(m.id);
+  $('roofFitPanel').open=true;updateRoofControls();refreshAnchorMarkers();clearRoofReport();$('roofFitPanel').scrollIntoView({block:'start',behavior:'instant'});
+ }
+ function roofFitStatus(m){
+  if(!m.roofFit)return '';
+  const f=m.roofFit,floor=modules.find(n=>n.id===f.floorId);
+  if(!fitFloorType(floor))return 'Opprinnelig takreferanse (gulv) finnes ikke lenger.';
+  const r=fitRoofOnFloor(m,floor,f,modules,L,W);
+  if(r.error||!sameRoofFit(m,r.module))return 'Gulv, tak eller vegger er endret. Tilpass taket på nytt.';
+  return 'Sentrert over gulv #'+f.floorId+' · kontakt med veggene #'+f.seats.map(s=>s.wallId).join(' og #')+'.';
+ }
+ function detachRoof(){
+  const m=current();if(!m?.roofFit)return;
+  const r={...m,roofFit:null},error=validModule(r,L,W,modules,m.id);
+  if(error){setStatus('Kan ikke frikoble: det uklipte taket kolliderer. Flytt taket til et ledig område først.',true);return;}
+  if(commitEdit(r)){clearRoofReport();setStatus('Tak frikoblet. Anleggskutt fjernet; fri redigering er aktiv.');}
+ }
  function wallFitInputs(){
   const source=$('wallFitSource').value==='selected'?current():newModule();
   const floor=modules.find(m=>String(m.id)===$('wallFitFloor').value);
@@ -702,6 +893,7 @@ try{
  function refreshEditFields(m){
   const defs=m&&isBuilding(m)?defsFor(m,false):{};$('editParamBox').hidden=!Object.keys(defs).length;
   makeFields($('editParamFields'),'editParam_',defs,m?.params||{});if(Object.keys(defs).length)$('editParamBox').open=true;
+  if(m?.roofFit)for(const input of $('editParamFields').querySelectorAll('input'))input.readOnly=true;
   $('insertOpening').disabled=!m||!isOpening(m)||modules.length>=MAX_MODULES;
   $('insertOpening').textContent=m?.type==='doorWall'?'Sett inn dør':m?.type==='windowWall'?'Sett inn vindu':'Sett inn element';
   $('insertReport').textContent=isOpening(m||{})?'Åpningen har 5 mm klaring på hver kant.':'';
@@ -822,7 +1014,7 @@ try{
   fillOptions(s,choices,oldS);
   t.disabled=!target;s.disabled=!source||!choices.length;
   $('doConnect').disabled=!source||!target||!choices.length||($('connectSource').value==='new'&&modules.length>=MAX_MODULES);
-  refreshBraceOptions();refreshWallFitOptions();refreshAnchorMarkers();
+  refreshBraceOptions();refreshWallFitOptions();updateRoofControls();refreshAnchorMarkers();
  }
  function refreshAnchorMarkers(){
   disposeGroup(anchorGroup);anchorGroup=null;
@@ -838,6 +1030,16 @@ try{
     const pts=[pointToWorld(floor,a),pointToWorld(floor,b)].map(p=>new THREE.Vector3(p[0]-L/2,p[1],p[2]-W/2));
     const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0x82e4fa,depthTest:false}));line.renderOrder=6;anchorGroup.add(line);
     for(const pt of pts){const mark=new THREE.Mesh(new THREE.SphereGeometry(r*1.4,10,7),new THREE.MeshBasicMaterial({color:0x82e4fa,depthTest:false}));mark.position.copy(pt);mark.renderOrder=6;anchorGroup.add(mark);}
+   }
+  }
+  if($('roofFitPanel').open){
+   const {floor}=roofFitInputs();
+   if(fitFloorType(floor)){
+    const coords=[[-floor.l/2,-floor.w/2],[floor.l/2,-floor.w/2],[floor.l/2,floor.w/2],[-floor.l/2,floor.w/2],[-floor.l/2,-floor.w/2]];
+    const pts=coords.map(([x,z])=>pointToWorld(floor,[x,floor.h+.015,z])).map(p=>new THREE.Vector3(p[0]-L/2,p[1],p[2]-W/2));
+    const outline=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0x82e4fa,depthTest:false}));outline.renderOrder=6;anchorGroup.add(outline);
+    const mark=new THREE.Mesh(new THREE.SphereGeometry(r*1.5,10,7),new THREE.MeshBasicMaterial({color:0x82e4fa,depthTest:false}));
+    mark.position.set(floor.x-L/2,floor.y+floor.h+.016,floor.z-W/2);mark.renderOrder=6;anchorGroup.add(mark);
    }
   }
   const targets=[[selected,0xffd58a,$('connectSource').value==='selected'?$('sourceAnchor').value:null,null],[target,0x82e4fa,$('targetAnchor').value,null]];
@@ -866,7 +1068,7 @@ try{
   });
   if(geos.length===1)return geos[0];const result=mergeGeometries(geos,false);geos.forEach(g=>g.dispose());return result;
  }
- function geometryKey(m){return isFitted(m)?'fitted:'+JSON.stringify(m.profile):usesPieces(m)?JSON.stringify([m.type,m.l,m.w,m.h,m.params]):'box';}
+ function geometryKey(m){return isFitted(m)?'fitted:'+JSON.stringify(m.profile):usesPieces(m)?JSON.stringify([m.type,m.l,m.w,m.h,m.params,m.roofFit?.seats]):'box';}
  function connectModules(){
   const source=sourceModule(),target=modules.find(n=>String(n.id)===$('connectTarget').value);
   const report=$('connectorResult');
@@ -874,7 +1076,7 @@ try{
   const result=aligned(source,$('sourceAnchor').value,target,$('targetAnchor').value);
   const error=result.error||validModule(result.module,L,W,modules,source.id);
   if(error){
-   const help=fitWallType(source)&&fitFloorType(target)?' Bruk Veggtilpasning for å få hele veggen innenfor gulvets ytterkant.':'';
+   const help=fitRoofType(source)?' Bruk Taktilpasning for sentrering over hele gulvet.':fitWallType(source)&&fitFloorType(target)?' Bruk Veggtilpasning for å få hele veggen innenfor gulvets ytterkant.':'';
    report.textContent=error+help;setStatus(error+help,true);return;
   }
   if($('connectSource').value==='selected'){
@@ -884,7 +1086,7 @@ try{
    const m=result.module;nextId++;modules.push(m);addMesh(m);selectModule(m.id);
   }
   if(measuring)setMeasuring(false);
-  setMode('select');report.textContent='Koblet geometrisk til modul #'+target.id+'. Ingen fysisk bæreevne er vurdert.';
+  setMode('select');report.textContent='Koblet geometrisk til modul #'+target.id+'. Ingen fysisk bæreevne er vurdert.'+(fitRoofType(source)?' Punktkobling sentrerer ikke automatisk. Bruk Taktilpasning for hele bygget.':'');
   setStatus('Festepunkter sammenfaller. Modul #'+source.id+' oppdatert.');
  }
  function showPanel(which){
@@ -926,7 +1128,7 @@ try{
   $('moduleCount').textContent=modules.length+' / '+MAX_MODULES;
   $('editFields').disabled=!m;$('moveMode').disabled=!m;
   for(const id of ['editL','editW','editH']){
-   $(id).readOnly=!!m&&(isFitted(m)||(id==='editH'&&isRoof(m)));$(id).min=m&&isBuilding(m)?'0.02':'0.05';
+   $(id).readOnly=!!m&&(isFitted(m)||!!m.roofFit||(id==='editH'&&isRoof(m)));$(id).min=m&&isBuilding(m)?'0.02':'0.05';
   }
   refreshEditFields(m);
   $('moduleInfo').textContent=m?catalog[m.type].name+' #'+m.id+' · '+fmt.format(m.l)+' × '+fmt.format(m.w)+' × '+fmt.format(m.h)+' m':'Velg en modul i 3D-visningen eller listen.';
@@ -934,6 +1136,7 @@ try{
   else for(const id of ['editX','editZ','editY','editL','editW','editH'])$(id).value='';
   const matches=m?matchingConnections(m,modules):[];
   $('connectionsInfo').textContent=!m?'Ingen modul valgt.':'Geometriske punktforbindelser: '+matches.length+(matches.length?'\n'+matches.map(a=>a.label).join('\n'):'');
+  if(m&&m.roofFit)$('connectionsInfo').textContent+='\n'+roofFitStatus(m);
   if(m&&m.edgeFit)$('connectionsInfo').textContent+='\n'+edgeFitStatus(m);
   if(m&&isFitted(m))$('connectionsInfo').textContent+='\n'+checkFitStatus(m)+'\nSenterlinje: '+fmt.format(m.fit.length)+' m · Helning: '+fmt.format(m.fit.slope)+'°';
   refreshConnectors();
@@ -948,6 +1151,7 @@ try{
    refreshAnchorMarkers();
   }
   if(selectedId!==null)showPanel('modules');
+  if(m?.roofFit&&$('roofFitSource').value==='selected'){loadRoofFit(m);updateRoofControls();refreshAnchorMarkers();}
  }
  function hideGhost(){if(ghost)ghost.visible=false;}
  function setMode(next){
@@ -1169,6 +1373,13 @@ try{
  $('moduleType').addEventListener('change',()=>{clearWallReport();updatePreset();});
  $('newParamFields').addEventListener('input',()=>{clearWallReport();updatePresetInfo();if(lastHover)preview(lastHover);refreshConnectors();});
  $('insertOpening').addEventListener('click',insertElement);
+ $('roofFitQuick').addEventListener('click',openRoofFit);
+ $('roofFitPreview').addEventListener('click',()=>calculateRoofFit(true));
+ $('roofFitApply').addEventListener('click',()=>calculateRoofFit(false));
+ $('roofFitDetach').addEventListener('click',detachRoof);
+ $('roofFitPanel').addEventListener('toggle',()=>{updateRoofControls();refreshAnchorMarkers();if(!$('roofFitPanel').open)clearBracePreview();});
+ $('roofFitSource').addEventListener('change',()=>{if($('roofFitSource').value==='selected')loadRoofFit(current());clearRoofReport();updateRoofControls();refreshAnchorMarkers();});
+ for(const id of ['roofFitFloor','roofFitType','roofFitDirection','roofFitEave','roofFitGable','roofFitPitch','roofFitThickness','roofFitAutoPitch'])$(id).addEventListener('change',()=>{clearRoofReport();updateRoofControls();refreshAnchorMarkers();});
  $('wallFitQuick').addEventListener('click',openWallFit);
  $('wallFitPreview').addEventListener('click',()=>calculateWallFit(true));
  $('wallFitApply').addEventListener('click',()=>calculateWallFit(false));
