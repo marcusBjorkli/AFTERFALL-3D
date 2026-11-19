@@ -1,0 +1,286 @@
+<!doctype html><html lang="nb"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>AFTERFALL Terrain Lab · CE 1.1.3A</title><style>
+:root{color-scheme:dark;font:14px system-ui,sans-serif;--bg:#17241f;--panel:#21332b;--border:#40584c;--muted:#adc2b5;--text:#e6f0e9;--gold:#eccb80}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text)}header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}h1{font-size:18px;margin:0}header small{color:var(--muted)}main{display:grid;grid-template-columns:minmax(0,1fr) 325px;min-height:calc(100dvh - 65px)}#viewport{position:sticky;top:0;height:calc(100dvh - 65px);min-height:340px;overflow:hidden;touch-action:none;background:#25362e}canvas{display:block;touch-action:none}#help{position:absolute;left:10px;bottom:10px;pointer-events:none;background:#172a22dd;padding:7px 10px;border-radius:6px;font-size:11px;max-width:calc(100% - 20px)}#cam{position:absolute;right:10px;top:10px;display:flex;gap:6px}aside{background:var(--panel);padding:14px;border-left:1px solid var(--border);display:flex;gap:13px;flex-direction:column}section{border-bottom:1px solid var(--border);padding-bottom:12px}section:last-child{border:0}h2{font-size:13px;margin:0 0 8px;color:var(--muted);font-weight:600}button,select,input{font:inherit;color:var(--text);background:#30483b;border:1px solid #597163;border-radius:6px;padding:9px;min-height:37px}button{cursor:pointer;touch-action:manipulation}button:active{background:#58705a}button:disabled{opacity:.35;cursor:default}select,input{width:100%}label{display:flex;align-items:center;gap:7px}label input[type=checkbox]{width:17px;min-height:17px;accent-color:#b4d1aa}.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}.big{font-size:25px;font-weight:650;color:var(--gold);font-variant-numeric:tabular-nums;margin:2px 0}.muted,small{color:var(--muted);font-size:12px}.data{display:flex;justify-content:space-between;gap:8px;margin:4px 0;font-variant-numeric:tabular-nums}.neighbors{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.neighbor{padding:6px;min-height:32px;font-variant-numeric:tabular-nums}.neighbor.match{color:#bce7be;background:#385f45}.neighbor.chosen{outline:2px solid var(--gold);outline-offset:-2px}.work button{font-weight:bold;min-height:48px;touch-action:none}.work #dig{background:#654d32}.work #fill{background:#355a49}.work small{display:block;font-weight:400;margin-top:3px}#message{color:#ffce99;min-height:1em}#cellState{font-weight:600}#cellState[data-state=flat]{color:#9be2ad}#cellState[data-state=cross]{color:#ead28a}#profile{width:100%;height:auto;font-size:10px;fill:#b8ccc2}#profile[hidden]{display:none}.note{font-size:11px;color:var(--muted);line-height:1.45}#chosen{color:var(--muted)}@media(max-width:780px){header{padding:10px 12px}header small{display:none}main{display:flex;flex-direction:column}#viewport{position:relative;height:48dvh;min-height:270px;flex-shrink:0}aside{border-left:0;border-top:1px solid var(--border);padding:12px}.mobileWork{position:sticky;bottom:0;background:#21332bf5;z-index:4;padding:8px 0}#help{font-size:10px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script></head><body><header><h1>AFTERFALL · Terrain Lab</h1><small>CE 1.1.3A · 20 × 20 m · isolert prototype</small></header><main><div id="viewport"><div id="cam"><button id="top">Ovenfra</button><button id="orbit">Perspektiv</button></div><div id="help">Trykk i en rute for å velge den. Dra for å rotere · klyp/scroll for zoom. Tastatur: piler / G grav / F fyll.</div></div><aside>
+<section><h2>Forsøksområde · CE 1.1.3A</h2><div class="row"><select id="scenario" aria-label="Terrengscenario"><option value="flat">Flat 12,3 m</option><option value="slope">Skråning</option><option value="mound">Haug</option><option value="natural">Naturlig, uavrundet</option></select><button id="reset">Nullstill</button></div><p class="note">Kun laboratoriet endres. Dynamisk ras og spillintegrasjon kommer i neste fase. Testlager: 5 000 L.</p></section>
+<section><h2>Valgt 1 × 1 m arbeidsrute</h2><div id="chosen"></div><div class="pair"><div><small>Senterkote</small><div class="big" id="elev">—</div></div><div><small>Avvik fra mål</small><div class="big" id="dev">—</div></div></div><div id="cellState"></div><div class="neighbors" id="neighbors"></div><p class="note">3 × 3 kontroll: sentrum, kryss (5) eller fullt planert (9). Ytterste ruter mangler full nabokontroll.</p><div id="count" class="muted"></div></section>
+<section class="mobileWork"><h2>Terrengarbeid</h2><div class="row work"><button id="dig">Grav 0,1 m<small id="nextDig"></small></button><button id="fill">Fyll 0,1 m<small id="nextFill"></small></button></div><p id="last" class="muted"></p><div id="message" role="status"></div><div class="row"><label for="target">Målkote</label><input id="target" type="number" step="0.1" min="8" max="17" value="12.4"></div><label><input type="checkbox" id="cap">Målkotevern (hele testområdet)</label></section>
+<section><h2>Masseregnskap</h2><div class="data"><span>Tilgjengelig lager</span><strong id="stock"></strong></div><div class="data"><span>Gravd / fylt</span><span><span id="volCut"></span> / <span id="volFill"></span></span></div><div class="data"><span>Regnskapets rest</span><strong id="balance"></strong></div><div class="data"><span>Antall inngrep</span><span id="actions"></span></div></section>
+<section><h2>Visning</h2><div class="pair"><label><input type="checkbox" id="grid" checked>Rutenett</label><label><input type="checkbox" id="points">Alle punkter</label><label><input type="checkbox" id="labels" checked>Koter (5 × 5)</label><label><input type="checkbox" id="contours" checked>Kotekurver</label></div><div class="row"><label for="interval">Ekvidistanse</label><select id="interval"><option value=".1">0,1 m</option><option value=".2" selected>0,2 m</option><option value=".5">0,5 m</option><option value="1">1,0 m</option></select></div><div class="row"><label for="shade">Terrengfarge</label><select id="shade"><option value="natural">Naturlig</option><option value="delta">Koteavvik</option></select></div><label><input type="checkbox" id="profileToggle" checked>Vis snitt gjennom valgt rute</label><svg id="profile" viewBox="0 0 300 120" aria-label="Terrengprofil"></svg></section>
+</aside></main><script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+
+const N=20,EPS=1e-8,START_STOCK=5000;
+const ix=(x,z)=>z*N+x;
+const inside=(x,z)=>Number.isInteger(x)&&Number.isInteger(z)&&x>=0&&z>=0&&x<N&&z<N;
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const roundDM=h=>Math.round(h*10)/10;
+const exact=(a,b)=>Math.abs(a-b)<=EPS;
+const axis=[0,...Array.from({length:N},(_,i)=>i+.5),N];
+function scenario(name){
+ const h=new Float64Array(N*N);
+ for(let z=0;z<N;z++)for(let x=0;x<N;x++){
+  let y=12.3;
+  if(name==='slope')y=12.4+.065*(x-9.5)+.035*(z-9.5)+.09*Math.sin(z*.5);
+  if(name==='mound')y=12.1+1.1*Math.exp(-((x-9.5)**2+(z-9.5)**2)/27);
+  if(name==='natural')y=12.4+.40*Math.sin(x*.26)+.34*Math.cos(z*.31)+.15*Math.sin((x+z)*.54);
+  h[ix(x,z)]=name==='natural'?y:roundDM(y);
+ }
+ return h;
+}
+function meshData(h){
+ const vertices=[],triangles=[];
+ for(let j=0;j<axis.length;j++)for(let i=0;i<axis.length;i++){
+  vertices.push([axis[i],h[ix(clamp(i-1,0,N-1),clamp(j-1,0,N-1))],axis[j]]);
+ }
+ const stride=axis.length;
+ for(let j=0;j<stride-1;j++)for(let i=0;i<stride-1;i++){
+  const ids=[j*stride+i,(j+1)*stride+i,(j+1)*stride+i+1,j*stride+i+1];
+  const p=ids.map(k=>vertices[k]);
+  const center=vertices.length;
+  vertices.push([(p[0][0]+p[2][0])/2,p.reduce((s,v)=>s+v[1],0)/4,(p[0][2]+p[2][2])/2]);
+  for(let k=0;k<4;k++)triangles.push([ids[k],ids[(k+1)%4],center]);
+ }
+ return {vertices,triangles};
+}
+// Fan interpolation: exactly the same four triangles as meshData.
+// The central vertex has the mean of the four corner heights. Their
+// integrated weights are equal, also along the half-cell exterior strips.
+function surfaceAt(h,x,z){
+ x=clamp(x,0,N);z=clamp(z,0,N);
+ const i=clamp(Math.floor(x-.5)+1,0,N),j=clamp(Math.floor(z-.5)+1,0,N);
+ const x0=axis[i],x1=axis[i+1],z0=axis[j],z1=axis[j+1];
+ const u=clamp((x-x0)/(x1-x0),0,1),v=clamp((z-z0)/(z1-z0),0,1);
+ const get=(a,b)=>h[ix(clamp(a-1,0,N-1),clamp(b-1,0,N-1))];
+ const a=get(i,j),b=get(i,j+1),c=get(i+1,j+1),d=get(i+1,j),m=(a+b+c+d)/4;
+ if(u<=v&&u<=1-v)return a*(1-v-u)+b*(v-u)+m*2*u;
+ if(v>=u&&v>=1-u)return b*(v-u)+c*(v+u-1)+m*2*(1-v);
+ if(u>=v&&u>=1-v)return d*(u-v)+c*(u+v-1)+m*2*(1-u);
+ return a*(1-u-v)+d*(u-v)+m*2*v;
+}
+function integratedHeight(data){
+ let total=0;
+ for(const t of data.triangles){
+  const [a,b,c]=t.map(i=>data.vertices[i]);
+  const area=Math.abs((b[0]-a[0])*(c[2]-a[2])-(c[0]-a[0])*(b[2]-a[2]))/2;
+  total+=area*(a[1]+b[1]+c[1])/3;
+ }
+ return total;
+}
+function cellStatus(h,x,z,target){
+ if(!inside(x,z)||!exact(h[ix(x,z)],target))return 'avvik';
+ let cross=true,full=true;
+ for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++){
+  if(!inside(x+dx,z+dz)||!exact(h[ix(x+dx,z+dz)],target)){
+   full=false;if(dx===0||dz===0)cross=false;
+  }
+ }
+ return full?'flat':cross?'cross':'center';
+}
+function newState(name='flat'){
+ const h=scenario(name);
+ return {name,h,base:h.slice(),stock:START_STOCK,cut:0,fill:0,actions:0,last:null};
+}
+function nextStep(h,dir,target=null){
+ if(!Number.isFinite(h)||![-1,1].includes(dir))return null;
+ if(target!==null&&(dir*(target-h)<=EPS))return null;
+ let y=(Math.round(h*10)+dir)/10;
+ if(target!==null)y=dir>0?Math.min(y,target):Math.max(y,target);
+ return dir*(y-h)>EPS?y:null;
+}
+function work(state,x,z,dir,target=null){
+ if(!inside(x,z))return {error:'Velg en gyldig celle.'};
+ const id=ix(x,z),before=state.h[id],after=nextStep(before,dir,target);
+ if(after===null)return {error:'Målkoten er nådd, eller handlingen går feil vei.'};
+ if(after<8||after>17)return {error:'Laboratoriets høydegrense er nådd (8–17 m).'};
+ const litres=(after-before)*1000;
+ if(litres>state.stock+EPS)return {error:'For lite masse på laboratoriets lager.'};
+ state.h[id]=after;state.stock-=litres;
+ if(Math.abs(state.stock)<EPS)state.stock=0;
+ if(litres>0)state.fill+=litres;else state.cut-=litres;
+ state.actions++;
+ return state.last={x,z,before,after,litres,dir};
+}
+function inventoryBalance(s){
+ const delta=s.h.reduce((sum,v,k)=>sum+(v-s.base[k])*1000,0);
+ return {delta,residual:s.stock-START_STOCK+delta};
+}
+function contourData(data,interval,target=null){
+ const groups=new Map(),seen=new Set();
+ function add(level,a,b){
+  if(Math.hypot(a[0]-b[0],a[2]-b[2])<EPS)return;
+  const point=p=>p[0].toFixed(7)+','+p[2].toFixed(7);
+  const ak=point(a),bk=point(b),key=level.toFixed(7)+'|'+[ak,bk].sort().join('|');
+  if(seen.has(key))return;seen.add(key);
+  if(!groups.has(level))groups.set(level,[]);groups.get(level).push([a,b]);
+ }
+ for(const tri of data.triangles){
+  const verts=tri.map(i=>data.vertices[i]),ys=verts.map(p=>p[1]),lo=Math.min(...ys),hi=Math.max(...ys);
+  if(hi-lo<EPS)continue; // no internal lines in a horizontal triangle
+  const levels=[];
+  for(let k=Math.ceil((lo-EPS)/interval);k<=Math.floor((hi+EPS)/interval);k++)levels.push(Number((k*interval).toFixed(8)));
+  if(target!==null&&target>=lo-EPS&&target<=hi+EPS&&!levels.some(y=>exact(y,target)))levels.push(target);
+  for(const level of levels){
+   const points=[];
+   const push=p=>{if(!points.some(q=>Math.hypot(p[0]-q[0],p[2]-q[2])<EPS))points.push(p);};
+   for(let k=0;k<3;k++){
+    const a=verts[k],b=verts[(k+1)%3],da=a[1]-level,db=b[1]-level;
+    if(Math.abs(da)<=EPS)push([a[0],level,a[2]]);
+    if(Math.abs(db)<=EPS)push([b[0],level,b[2]]);
+    if(da*db<0&&Math.abs(da)>EPS&&Math.abs(db)>EPS){const t=(level-a[1])/(b[1]-a[1]);push([a[0]+(b[0]-a[0])*t,level,a[2]+(b[2]-a[2])*t]);}
+   }
+   if(points.length===2)add(level,points[0],points[1]);
+  }
+ }
+ return groups;
+}
+
+
+const $=id=>document.getElementById(id);
+let state=newState(),selected={x:10,z:10},target=12.4,terrain,grid,selection,markers,contours,labels,profileLine,dirty=true;
+let data=meshData(state.h);
+const scene=new THREE.Scene();scene.background=new THREE.Color('#24332e');
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.75));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+$('viewport').prepend(renderer.domElement);
+const camera=new THREE.PerspectiveCamera(42,1,.1,180);
+camera.position.set(29,29,32);
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.target.set(10,12.1,10);controls.enableDamping=true;controls.dampingFactor=.12;controls.minDistance=3;controls.maxDistance=60;controls.maxPolarAngle=Math.PI/2-.07;controls.update();
+scene.add(new THREE.HemisphereLight(0xe3f3fc,0x6e6049,2.1));
+const sun=new THREE.DirectionalLight(0xfff2d6,2.2);sun.position.set(-10,28,8);scene.add(sun);
+const terrainMat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,side:THREE.DoubleSide});
+const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();
+const fmt=(v,n=1)=>v.toFixed(n).replace('.',',');
+const sign=(v,n=1)=>(v>EPS?'+':v<-EPS?'−':'')+fmt(Math.abs(v),n);
+const height=(x,z)=>state.h[ix(x,z)];
+const statusNames={avvik:'Koteavvik',center:'Kun sentrum',cross:'Kryss / 5 punkter',flat:'Ferdig / 9 punkter'};
+function clear(obj){if(!obj)return;scene.remove(obj);obj.traverse(o=>{o.geometry?.dispose();if(o.material&&o.material!==terrainMat){o.material.map?.dispose();o.material.dispose();}});}
+function lineSegments(points,color,opacity=1){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(points,3));return new THREE.LineSegments(g,new THREE.LineBasicMaterial({color,transparent:opacity<1,opacity,depthTest:true}));}
+function segment(arr,x0,z0,x1,z1,lift=.018){arr.push(x0,surfaceAt(state.h,x0,z0)+lift,z0,x1,surfaceAt(state.h,x1,z1)+lift,z1);}
+function updateScene(){
+ data=meshData(state.h);
+ clear(terrain);clear(grid);clear(selection);clear(markers);clear(contours);clear(labels);clear(profileLine);
+ const geometry=new THREE.BufferGeometry(),positions=data.vertices.flat(),colors=[],c=new THREE.Color(),green=new THREE.Color('#87a26a'),low=new THREE.Color('#4f6d52'),high=new THREE.Color('#b7ae7e'),earth=new THREE.Color('#ae8558');
+ const mode=$('shade').value;
+ for(const [x,y,z] of data.vertices){
+  if(mode==='delta'){c.set(exact(y,target)?'#71b58b':y>target?'#c29a61':'#699ec5');}
+  else {c.copy(low).lerp(y>12.7?high:green,clamp((y-11.4)/2,0,1));if(Math.abs(y-surfaceAt(state.base,x,z))>EPS)c.lerp(earth,.38);}
+  colors.push(c.r,c.g,c.b);
+ }
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geometry.setIndex(data.triangles.flat());geometry.computeVertexNormals();
+ terrain=new THREE.Mesh(geometry,terrainMat);scene.add(terrain);
+ const lines=[];
+ for(let i=0;i<=N;i++)for(let k=0;k<N*2;k++){
+  segment(lines,i,k/2,i,(k+1)/2);segment(lines,k/2,i,(k+1)/2,i);
+ }
+ grid=lineSegments(lines,0xc8ddc9,.38);grid.visible=$('grid').checked;scene.add(grid);
+ const sel=[];
+ for(let k=0;k<2;k++){const a=k/2,b=(k+1)/2,x=selected.x,z=selected.z;
+  segment(sel,x+a,z,x+b,z,.035);segment(sel,x+a,z+1,x+b,z+1,.035);
+  segment(sel,x,z+a,x,z+b,.035);segment(sel,x+1,z+a,x+1,z+b,.035);
+ }
+ selection=lineSegments(sel,0xffd678);scene.add(selection);
+ const pointPositions=[],pointColors=[];
+ for(let z=0;z<N;z++)for(let x=0;x<N;x++){
+  if(!$('points').checked&&(Math.abs(x-selected.x)>1||Math.abs(z-selected.z)>1))continue;
+  pointPositions.push(x+.5,height(x,z)+.04,z+.5);const st=cellStatus(state.h,x,z,target);
+  c.set(x===selected.x&&z===selected.z?'#ffdb79':st==='flat'?'#91e8ac':st==='cross'?'#e0cc75':st==='center'?'#e5ae70':'#dce9db');pointColors.push(c.r,c.g,c.b);
+ }
+ const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.Float32BufferAttribute(pointPositions,3));pg.setAttribute('color',new THREE.Float32BufferAttribute(pointColors,3));
+ markers=new THREE.Points(pg,new THREE.PointsMaterial({size:.095,vertexColors:true,sizeAttenuation:true}));scene.add(markers);
+ contours=new THREE.Group();
+ if($('contours').checked){
+  for(const [level,segs] of contourData(data,Number($('interval').value),target)){
+   const arr=[];for(const [a,b] of segs)arr.push(a[0],a[1]+.032,a[2],b[0],b[1]+.032,b[2]);
+   contours.add(lineSegments(arr,exact(level,target)?0xffd66c:0xe6efd7,exact(level,target)?1:.7));
+  }
+ }scene.add(contours);
+ labels=new THREE.Group();
+ if($('labels').checked){
+  // Keep the number of sprite textures bounded on mobile: selected 5x5 area.
+  for(let dz=-2;dz<=2;dz++)for(let dx=-2;dx<=2;dx++){
+   const x=selected.x+dx,z=selected.z+dz;if(!inside(x,z))continue;
+   const canvas=document.createElement('canvas');canvas.width=128;canvas.height=64;const ctx=canvas.getContext('2d');
+   ctx.fillStyle='rgba(21,38,30,0.85)';ctx.fillRect(4,4,120,56);ctx.font='bold 30px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=(dx===0&&dz===0)?'#ffdc7d':'#ecf5ed';ctx.fillText(fmt(height(x,z)),64,32);
+   const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+   const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,depthTest:true,transparent:true}));sprite.position.set(x+.5,height(x,z)+.24,z+.5);sprite.scale.set(.65,.325,1);labels.add(sprite);
+  }
+ }scene.add(labels);
+ if($('profileToggle').checked){
+  const arr=[],z=selected.z+.5;for(let k=0;k<N*2;k++)segment(arr,k/2,z,(k+1)/2,z,.055);
+  profileLine=lineSegments(arr,0xffe4aa);scene.add(profileLine);
+ }
+ dirty=false;updatePanel();
+}
+function updatePanel(){
+ const x=selected.x,z=selected.z,h=height(x,z),st=cellStatus(state.h,x,z,target),b=inventoryBalance(state);
+ $('chosen').textContent='Rute '+(x+1)+' / '+(z+1);
+ $('elev').textContent=sign(h)+' m';$('dev').textContent=sign(h-target)+' m';
+ $('cellState').textContent=statusNames[st];$('cellState').dataset.state=st;
+ $('stock').textContent=fmt(state.stock,1)+' L';$('volCut').textContent=fmt(state.cut,1)+' L';$('volFill').textContent=fmt(state.fill,1)+' L';$('balance').textContent=fmt(Math.abs(b.residual)<EPS?0:b.residual,6)+' L';
+ $('actions').textContent=String(state.actions);
+ $('nextDig').textContent=nextText(-1);$('nextFill').textContent=nextText(1);
+ const cells=$('neighbors');cells.replaceChildren();
+ for(let dz=-1;dz<=1;dz++)for(let dx=-1;dx<=1;dx++){
+  const el=document.createElement('button'),a=x+dx,q=z+dz;
+  el.type='button';el.disabled=!inside(a,q);el.textContent=el.disabled?'—':fmt(height(a,q));
+  el.className='neighbor'+(dx===0&&dz===0?' chosen':'')+(!el.disabled&&exact(height(a,q),target)?' match':'');
+  el.setAttribute('aria-label',el.disabled?'Utenfor terrenget':'Velg rute '+(a+1)+', '+(q+1)+', kote '+el.textContent);
+  el.onclick=()=>select(a,q);cells.append(el);
+ }
+ const statusCounts={avvik:0,center:0,cross:0,flat:0};
+ for(let j=0;j<N;j++)for(let i=0;i<N;i++)statusCounts[cellStatus(state.h,i,j,target)]++;
+ $('count').textContent=statusCounts.flat+' / 400 fullt plane ruter ved målkoten';
+ $('last').textContent=state.last?'Kote '+fmt(state.last.before)+' → '+fmt(state.last.after)+' m · '+sign(state.last.litres)+' L':'Ingen terrenginngrep ennå.';
+ drawProfile();
+}
+function nextText(dir){const h=height(selected.x,selected.z),y=nextStep(h,dir,$('cap').checked?target:null);return y===null?'Stopp ved målkote':fmt(h)+' → '+fmt(y)+' m';}
+function drawProfile(){
+ const svg=$('profile');if(!$('profileToggle').checked){svg.hidden=true;return;}svg.hidden=false;
+ const z=selected.z+.5,values=Array.from({length:N*4+1},(_,i)=>surfaceAt(state.h,i/4,z));
+ const lo=Math.min(target,...values)-.1,hi=Math.max(target,...values)+.1;
+ const px=x=>26+x/N*262,py=y=>100-(y-lo)/(hi-lo)*80;
+ const poly=values.map((v,i)=>px(i/4)+','+py(v)).join(' ');
+ svg.innerHTML='<path d="M26 10 V100 H288" fill="none" stroke="#91a49c"/><path d="M26 '+py(target)+' H288" stroke="#e2b95e" stroke-dasharray="4 3"/><polyline points="'+poly+'" stroke="#b0d2b6" fill="none" stroke-width="2"/><path d="M'+px(selected.x+.5)+' 10 V100" stroke="#ffdb79" stroke-dasharray="3 3"/><text x="2" y="14">'+fmt(hi)+'</text><text x="2" y="100">'+fmt(lo)+'</text><text x="26" y="115">0 m</text><text x="258" y="115">20 m</text>';
+}
+function select(x,z){if(!inside(x,z))return;selected={x,z};dirty=true;}
+function action(dir){
+ const result=work(state,selected.x,selected.z,dir,$('cap').checked?target:null);
+ if(result.error){$('message').textContent=result.error;return false;}
+ $('message').textContent='';dirty=true;return true;
+}
+function loadScenario(){
+ if(state.actions&&!confirm('Nullstille terreng og masselager i laboratoriet?')){$('scenario').value=state.name;return;}
+ state=newState($('scenario').value);$('message').textContent='';dirty=true;
+}
+let press=null;
+renderer.domElement.addEventListener('pointerdown',e=>{if(!press)press={id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};else press.moved=true;});
+renderer.domElement.addEventListener('pointermove',e=>{if(press&&e.pointerId===press.id&&Math.hypot(e.clientX-press.x,e.clientY-press.y)>7)press.moved=true;});
+renderer.domElement.addEventListener('pointercancel',()=>press=null);
+renderer.domElement.addEventListener('pointerup',e=>{
+ if(!press||press.id!==e.pointerId)return;const tap=!press.moved;press=null;if(!tap)return;
+ const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2);
+ ray.setFromCamera(pointer,camera);const hit=ray.intersectObject(terrain,false)[0];if(hit)select(clamp(Math.floor(hit.point.x),0,N-1),clamp(Math.floor(hit.point.z),0,N-1));
+});
+function bindHold(id,dir){
+ const b=$(id);let timer=null,active=null;
+ const stop=()=>{clearInterval(timer);timer=null;active=null;};
+ b.addEventListener('pointerdown',e=>{if(active!==null)return;e.preventDefault();active=e.pointerId;b.setPointerCapture(e.pointerId);if(action(dir))timer=setInterval(()=>{if(!action(dir))stop();},500);else stop();});
+ for(const ev of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(ev,stop);
+ b.addEventListener('click',e=>{if(e.detail===0)action(dir);});
+ window.addEventListener('blur',stop);document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();});
+}
+bindHold('dig',-1);bindHold('fill',1);
+$('scenario').addEventListener('change',loadScenario);$('reset').onclick=loadScenario;
+for(const id of ['grid','points','contours','labels','profileToggle','interval','shade','cap'])$(id).addEventListener('change',()=>dirty=true);
+$('target').addEventListener('change',()=>{const v=Number($('target').value.replace(',','.'));target=Number.isFinite(v)&&$('target').value.trim()?roundDM(clamp(v,8,17)):target;$('target').value=target.toFixed(1);dirty=true;});
+$('top').onclick=()=>{camera.position.set(10,40,10.001);controls.target.set(10,12.1,10);controls.update();};
+$('orbit').onclick=()=>{camera.position.set(29,29,32);controls.target.set(10,12.1,10);controls.update();};
+window.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA','BUTTON'].includes(document.activeElement?.tagName))return;const moves={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};if(moves[e.key]){e.preventDefault();select(selected.x+moves[e.key][0],selected.z+moves[e.key][1]);}else if(e.key.toLowerCase()==='g')action(-1);else if(e.key.toLowerCase()==='f')action(1);});
+function resize(){const v=$('viewport');renderer.setSize(v.clientWidth,v.clientHeight);camera.aspect=v.clientWidth/Math.max(1,v.clientHeight);camera.updateProjectionMatrix();}
+new ResizeObserver(resize).observe($('viewport'));resize();
+function frame(){requestAnimationFrame(frame);if(dirty)updateScene();controls.update();renderer.render(scene,camera);}frame();
+
+</script></body></html>
