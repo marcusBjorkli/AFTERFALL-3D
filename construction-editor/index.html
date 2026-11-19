@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#101c20">
-<title>AFTERFALL | Construction Editor CE 0.7</title>
+<title>AFTERFALL | Construction Editor CE 0.8</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:#101c20;color:#e9f0ed;font:14px system-ui,sans-serif}
 body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
@@ -138,16 +138,36 @@ main.materials-open{grid-template-columns:minmax(320px,42%) minmax(0,1fr)}
 #structPanel summary{font-weight:700;font-size:12px;cursor:pointer}
 #structPanel details{margin:12px 0}
 #structLegend{font-size:11px;color:#abc0c3}
+
+#blueprintPanel{min-width:0;overflow-wrap:anywhere}
+#blueprintPanel .fields>*{min-width:0}
+#blueprintPanel input,#blueprintPanel select{font-size:16px;min-width:0}
+#blueprintReport{white-space:pre-line;color:#c2e3d7}
+#blueprintReport.error{color:#ffb6a2}
+#blueprintDrawings svg{display:block;width:100%;height:auto;background:#f4f5f0;border-radius:5px;margin:7px 0 12px}
+#blueprintPanel .matDetails{min-width:0}
+#blueprintPanel .buttons{margin-top:8px}
+#blueprintPanel .drawingTitle{font-weight:700;color:#d5ece2;margin-top:10px}
+main.blueprints-open{grid-template-columns:minmax(330px,43%) minmax(0,1fr)}
+@media(max-width:660px) and (orientation:portrait){
+ main.blueprints-open{grid-template-columns:1fr;grid-template-rows:minmax(0,46dvh) minmax(0,1fr)}
+ main.blueprints-open aside{max-height:none;min-height:0}
+ main.blueprints-open #viewport{display:flex}
+ main.blueprints-open .panelTabs{position:sticky;top:0;z-index:2;background:#142329;padding:5px 0}
+ main.blueprints-open.blueprint-paper{grid-template-rows:minmax(0,1fr)}
+ main.blueprints-open.blueprint-paper #viewport{display:none}
+}
+@media(max-height:480px) and (orientation:landscape){main.blueprints-open{grid-template-columns:minmax(260px,48%) minmax(0,1fr)}}
 </style>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
 </script>
 </head>
 <body>
-<header><span class="brand">AFTERFALL</span><span class="version">CE 0.7</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
+<header><span class="brand">AFTERFALL</span><span class="version">CE 0.8</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
 <main>
 <aside>
-<div class="panelTabs" aria-label="Verktøypaneler"><button id="tabModules" type="button" aria-pressed="true">Moduler</button><button id="tabSite" type="button" aria-pressed="false">Byggeflate / mål</button><button id="tabMaterials" type="button" aria-pressed="false">Materialer</button><button id="tabStructure" type="button" aria-pressed="false">Konstruksjon</button></div>
+<div class="panelTabs" aria-label="Verktøypaneler"><button id="tabModules" type="button" aria-pressed="true">Moduler</button><button id="tabSite" type="button" aria-pressed="false">Byggeflate / mål</button><button id="tabMaterials" type="button" aria-pressed="false">Materialer</button><button id="tabStructure" type="button" aria-pressed="false">Konstruksjon</button><button id="tabBlueprint" type="button" aria-pressed="false" style="grid-column:1/-1">Byggetegninger</button></div>
 <section id="modulePanel">
 <h1>Modulbibliotek</h1>
 <p>Standardmoduler med geometriske festepunkter. Bæreevne og materialbehov beregnes i senere versjoner.</p>
@@ -252,7 +272,7 @@ main.materials-open{grid-template-columns:minmax(320px,42%) minmax(0,1fr)}
 <button id="doConnect" class="primary" type="button" disabled>Koble moduler</button>
 <p id="connectorResult" aria-live="polite">Velg to festepunkter. Kilden flyttes i X, Y og Z. Punktene må vende mot hverandre.</p>
 </section>
-<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.7. Tilpassede avstivere må beregnes på nytt hvis festemodulene flyttes.</p>
+<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.8. Tilpassede avstivere må beregnes på nytt hvis festemodulene flyttes.</p>
 </section>
 <section id="sitePanel" hidden>
 <h1>Byggeflate</h1>
@@ -309,13 +329,42 @@ main.materials-open{grid-template-columns:minmax(320px,42%) minmax(0,1fr)}
 <p>Spenn i gulv og tak er overordnede projiserte støtteavstander, ikke individuelle statiske beregninger. Mulig avstiving sjekkes i X og Z via sammenhengende veggpaneler og tilpassede avstivere. Kontakt gir ikke dokumentert innfesting. Vind, snø, nyttelast, jord, fundamentsetninger, knekking, brudd, deformasjon og forbindelseskapasitet er ikke beregnet.</p>
 </details>
 </section>
+<section id="blueprintPanel" hidden>
+<h1>Bygningskatalog og tegninger</h1>
+<p>Velg en ferdigtegning eller tegn fritt i modulbiblioteket. Ferdigtegninger blir vanlige, individuelt redigerbare moduler.</p>
+<label for="blueprintType">Ferdigtegning</label><select id="blueprintType"><option value="storage">Lagerskur</option><option value="cabin">Enkel bolig</option><option value="workshop">Verksted</option></select>
+<p id="blueprintDescription"></p>
+<div class="fields">
+<div><label for="bpLength">Lengde (m)</label><input id="bpLength" type="number" min="2.5" max="8" step="any"></div>
+<div><label for="bpWidth">Bredde (m)</label><input id="bpWidth" type="number" min="2.5" max="8" step="any"></div>
+<div><label for="bpWallHeight">Vegghøyde (m)</label><input id="bpWallHeight" type="number" min="2.2" max="3.5" step="any"></div>
+<div><label for="bpAngle">Rotasjon</label><select id="bpAngle"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></div>
+<div><label for="bpX">Sentrum X (m)</label><input id="bpX" type="number" step="any"></div>
+<div><label for="bpZ">Sentrum Z (m)</label><input id="bpZ" type="number" step="any"></div>
+<div><label for="bpRoof">Taktype</label><select id="bpRoof"><option value="flatRoof">Flatt tak</option><option value="gableRoof">Saltak (åpne gavlfelt)</option></select></div>
+<div><label for="bpPitch">Takvinkel (°)</label><input id="bpPitch" type="number" min="5" max="45" step="any"></div>
+<div><label for="bpOverhang">Takutstikk (m)</label><input id="bpOverhang" type="number" min="0" max="1" step="any"></div>
+</div>
+<div class="buttons"><button id="bpCenter" type="button">Sentrer på byggeflate</button><button id="bpPreview" type="button">Forhåndsvis bygg</button></div>
+<button id="bpApply" class="primary" type="button" disabled>Legg bygget til prosjektet</button>
+<p id="blueprintReport" aria-live="polite">Forhåndsvis og kontroller før plassering. Eksisterende moduler beholdes.</p>
+<details class="matDetails" open><summary>Materialer og byggetrinn</summary><div id="bpSummary"></div></details>
+<h2>Automatiske tegninger</h2>
+<label for="bpDrawingSource">Tegningsgrunnlag</label><select id="bpDrawingSource"><option value="project">Gjeldende prosjekt</option><option value="preview">Ferdigtegning – forhåndsvisning</option></select>
+<label class="check"><input id="bpPlanRoof" type="checkbox">Vis tak i plan</label>
+<label class="check"><input id="bpPaper" type="checkbox">Utvid tegningspanel</label>
+<p>Skjematiske ortografiske tegninger i prosjektets akser (meter). Plan uten tak er en ovenfravisning, ikke et horisontalt snitt. Skala tilpasses visningen.</p>
+<div id="blueprintDrawings"></div>
+<button id="bpBack" class="wide" type="button">Tilbake til fri prosjektering</button>
+<p>Ferdigtegningene er spillprototyper. Saltak har åpne gavlfelt. Ingen lagring, eksport, installasjoner, inventar, fysiske byggehandlinger eller materialtrekk i CE 0.8.</p>
+</section>
 </aside>
 <section id="viewport" aria-label="3D-visning av byggeflate">
 <div id="toolbar" role="toolbar" aria-label="Kameravisninger">
 <button data-view="orbit" aria-pressed="true">3D</button><button data-view="top" aria-pressed="false">Ovenfra</button><button data-view="front" aria-pressed="false">Foran</button><button data-view="right" aria-pressed="false">Høyre</button><span class="divider"></span>
 <button id="fit">Tilpass</button><button id="zoomIn" aria-label="Zoom inn">+</button><button id="zoomOut" aria-label="Zoom ut">−</button>
 </div>
-<div id="modebar"><button id="selectMode" type="button" aria-pressed="true">Velg</button><button id="placeMode" type="button" aria-pressed="false">Plasser</button><button id="moveMode" type="button" aria-pressed="false" disabled>Flytt</button><button id="cancelMode" type="button" disabled>Avbryt</button><button id="wallFitQuick" type="button">Veggtilpasning</button><button id="roofFitQuick" type="button">Taktilpasning</button><button id="materialsQuick" type="button">Mengder</button><button id="structureQuick" type="button">Kontroll</button><span id="currentMode">Velg en modul</span></div>
+<div id="modebar"><button id="selectMode" type="button" aria-pressed="true">Velg</button><button id="placeMode" type="button" aria-pressed="false">Plasser</button><button id="moveMode" type="button" aria-pressed="false" disabled>Flytt</button><button id="cancelMode" type="button" disabled>Avbryt</button><button id="wallFitQuick" type="button">Veggtilpasning</button><button id="roofFitQuick" type="button">Taktilpasning</button><button id="materialsQuick" type="button">Mengder</button><button id="structureQuick" type="button">Kontroll</button><button id="blueprintQuick" type="button">Tegninger</button><span id="currentMode">Velg en modul</span></div>
 <p id="status" role="status" aria-live="polite">Laster 3D-miljø …</p>
 <div id="stage">
 <div id="overlay"><b id="size">12 × 10 m</b><br>Areal: <span id="area">120</span> m²<br>Y = 0 m · <span id="viewName">3D</span></div>
@@ -324,7 +373,7 @@ main.materials-open{grid-template-columns:minmax(320px,42%) minmax(0,1fr)}
 </div>
 </section>
 </main>
-<footer>CE 0.7 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
+<footer>CE 0.8 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
 <script type="module">
 const $=id=>document.getElementById(id);
 const status=$('status'),stage=$('stage'),form=$('dimensions'),lengthInput=$('length'),widthInput=$('width');
@@ -848,6 +897,89 @@ function structureAnalysis(modules,densities=defaultDensities()){
  for(const n of list){n.status=n.issues.some(i=>i.level==='error')?'error':n.issues.length?'warn':'ok';}
  return {nodes:list,edges,sideEdges,assemblies,ownForce:quantities.mass*GRAVITY,unknownVolume:quantities.unknownVolume,groundForce,unresolvedForce,groundUnknown,unresolvedUnknown,errors:list.filter(n=>n.status==='error').length,warnings:list.filter(n=>n.status==='warn').length,cycles:list.filter(n=>!n.processed).length};
 }
+// CE 0.8: blueprints instantiate the same modules used for free construction.
+const blueprintCatalog={
+ storage:{name:'Lagerskur',description:'Lite lukket lager med enkel dør, uten vindu. Funksjon i spillet kommer ved integrasjon.',l:3,w:3,h:2.4,roof:'flatRoof',pitch:20,overhang:.2,door:.9,windows:[]},
+ cabin:{name:'Enkel bolig',description:'Enroms hytte med dør og to vinduer. Saltak har foreløpig åpne gavlfelt; velg flatt tak for lukket bygningsvolum.',l:4,w:3.5,h:2.4,roof:'gableRoof',pitch:30,overhang:.3,door:.9,windows:['south','east']},
+ workshop:{name:'Verksted',description:'Større arbeidsrom med bred dør og to vinduer. Innredning og produksjonsfunksjon kommer senere.',l:5,w:4,h:2.7,roof:'flatRoof',pitch:20,overhang:.3,door:1.5,windows:['south','west']}
+};
+function blueprintOptions(type,L,W){
+ const d=blueprintCatalog[type];return {type,l:d.l,w:d.w,h:d.h,roof:d.roof,pitch:d.pitch,overhang:d.overhang,angle:0,x:L/2,z:W/2};
+}
+function buildBlueprint(o,existing,L,W,firstId){
+ const fail=error=>({error}),def=blueprintCatalog[o.type];
+ if(!def)return fail('Ukjent ferdigtegning.');
+ if(![o.l,o.w,o.h,o.x,o.z,o.angle,o.overhang,o.pitch].every(Number.isFinite)||o.l<2.5||o.l>8||o.w<2.5||o.w>8||o.h<2.2||o.h>3.5||o.overhang<0||o.overhang>1||o.pitch<5||o.pitch>45||![0,90,180,270].includes(o.angle)||!['flatRoof','gableRoof'].includes(o.roof))return fail('Kontroller mål: 2,5–8 m, vegghøyde 2,2–3,5 m, takvinkel 5–45°, takutstikk 0–1 m.');
+ if(!Number.isSafeInteger(firstId)||firstId<1||existing.some(m=>m.id>=firstId))return fail('Ugyldig startnummer for moduler.');
+ const list=[],steps=[],basis={x:o.x,y:0,z:o.z,angle:o.angle};
+ let id=firstId;
+ const make=(type,x,y,z,angle,patch={})=>{
+  const d=catalog[type],[X,Y,Z]=pointToWorld(basis,[x,y,z]);
+  return normalizeBuilding({id:id++,type,x:X,y:Y,z:Z,l:d.l,w:d.w,h:d.h,angle:(angle+o.angle)%360,...patch});
+ };
+ const append=(m,step)=>{
+  const error=validModule(m,L,W,list);
+  if(error)throw Error(catalog[m.type].name+': '+error);
+  list.push(m);
+  let group=steps.at(-1);
+  if(!group||group.name!==step){group={name:step,ids:[]};steps.push(group);}
+  group.ids.push(m.id);return m;
+ };
+ try{
+  // Three strip footings directly beneath the floor joists (more above 5 m).
+  // The outside edges coincide with the floor extent. All are real modules.
+  const footWidth=.3,footH=.3,frameH=.198,deckH=.035;
+  const n=Math.ceil((o.l-footWidth)/2.5)+1;
+  for(let i=0;i<n;i++){
+   const x=-o.l/2+footWidth/2+(o.l-footWidth)*i/(n-1);
+   append(make('stripFoot',x,0,0,90,{l:o.w,w:footWidth,h:footH}),'1. Fundamentering');
+  }
+  append(make('floorFrame',0,footH,0,0,{l:o.l,w:o.w,h:frameH}),'2. Gulvbjelkelag og gulv');
+  const floor=append(make('floorDeck',0,footH+frameH,0,0,{l:o.l,w:o.w,h:deckH}),'2. Gulvbjelkelag og gulv');
+  const openings=[];
+  for(const side of ['north','south','east','west']){
+   const type=side==='north'?'doorWall':def.windows.includes(side)?'windowWall':'solidWall';
+   const patch={h:o.h,w:.148};
+   if(type==='doorWall')patch.params={openingW:def.door,openingH:2.1,offset:0};
+   if(type==='windowWall')patch.params={openingW:1,openingH:.9,sill:.9,offset:0};
+   const m=make(type,0,0,0,0,patch),r=fitWallOnEdge(m,floor,side,list,L,W);
+   if(r.error)throw Error('Vegg '+edgeNames[side]+': '+r.error);
+   const wall=append(r.module,'3. Yttervegger');if(isOpening(wall))openings.push(wall);
+  }
+  for(const wall of openings){
+   const r=openingInsert(wall,id++);
+   if(r.error)throw Error(r.error);
+   append(r.module,'4. Dører og vinduer');
+  }
+  const roof=fitRoofOnFloor(make(o.roof,0,0,0,0),floor,{direction:0,eave:o.overhang,gable:o.overhang,pitch:o.pitch,thickness:o.roof==='flatRoof'?.12:.20,autoPitch:false},list,L,W);
+  if(roof.error)throw Error('Tak: '+roof.error);
+  append(roof.module,'5. Tak');
+  if(list.length+existing.length>MAX_MODULES)return fail('Prosjektet overskrider grensen på '+MAX_MODULES+' moduler.');
+  for(const m of list){
+   const error=validModule(m,L,W,existing);
+   if(error)return fail(catalog[m.type].name+': '+error+' Velg en annen plassering.');
+  }
+  return {modules:list,steps,nextId:id,floorId:floor.id,name:def.name,options:{...o}};
+ }catch(e){return fail(e.message);}
+}
+function drawingModel(modules,view,hideRoof=false){
+ const faces=[];
+ for(const m of modules){
+  if(hideRoof&&isRoof(m))continue;
+  for(const p of piecesOf(m)){
+   const vertices=p.polygon.flatMap(([x,y])=>[p.z0,p.z1].map(z=>pointToWorld(m,[x,y,z])));
+   const project=v=>view==='plan'?[v[0],v[2],v[1]]:view==='front'?[v[0],-v[1],v[2]]:[-v[2],-v[1],v[0]];
+   const mapped=vertices.map(project),poly=hull2(mapped.map(v=>v.slice(0,2)));
+   if(poly.length<3||polygonArea(poly)<EPS)continue;
+   const depth=mapped.reduce((s,v)=>s+v[2],0)/mapped.length;
+   faces.push({id:m.id,type:m.type,kind:p.kind,polygon:poly,depth});
+  }
+ }
+ if(!faces.length)return {faces:[],bounds:null};
+ faces.sort((a,b)=>a.depth-b.depth||a.id-b.id);
+ const all=faces.flatMap(f=>f.polygon);
+ return {faces,bounds:bounds2(all)};
+}
 function solid(m,piece=null){
  const part=piece||{polygon:profileOf(m),z0:-m.w/2,z1:m.w/2};
  const polygon=part.polygon;
@@ -1103,7 +1235,7 @@ function roofWallPair(floor,direction,others){
   if(Math.abs(x1-half)<=EPS&&x0>=-EPS)high.push(s);
  }
  if(!low.length||!high.length)return {error:'Det kreves to motstående yttervegger oppå valgt gulv. Kontroller takretning og veggplassering.'};
- if(low.length!==1||high.length!==1)return {error:'Flere vegger funnet på samme takside. CE 0.7 støtter én sammenhengende vegg per motsatt ytterkant.'};
+ if(low.length!==1||high.length!==1)return {error:'Flere vegger funnet på samme takside. CE 0.8 støtter én sammenhengende vegg per motsatt ytterkant.'};
  if(Math.min(low[0].z1,high[0].z1)-Math.max(low[0].z0,high[0].z0)<=EPS)return {error:'Motstående vegger må overlappe i takets lengderetning.'};
  return {angle,span,depth,low:low[0],high:high[0]};
 }
@@ -1184,6 +1316,111 @@ try{
  const meshes=new Map();
  let anchorGroup=null;
  let materialDensities=defaultDensities();
+ let bpCandidate=null,bpGhost=null;
+ const bpIds=['bpLength','bpWidth','bpWallHeight','bpAngle','bpX','bpZ','bpRoof','bpPitch','bpOverhang'];
+ function bpRead(){
+  const val=id=>$(id).valueAsNumber;
+  return {type:$('blueprintType').value,l:val('bpLength'),w:val('bpWidth'),h:val('bpWallHeight'),angle:Number($('bpAngle').value),x:val('bpX'),z:val('bpZ'),roof:$('bpRoof').value,pitch:val('bpPitch'),overhang:val('bpOverhang')};
+ }
+ function bpClearGhost(){
+  if(bpGhost){disposeGroup(bpGhost);bpGhost=null;}
+ }
+ function bpInvalidate(message='Forhåndsvis bygget på nytt før plassering.'){
+  bpCandidate=null;bpClearGhost();$('bpApply').disabled=true;
+  $('blueprintReport').className='';$('blueprintReport').textContent=message;
+  $('bpSummary').replaceChildren();
+  if($('bpDrawingSource').value==='preview')$('bpDrawingSource').value='project';
+  renderBlueprintDrawings();
+ }
+ function bpLoadPreset(){
+  const o=blueprintOptions($('blueprintType').value,L,W);
+  for(const [id,key] of Object.entries({bpLength:'l',bpWidth:'w',bpWallHeight:'h',bpAngle:'angle',bpX:'x',bpZ:'z',bpRoof:'roof',bpPitch:'pitch',bpOverhang:'overhang'}))$(id).value=String(o[key]);
+  $('blueprintDescription').textContent=blueprintCatalog[o.type].description;
+  $('bpPitch').disabled=o.roof==='flatRoof';
+  bpInvalidate('Forhåndsvis og kontroller før plassering. Eksisterende moduler beholdes.');
+ }
+ function bpKey(){return JSON.stringify([bpRead(),modules,L,W,nextId,materialDensities]);}
+ function bpSummary(result){
+  const host=$('bpSummary');host.replaceChildren();
+  const q=quantitySummary(result.modules,materialDensities),s=structureAnalysis(result.modules,materialDensities);
+  materialText(host,'p',result.modules.length+' moduler · '+q.partCount+' materialdeler');
+  materialText(host,'p','Netto '+qty(q.net)+' m³ · rå '+qty(q.raw)+' m³ · '+qty(q.mass)+' kg'+(q.unknownVolume>EPS?' + ukjent masse':''));
+  materialText(host,'p','Konstruksjonskontroll: '+s.errors+' moduler med feil · '+s.warnings+' med advarsler.',s.errors?'structError':s.warnings?'structWarn':'structOK');
+  if(s.errors)for(const n of s.nodes.filter(n=>n.status==='error'))materialText(host,'p','#'+n.id+' '+n.name+': '+n.issues.filter(i=>i.level==='error').map(i=>i.message).join(' '),'structError');
+  materialText(host,'p','Materialer (råmengde):');
+  for(const a of q.materials)materialText(host,'p',materialCatalog[a.key].name+': '+qty(a.raw)+' m³ · '+qty(a.rawMass)+' kg'+(a.unknownRaw>EPS?' + ukjent':''));
+  materialText(host,'p','Foreslått byggerekkefølge (ingen fysisk bygging):');
+  for(const step of result.steps)materialText(host,'p',step.name+' – '+step.ids.length+' moduler (#'+step.ids.join(', #')+')');
+ }
+ function bpPreview(){
+  if(measuring)setMeasuring(false);if(mode!=='select')setMode('select');
+  clearBracePreview();hideGhost();bpInvalidate();
+  const result=buildBlueprint(bpRead(),modules,L,W,nextId);
+  if(result.error){$('blueprintReport').className='error';$('blueprintReport').textContent=result.error;setStatus(result.error,true);return;}
+  bpCandidate={result,key:bpKey()};
+  bpGhost=new THREE.Group();
+  for(const m of result.modules){const mesh=modelMesh(m,true);transform(mesh,m);bpGhost.add(mesh);}
+  scene.add(bpGhost);
+  $('bpApply').disabled=false;$('bpDrawingSource').value='preview';
+  $('blueprintReport').textContent=result.name+' · '+result.modules.length+' moduler.\nGeometrisk passform kontrollert. Se konstruksjonskontroll nedenfor. Ingen moduler er lagt til.';
+  bpSummary(result);renderBlueprintDrawings();setStatus('Forhåndsvisning av '+result.name+'. Bekreft i Byggetegninger.');
+ }
+ function bpApply(){
+  if(!bpCandidate||bpCandidate.key!==bpKey()){bpInvalidate('Prosjektet eller innstillingene er endret. Forhåndsvis på nytt.');return;}
+  const result=buildBlueprint(bpRead(),modules,L,W,nextId);
+  if(result.error){bpInvalidate();$('blueprintReport').className='error';$('blueprintReport').textContent=result.error;return;}
+  // Prepare every mesh first; rollback on error before changing project state.
+  const prepared=[];
+  try{for(const m of result.modules){const mesh=modelMesh(m);transform(mesh,m);prepared.push([m,mesh]);}}
+  catch(err){for(const [,mesh] of prepared)disposeGroup(mesh);bpInvalidate('Kunne ikke opprette alle moduler. Prosjektet er uendret.');setStatus(err.message,true);return;}
+  bpClearGhost();bpCandidate=null;
+  for(const [m,mesh] of prepared){moduleGroup.add(mesh);meshes.set(m.id,mesh);}
+  modules.push(...result.modules);nextId=result.nextId;selectedId=null;
+  $('bpDrawingSource').value='project';$('bpApply').disabled=true;
+  refreshSelection();bpSummary(result);renderBlueprintDrawings();
+  $('blueprintReport').textContent=result.name+' lagt til som '+result.modules.length+' redigerbare moduler. Eksisterende prosjekt beholdt.';
+  setStatus(result.name+' lagt til. Fortsett i Moduler eller Konstruksjon.');fitCamera();
+ }
+ const bpSVG=(tag,attrs,parent,text)=>{const el=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const [k,v] of Object.entries(attrs))el.setAttribute(k,String(v));if(text!==undefined)el.textContent=text;parent.append(el);return el;};
+ function bpDrawing(host,ms,view,label,hide){
+  materialText(host,'p',label,'drawingTitle');
+  const d=drawingModel(ms,view,hide);
+  if(!d.bounds){materialText(host,'p','Ingen synlige moduler.');return;}
+  const [x0,x1,y0,y1]=d.bounds,w=x1-x0,h=y1-y0,scale=Math.min(280/Math.max(w,.05),175/Math.max(h,.05));
+  const ox=40+(280-w*scale)/2,oy=28+(175-h*scale)/2;
+  const p=([x,y])=>[ox+(x-x0)*scale,oy+(y-y0)*scale];
+  const svg=bpSVG('svg',{viewBox:'0 0 360 245',role:'img','aria-label':label+' – '+qty(w)+' × '+qty(h)+' m'},host);
+  for(const f of d.faces){
+   const color=f.kind==='glass'?'#b2d9e0':'#'+catalog[f.type].color.toString(16).padStart(6,'0');
+   bpSVG('polygon',{points:f.polygon.map(v=>p(v).map(n=>n.toFixed(3)).join(',')).join(' '),fill:color,stroke:'#3c4b4d','stroke-width':.55,'stroke-linejoin':'round'},svg);
+  }
+  const [a,b]=p([x0,y1]),[dX,dY]=p([x1,y0]),line=(x1,y1,x2,y2)=>bpSVG('line',{x1,y1,x2,y2,stroke:'#34494e','stroke-width':.7},svg);
+  const yDim=b+15,xDim=a-15;
+  line(a,b,a,yDim+5);line(dX,b,dX,yDim+5);line(a,yDim,dX,yDim);
+  line(a-3,yDim-3,a+3,yDim+3);line(dX-3,yDim-3,dX+3,yDim+3);
+  bpSVG('text',{x:(a+dX)/2,y:yDim+12,'text-anchor':'middle','font-size':10,fill:'#34494e'},svg,qty(w)+' m');
+  line(a,dY,xDim-5,dY);line(a,b,xDim-5,b);line(xDim,dY,xDim,b);
+  line(xDim-3,dY-3,xDim+3,dY+3);line(xDim-3,b-3,xDim+3,b+3);
+  bpSVG('text',{x:xDim-7,y:(dY+b)/2,transform:'rotate(-90 '+(xDim-7)+' '+((dY+b)/2)+')','text-anchor':'middle','font-size':10,fill:'#34494e'},svg,qty(h)+' m');
+  bpSVG('text',{x:350,y:13,'text-anchor':'end','font-size':9,fill:'#34494e'},svg,view==='plan'?'X → / Z ↓':view==='front'?'X → / Y ↑':'−Z → / Y ↑');
+ }
+ function renderBlueprintDrawings(){
+  if($('blueprintPanel').hidden)return;
+  const host=$('blueprintDrawings');host.replaceChildren();
+  const preview=$('bpDrawingSource').value==='preview',ms=preview?(bpCandidate?.result.modules||[]):modules;
+  if(!ms.length){materialText(host,'p','Ingen moduler i tegningsgrunnlaget.');return;}
+  bpDrawing(host,ms,'plan','Plan – ovenfra',!$('bpPlanRoof').checked);
+  bpDrawing(host,ms,'front','Fasade – forfra (+Z)',false);
+  bpDrawing(host,ms,'right','Fasade – fra høyre (+X)',false);
+ }
+ function openBlueprints(){
+  if(measuring)setMeasuring(false);if(mode!=='select')setMode('select');
+  showPanel('blueprints');document.querySelector('aside').scrollTop=0;
+ }
+ function bpProjectChanged(){
+  if(bpCandidate&&bpCandidate.key!==bpKey())bpInvalidate('Prosjektet er endret. Forhåndsvis på nytt.');
+  renderBlueprintDrawings();
+ }
  let structuralCache=null,structuralKey='';
  const structFmt=new Intl.NumberFormat('nb-NO',{maximumFractionDigits:3});
  const skn=v=>structFmt.format(v/1000)+' kN';
@@ -1264,7 +1501,7 @@ try{
     if(input.value.trim()==='')materialDensities[key]=null;
     else if(Number.isFinite(val)&&val>=1&&val<=20000)materialDensities[key]=val;
     else {input.value=materialDensities[key]??'';setStatus('Densitet må være 1–20 000 kg/m³, eller tom for ukjent.',true);}
-    renderMaterials();renderStructure();
+    renderMaterials();renderStructure();bpProjectChanged();
    });
    wrap.append(lab,input);host.append(wrap);
   }
@@ -1670,12 +1907,15 @@ try{
   setStatus('Festepunkter sammenfaller. Modul #'+source.id+' oppdatert.');
  }
  function showPanel(which){
-  $('modulePanel').hidden=which!=='modules';$('sitePanel').hidden=which!=='site';$('materialPanel').hidden=which!=='materials';$('structPanel').hidden=which!=='structure';
+  if(which!=='blueprints'&&bpCandidate)bpInvalidate();
+  $('modulePanel').hidden=which!=='modules';$('sitePanel').hidden=which!=='site';$('materialPanel').hidden=which!=='materials';$('structPanel').hidden=which!=='structure';$('blueprintPanel').hidden=which!=='blueprints';
   $('tabModules').setAttribute('aria-pressed',String(which==='modules'));
   $('tabSite').setAttribute('aria-pressed',String(which==='site'));$('tabMaterials').setAttribute('aria-pressed',String(which==='materials'));
-  $('tabStructure').setAttribute('aria-pressed',String(which==='structure'));
+  $('tabStructure').setAttribute('aria-pressed',String(which==='structure'));$('tabBlueprint').setAttribute('aria-pressed',String(which==='blueprints'));
   document.querySelector('main').classList.toggle('materials-open',which==='materials'||which==='structure');
-  if(which==='materials')renderMaterials();if(which==='structure')renderStructure();
+  document.querySelector('main').classList.toggle('blueprints-open',which==='blueprints');
+  document.querySelector('main').classList.toggle('blueprint-paper',which==='blueprints'&&$('bpPaper').checked);
+  if(which==='materials')renderMaterials();if(which==='structure')renderStructure();if(which==='blueprints')renderBlueprintDrawings();
  }
  function current(){return modules.find(m=>m.id===selectedId)||null;}
  function modelMesh(m,preview=false){
@@ -1722,7 +1962,7 @@ try{
   if(m&&m.roofFit)$('connectionsInfo').textContent+='\n'+roofFitStatus(m);
   if(m&&m.edgeFit)$('connectionsInfo').textContent+='\n'+edgeFitStatus(m);
   if(m&&isFitted(m))$('connectionsInfo').textContent+='\n'+checkFitStatus(m)+'\nSenterlinje: '+fmt.format(m.fit.length)+' m · Helning: '+fmt.format(m.fit.slope)+'°';
-  refreshConnectors();renderMaterials();renderStructure();
+  refreshConnectors();renderMaterials();renderStructure();bpProjectChanged();
  }
  function selectModule(id){
   selectedId=modules.some(m=>m.id===id)?id:null;refreshSelection();
@@ -1742,6 +1982,7 @@ try{
   if(next==='place'&&modules.length>=MAX_MODULES){setStatus('Maks '+MAX_MODULES+' testmoduler.',true);return;}
   if(measuring&&next!=='select')setMeasuring(false);
   mode=next;lastHover=null;hideGhost();clearBracePreview();
+  if(next!=='select'&&bpCandidate)bpInvalidate();
   stage.classList.toggle('placing',next!=='select');
   $('selectMode').setAttribute('aria-pressed',String(next==='select'));
   $('placeMode').setAttribute('aria-pressed',String(next==='place'));
@@ -1862,7 +2103,7 @@ try{
   plot.add(lines([a,e,c,b,e,c,b,e,c,b,e,d,b,e,d,a,e,d,a,e,d,a,e,c],0xc4e8dc));
   scene.add(plot);updateGrid();
   $('size').textContent=fmt.format(L)+' × '+fmt.format(W)+' m';$('area').textContent=fmt.format(L*W);
-  refreshAnchorMarkers();setStatus('Byggeflate oppdatert.');fitCamera();return true;
+  refreshAnchorMarkers();bpProjectChanged();setStatus('Byggeflate oppdatert.');fitCamera();return true;
  }
  function clearMeasurement(){
   points=[];disposeGroup(measureGroup);measureGroup=null;measurementCenter=null;
@@ -1937,9 +2178,18 @@ try{
  for(const id of ['tabMaterials','materialsQuick'])$(id).addEventListener('click',openMaterials);
  $('materialBack').addEventListener('click',()=>showPanel('modules'));
  $('materialScope').addEventListener('change',renderMaterials);
- $('resetDensities').addEventListener('click',()=>{materialDensities=defaultDensities();initMaterialDensities();renderMaterials();renderStructure();});
+ $('resetDensities').addEventListener('click',()=>{materialDensities=defaultDensities();initMaterialDensities();renderMaterials();renderStructure();bpProjectChanged();});
  initMaterialDensities();
  for(const id of ['tabStructure','structureQuick'])$(id).addEventListener('click',openStructure);
+ for(const id of ['tabBlueprint','blueprintQuick'])$(id).addEventListener('click',openBlueprints);
+ $('blueprintType').addEventListener('change',bpLoadPreset);
+ for(const id of bpIds)$(id).addEventListener('input',()=>{$('bpPitch').disabled=$('bpRoof').value==='flatRoof';bpInvalidate();});
+ $('bpCenter').addEventListener('click',()=>{$('bpX').value=String(L/2);$('bpZ').value=String(W/2);bpInvalidate();});
+ $('bpPreview').addEventListener('click',bpPreview);$('bpApply').addEventListener('click',bpApply);
+ $('bpDrawingSource').addEventListener('change',renderBlueprintDrawings);$('bpPlanRoof').addEventListener('change',renderBlueprintDrawings);
+ $('bpPaper').addEventListener('change',()=>document.querySelector('main').classList.toggle('blueprint-paper',$('bpPaper').checked));
+ $('bpBack').addEventListener('click',()=>showPanel('modules'));
+ bpLoadPreset();
  $('structBack').addEventListener('click',()=>showPanel('modules'));
  $('structRefresh').addEventListener('click',()=>{structuralCache=null;renderStructure();});
  $('structFilter').addEventListener('change',renderStructure);
