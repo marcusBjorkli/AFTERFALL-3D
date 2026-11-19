@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#101c20">
-<title>AFTERFALL | Construction Editor CE 0.8</title>
+<title>AFTERFALL | Construction Editor CE 0.8.1</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:#101c20;color:#e9f0ed;font:14px system-ui,sans-serif}
 body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
@@ -158,13 +158,18 @@ main.blueprints-open{grid-template-columns:minmax(330px,43%) minmax(0,1fr)}
  main.blueprints-open.blueprint-paper #viewport{display:none}
 }
 @media(max-height:480px) and (orientation:landscape){main.blueprints-open{grid-template-columns:minmax(260px,48%) minmax(0,1fr)}}
+
+#gablePanel{margin:10px 0;padding:10px;border:1px solid #527572;border-radius:8px;background:#192f34}
+#gablePanel summary{font-weight:700;cursor:pointer;color:#c9e6d9}
+#gablePanel .fields>*{min-width:0}#gablePanel input,#gablePanel select{min-width:0}
+#gableReport{white-space:pre-line;color:#c2e3d7}#gableReport.error{color:#ffb6a2}
 </style>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
 </script>
 </head>
 <body>
-<header><span class="brand">AFTERFALL</span><span class="version">CE 0.8</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
+<header><span class="brand">AFTERFALL</span><span class="version">CE 0.8.1</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
 <main>
 <aside>
 <div class="panelTabs" aria-label="Verktøypaneler"><button id="tabModules" type="button" aria-pressed="true">Moduler</button><button id="tabSite" type="button" aria-pressed="false">Byggeflate / mål</button><button id="tabMaterials" type="button" aria-pressed="false">Materialer</button><button id="tabStructure" type="button" aria-pressed="false">Konstruksjon</button><button id="tabBlueprint" type="button" aria-pressed="false" style="grid-column:1/-1">Byggetegninger</button></div>
@@ -216,6 +221,29 @@ main.blueprints-open{grid-template-columns:minmax(330px,43%) minmax(0,1fr)}
 <button id="roofFitDetach" class="wide" type="button" hidden>Frikoble valgt tak fra tilpasning</button>
 <p id="roofFitReport" aria-live="polite">Velg gulv og taktype. Forhåndsvis for å kontrollere kontaktflatene.</p>
 <p>Forenklet geometrisk anlegg mot to motstående vegger. Gavlvegger, bæreevne og reelle konstruksjonsberegninger inngår ikke.</p>
+</details>
+<details id="gablePanel">
+<summary>Gavltilpasning – lukk felt under saltak</summary>
+<p>Velg saltak og endevegg. Gavlen følger takets underside og endeveggens ytterkant.</p>
+<label for="gableSource">Modul</label><select id="gableSource"><option value="new">Ny gavl</option><option value="selected">Tilpass valgt gavl på nytt</option></select>
+<label for="gableRoof">Saltak</label><select id="gableRoof"></select>
+<label for="gableWall">Endevegg</label><select id="gableWall"></select>
+<label for="gableType">Gavltype</label><select id="gableType"><option value="gableWall">Hel gavlvegg</option><option value="gableFrame">Gavlramme</option><option value="gableCladding">Gavlkledning</option><option value="gableWindowWall">Gavl med vindusåpning</option></select>
+<label for="gableThickness">Tykkelse (m, tom = automatisk)</label><input id="gableThickness" type="number" min=".02" max="1" step="any" placeholder="Automatisk">
+<div id="gableFrameFields" class="fields" hidden>
+<div><label for="gableMember">Stenderbredde (m)</label><input id="gableMember" type="number" min=".025" max=".3" step="any" value=".048"></div>
+<div><label for="gableSpacing">Maks. senteravstand (m)</label><input id="gableSpacing" type="number" min=".25" max="2" step="any" value=".6"></div>
+</div>
+<div id="gableWindowFields" class="fields" hidden>
+<div><label for="gableOpeningW">Vindusbredde (m)</label><input id="gableOpeningW" type="number" min=".2" step="any" value=".6"></div>
+<div><label for="gableOpeningH">Vindushøyde (m)</label><input id="gableOpeningH" type="number" min=".2" step="any" value=".4"></div>
+<div><label for="gableSill">Høyde over gavlbunn (m)</label><input id="gableSill" type="number" min=".05" step="any" value=".15"></div>
+<div><label for="gableOffset">Sideforskyvning (m)</label><input id="gableOffset" type="number" step="any" value="0"></div>
+</div>
+<div class="buttons"><button id="gablePreview" type="button">Forhåndsvis</button><button id="gableApply" type="button">Plasser / tilpass</button></div>
+<p id="gableReport" aria-live="polite">Velg tak og endevegg.</p>
+<p>Gavler er ikke-bærende utfylling. Ramme og kledning kan kombineres med total tykkelse lik endeveggen; kledning ligger ytterst, ramme med valgt mindre tykkelse kan plasseres på innsiden. Vinduer settes inn med vindusverktøyet.</p>
+<label class="check"><input id="gableInside" type="checkbox">Plasser gavl på innsiden av endeveggen</label>
 </details>
 <details id="bracePanel">
 <summary>Tilpasset skråavstiver – to punkter</summary>
@@ -272,7 +300,7 @@ main.blueprints-open{grid-template-columns:minmax(330px,43%) minmax(0,1fr)}
 <button id="doConnect" class="primary" type="button" disabled>Koble moduler</button>
 <p id="connectorResult" aria-live="polite">Velg to festepunkter. Kilden flyttes i X, Y og Z. Punktene må vende mot hverandre.</p>
 </section>
-<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.8. Tilpassede avstivere må beregnes på nytt hvis festemodulene flyttes.</p>
+<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.8.1. Tilpassede avstivere må beregnes på nytt hvis festemodulene flyttes.</p>
 </section>
 <section id="sitePanel" hidden>
 <h1>Byggeflate</h1>
@@ -341,7 +369,7 @@ main.blueprints-open{grid-template-columns:minmax(330px,43%) minmax(0,1fr)}
 <div><label for="bpAngle">Rotasjon</label><select id="bpAngle"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></div>
 <div><label for="bpX">Sentrum X (m)</label><input id="bpX" type="number" step="any"></div>
 <div><label for="bpZ">Sentrum Z (m)</label><input id="bpZ" type="number" step="any"></div>
-<div><label for="bpRoof">Taktype</label><select id="bpRoof"><option value="flatRoof">Flatt tak</option><option value="gableRoof">Saltak (åpne gavlfelt)</option></select></div>
+<div><label for="bpRoof">Taktype</label><select id="bpRoof"><option value="flatRoof">Flatt tak</option><option value="gableRoof">Saltak med gavlvegger</option></select></div>
 <div><label for="bpPitch">Takvinkel (°)</label><input id="bpPitch" type="number" min="5" max="45" step="any"></div>
 <div><label for="bpOverhang">Takutstikk (m)</label><input id="bpOverhang" type="number" min="0" max="1" step="any"></div>
 </div>
@@ -356,7 +384,7 @@ main.blueprints-open{grid-template-columns:minmax(330px,43%) minmax(0,1fr)}
 <p>Skjematiske ortografiske tegninger i prosjektets akser (meter). Plan uten tak er en ovenfravisning, ikke et horisontalt snitt. Skala tilpasses visningen.</p>
 <div id="blueprintDrawings"></div>
 <button id="bpBack" class="wide" type="button">Tilbake til fri prosjektering</button>
-<p>Ferdigtegningene er spillprototyper. Saltak har åpne gavlfelt. Ingen lagring, eksport, installasjoner, inventar, fysiske byggehandlinger eller materialtrekk i CE 0.8.</p>
+<p>Ferdigtegningene er spillprototyper. Saltak får automatisk to tilpassede gavlvegger. Ingen lagring, eksport, installasjoner, inventar, fysiske byggehandlinger eller materialtrekk i CE 0.8.1.</p>
 </section>
 </aside>
 <section id="viewport" aria-label="3D-visning av byggeflate">
@@ -364,7 +392,7 @@ main.blueprints-open{grid-template-columns:minmax(330px,43%) minmax(0,1fr)}
 <button data-view="orbit" aria-pressed="true">3D</button><button data-view="top" aria-pressed="false">Ovenfra</button><button data-view="front" aria-pressed="false">Foran</button><button data-view="right" aria-pressed="false">Høyre</button><span class="divider"></span>
 <button id="fit">Tilpass</button><button id="zoomIn" aria-label="Zoom inn">+</button><button id="zoomOut" aria-label="Zoom ut">−</button>
 </div>
-<div id="modebar"><button id="selectMode" type="button" aria-pressed="true">Velg</button><button id="placeMode" type="button" aria-pressed="false">Plasser</button><button id="moveMode" type="button" aria-pressed="false" disabled>Flytt</button><button id="cancelMode" type="button" disabled>Avbryt</button><button id="wallFitQuick" type="button">Veggtilpasning</button><button id="roofFitQuick" type="button">Taktilpasning</button><button id="materialsQuick" type="button">Mengder</button><button id="structureQuick" type="button">Kontroll</button><button id="blueprintQuick" type="button">Tegninger</button><span id="currentMode">Velg en modul</span></div>
+<div id="modebar"><button id="selectMode" type="button" aria-pressed="true">Velg</button><button id="placeMode" type="button" aria-pressed="false">Plasser</button><button id="moveMode" type="button" aria-pressed="false" disabled>Flytt</button><button id="cancelMode" type="button" disabled>Avbryt</button><button id="wallFitQuick" type="button">Veggtilpasning</button><button id="roofFitQuick" type="button">Taktilpasning</button><button id="materialsQuick" type="button">Mengder</button><button id="structureQuick" type="button">Kontroll</button><button id="blueprintQuick" type="button">Tegninger</button><button id="gableQuick" type="button">Gavltilpasning</button><span id="currentMode">Velg en modul</span></div>
 <p id="status" role="status" aria-live="polite">Laster 3D-miljø …</p>
 <div id="stage">
 <div id="overlay"><b id="size">12 × 10 m</b><br>Areal: <span id="area">120</span> m²<br>Y = 0 m · <span id="viewName">3D</span></div>
@@ -373,7 +401,7 @@ main.blueprints-open{grid-template-columns:minmax(330px,43%) minmax(0,1fr)}
 </div>
 </section>
 </main>
-<footer>CE 0.8 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
+<footer>CE 0.8.1 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
 <script type="module">
 const $=id=>document.getElementById(id);
 const status=$('status'),stage=$('stage'),form=$('dimensions'),lengthInput=$('length'),widthInput=$('width');
@@ -403,6 +431,10 @@ const catalog={
  flatRoof:{name:'Flatt tak',l:3,w:3,h:.12,color:0x66767a,material:'Tre/taktekking',role:'roof',params:{thickness:.12}},
  shedRoof:{name:'Pulttak',l:3,w:3,h:1,color:0x66767a,material:'Tre/taktekking',role:'roof',params:{pitch:20,thickness:.12}},
  gableRoof:{name:'Saltak',l:3,w:3,h:1,color:0x66767a,material:'Tre/taktekking',role:'roof',params:{pitch:30,thickness:.12}},
+ gableWall:{name:'Hel gavlvegg',l:3,w:.148,h:1,color:0xa88765,material:'Tre',role:'gable',params:{}},
+ gableFrame:{name:'Gavlramme',l:3,w:.148,h:1,color:0xb28d64,material:'Tre',role:'gable',params:{member:.048,spacing:.6}},
+ gableCladding:{name:'Gavlkledning',l:3,w:.048,h:1,color:0x9a7957,material:'Tre',role:'gable',params:{}},
+ gableWindowWall:{name:'Gavl med vindusåpning',l:3,w:.148,h:1,color:0xa88765,material:'Tre',role:'gable',params:{openingW:.6,openingH:.4,sill:.15,offset:0}},
  block:{name:'Testblokk',l:1,w:1,h:1,color:0x8da6ac},
  post:{name:'Stolpe',l:0.2,w:0.2,h:2.5,color:0xaf8961},
  beam:{name:'Bjelke',l:3,w:0.2,h:0.25,color:0xc7a47a},
@@ -430,7 +462,8 @@ function profileOf(m){
 }
 function isBuilding(m){return !!catalog[m.type]?.params;}
 function isRoof(m){return catalog[m.type]?.role==='roof';}
-function isOpening(m){return m.type==='doorWall'||m.type==='windowWall';}
+function isGable(m){return !!m&&catalog[m.type]?.role==='gable';}
+function isOpening(m){return m.type==='doorWall'||m.type==='windowWall'||m.type==='gableWindowWall';}
 function roofRise(m){return (m.type==='gableRoof'?m.l/2:m.l)*Math.tan((m.type==='flatRoof'?0:m.params.pitch)*Math.PI/180);}
 function roofThickness(m){return m.params.thickness/Math.cos((m.type==='flatRoof'?0:m.params.pitch)*Math.PI/180);}
 function normalizeBuilding(m){
@@ -442,10 +475,30 @@ function openingOf(m){
  const p=m.params,base=m.type==='doorWall'?0:p.sill;
  return {x0:p.offset-p.openingW/2,x1:p.offset+p.openingW/2,y0:base,y1:base+p.openingH};
 }
+function gableError(m){
+ const f=m.gableFit,p=m.params,s=f?.segments;
+ if(!f||!Array.isArray(s)||!s.length||f.type!==m.type||Math.abs(f.l-m.l)>EPS||Math.abs(f.w-m.w)>EPS||Math.abs(f.h-m.h)>EPS)return 'Gavlen må dimensjoneres med Gavltilpasning.';
+ if(s.some(a=>a.length!==4||!a.every(Number.isFinite)||a[1]-a[0]<=EPS||a[0]<-m.l/2-EPS||a[1]>m.l/2+EPS||Math.min(a[2],a[3])<-EPS)||s.some((a,i)=>i&&a[0]<s[i-1][1]-EPS)||Math.abs(Math.max(...s.flatMap(a=>a.slice(2)))-m.h)>EPS)return 'Ugyldig gavlprofil.';
+ if(m.type==='gableFrame'&&(p.member<.025-EPS||p.member>.3||p.spacing<.25||p.spacing>2||p.spacing<p.member+.025||m.l>24||m.l<2*p.member))return 'Kontroller stenderbredde og senteravstand.';
+ if(m.type==='gableWindowWall'){
+  const o=openingOf(m),a=o.x0-.05,b=o.x1+.05;
+  if(p.openingW<.2||p.openingH<.2||o.y0<.05||a<-m.l/2-EPS||b>m.l/2+EPS)return 'Vindusåpningen må ha minst 50 mm materiale rundt.';
+  let reach=a;
+  for(const q of s){
+   const lo=Math.max(a,q[0]),hi=Math.min(b,q[1]);if(hi-lo<=EPS)continue;
+   const height=x=>q[2]+(q[3]-q[2])*(x-q[0])/(q[1]-q[0]);
+   if(lo>reach+EPS||Math.min(height(lo),height(hi))<o.y1+.05-EPS)return 'Vinduet går utenfor gavlprofilen. Reduser åpningen eller flytt den.';
+   reach=Math.max(reach,hi);
+  }
+  if(reach<b-EPS)return 'Vinduet går utenfor gavlprofilen.';
+ }
+ return '';
+}
 function buildingError(m){
  if(!isBuilding(m))return '';
  const p=m.params||{};
  for(const k of Object.keys(catalog[m.type].params))if(!Number.isFinite(p[k]))return 'Ugyldig bygningsparameter: '+k;
+ if(isGable(m))return gableError(m);
  if(isRoof(m)){
   if(m.roofFit){
    const f=m.roofFit;
@@ -484,7 +537,47 @@ function fittedRoofPieces(m){
  }
  return pieces;
 }
+function gablePieces(m){
+ const out=[],t=m.params.member||0,z=m.w/2;
+ const add=(a,b,lo0,lo1,hi0,hi1,kind='body',key='body')=>{
+  if(b-a<=EPS||Math.max(hi0-lo0,hi1-lo1)<=EPS)return;
+  const raw=[[a,lo0],[b,lo1],[b,hi1],[a,hi0]];
+  const polygon=raw.filter((q,i)=>!i||Math.hypot(q[0]-raw[i-1][0],q[1]-raw[i-1][1])>EPS);
+  if(polygon.length>2&&Math.hypot(polygon[0][0]-polygon.at(-1)[0],polygon[0][1]-polygon.at(-1)[1])<=EPS)polygon.pop();
+  if(polygon.length>=3&&polygonArea(polygon)>EPS)out.push({polygon,z0:-z,z1:z,kind,memberKey:key});
+ };
+ const count=m.type==='gableFrame'?Math.max(1,Math.ceil((m.l-t)/m.params.spacing)):0;
+ const studs=Array.from({length:count?count+1:0},(_,i)=>{const mid=-m.l/2+t/2+(m.l-t)*i/count;return [mid-t/2,mid+t/2];});
+ const o=m.type==='gableWindowWall'?openingOf(m):null;
+ for(const [i,s] of m.gableFit.segments.entries()){
+  const [x0,x1,h0,h1]=s,H=x=>h0+(h1-h0)*(x-x0)/(x1-x0);
+  const band=(a,b,lo,hi,kind,key,levels=[])=>{
+   if(b-a<=EPS)return;
+   const xs=[a,b];
+   if(Math.abs(h1-h0)>EPS)for(const v of levels){const x=x0+(v-h0)*(x1-x0)/(h1-h0);if(x>a+EPS&&x<b-EPS)xs.push(x);}
+   xs.sort((a,b)=>a-b);
+   for(let j=0;j<xs.length-1;j++){
+    const a=xs[j],b=xs[j+1],ha=H(a),hb=H(b);
+    add(a,b,lo(ha),lo(hb),hi(ha),hi(hb),kind,key);
+   }
+  };
+  if(m.type==='gableFrame'){
+   const bottom=h=>Math.min(t,h),top=h=>Math.max(bottom(h),h-t);
+   band(x0,x1,()=>0,bottom,'bottom','bottom-'+i,[t]);
+   band(x0,x1,top,h=>h,'top','top-'+i,[t,2*t]);
+   for(const [j,st] of studs.entries())band(Math.max(x0,st[0]),Math.min(x1,st[1]),bottom,top,'stud','stud-'+j,[t,2*t]);
+  }else if(o){
+   band(x0,Math.min(x1,o.x0),()=>0,h=>h,'body','body');
+   band(Math.max(x0,o.x1),x1,()=>0,h=>h,'body','body');
+   const a=Math.max(x0,o.x0),b=Math.min(x1,o.x1);
+   band(a,b,()=>0,h=>Math.min(h,o.y0),'body','body',[o.y0]);
+   band(a,b,h=>Math.min(h,o.y1),h=>h,'body','body',[o.y1]);
+  }else band(x0,x1,()=>0,h=>h,'body','body');
+ }
+ return out;
+}
 function piecesOf(m){
+ if(isGable(m))return gablePieces(m);
  const x=m.l/2,z=m.w/2,h=m.h,p=m.params||{},pieces=[];
  const box=(a,b,c,d,e=-z,f=z,kind='body')=>{if(b-a>EPS&&d-c>EPS&&f-e>EPS)pieces.push(rectPiece(a,b,c,d,e,f,kind));};
  if(isOpening(m)){
@@ -515,7 +608,7 @@ function piecesOf(m){
  }
  return [{polygon:profileOf(m),z0:-z,z1:z,kind:'body'}];
 }
-function usesPieces(m){return !!m.roofFit?.seats?.length||isBrace(m)||['floorFrame','wallFrame','doorWall','windowWall','windowUnit','rafter','shedRoof','gableRoof'].includes(m.type);}
+function usesPieces(m){return isGable(m)||!!m.roofFit?.seats?.length||isBrace(m)||['floorFrame','wallFrame','doorWall','windowWall','windowUnit','rafter','shedRoof','gableRoof'].includes(m.type);}
 function pointOnPiece(p,q){
  if(q[2]<p.z0-EPS||q[2]>p.z1+EPS)return false;
  const poly=p.polygon;let positive=false,negative=false;
@@ -565,6 +658,24 @@ function quantityRows(m){
  };
  if(m.type==='floorFrame'){
   parts.forEach((p,i)=>member(p,i<2?'Kantbjelke – tvers':i<4?'Kantbjelke – langs':'Gulvbjelke',i,i<2?'z':'x'));return out;
+ }
+ if(isGable(m)){
+  if(m.type==='gableFrame'){
+   const groups=new Map();
+   for(const p of parts){if(!groups.has(p.memberKey))groups.set(p.memberKey,[]);groups.get(p.memberKey).push(p);}
+   for(const ps of groups.values()){
+    const poly=ps.flatMap(p=>p.polygon),[x0,x1,y0,y1]=bounds2(poly),kind=ps[0].kind,net=ps.reduce((v,p)=>v+pieceVolume(p),0);
+    let len,section,label,slope;
+    if(kind==='stud'){len=y1-y0;section=x1-x0;label='Gavlstender';}
+    else if(kind==='bottom'){len=x1-x0;section=y1-y0;label='Gavl – bunnsvillseksjon';}
+    else{
+     const seg=m.gableFit.segments[Number(ps[0].memberKey.split('-')[1])],rad=Math.atan2(seg[3]-seg[2],seg[1]-seg[0]);
+     len=projectionExtent(poly,[Math.cos(rad),Math.sin(rad)]);section=projectionExtent(poly,[-Math.sin(rad),Math.cos(rad)]);slope=rad*180/Math.PI;label='Gavl – skrå toppsvillseksjon';
+    }
+    add(label,'wood',net,Math.max(net,len*section*m.w),[len,m.w,section],{length:len,rawLength:len,dimKind:'member',area:net/m.w,areaKind:'frame',slope,shape:ps.map(p=>p.polygon.map(q=>[q[0]-x0,q[1]-y0]))});
+   }
+  }else add(catalog[m.type].name,'wood',vol,m.l*m.w*m.h,dim,{area:vol/m.w,areaKind:'wall',shape:[m.gableFit.segments,m.params]});
+  return out;
  }
  if(m.type==='wallFrame'){
   parts.forEach((p,i)=>{
@@ -760,7 +871,8 @@ function structureAnalysis(modules,densities=defaultDensities()){
    const patch=contactPatch(p,q);if(!patch)continue;
    if(p.axis===1)(p.sign===-1?ab:ba).push(patch);else sides.push(patch);
   }
-  if(ab.length)link(a,b,ab,'bearing');if(ba.length)link(b,a,ba,'bearing');
+  if(ab.length){if(isRoof(a.m)&&isGable(b.m)){a.neighbors.add(b.id);b.neighbors.add(a.id);}else link(a,b,ab,'bearing');}
+  if(ba.length){if(isRoof(b.m)&&isGable(a.m)){a.neighbors.add(b.id);b.neighbors.add(a.id);}else link(b,a,ba,'bearing');}
   if(sides.length){
    a.neighbors.add(b.id);b.neighbors.add(a.id);
    sideEdges.push({a:a.id,b:b.id,patches:sides,area:sides.reduce((v,p)=>v+p.area,0)});
@@ -789,6 +901,7 @@ function structureAnalysis(modules,densities=defaultDensities()){
  for(const n of list){
   if(!n.grounded)issue(n,'error','no-ground','Ingen sammenhengende lastvei til byggegrunnen.');
   if(!n.links.length)issue(n,'error','no-support','Ingen understøttende flate eller definert monteringsforbindelse.');
+  if(isGable(n.m))issue(n,'warn','gable-infill','Gavl er ikke-bærende utfylling; taklast og innfesting er ikke dimensjonert.');
   if(n.ownUnknown)issue(n,'warn','unknown-mass','Deler av egenlasten er ukjent. Angi densitet i Materialer.');
   if(n.links.some(e=>e.kind==='ground')&&catalog[n.m.type].role!=='foundation')issue(n,'warn','direct-ground','Står direkte på byggeplaten uten egen fundamentmodul.');
  }
@@ -897,10 +1010,10 @@ function structureAnalysis(modules,densities=defaultDensities()){
  for(const n of list){n.status=n.issues.some(i=>i.level==='error')?'error':n.issues.length?'warn':'ok';}
  return {nodes:list,edges,sideEdges,assemblies,ownForce:quantities.mass*GRAVITY,unknownVolume:quantities.unknownVolume,groundForce,unresolvedForce,groundUnknown,unresolvedUnknown,errors:list.filter(n=>n.status==='error').length,warnings:list.filter(n=>n.status==='warn').length,cycles:list.filter(n=>!n.processed).length};
 }
-// CE 0.8: blueprints instantiate the same modules used for free construction.
+// CE 0.8.1: blueprints instantiate the same modules used for free construction.
 const blueprintCatalog={
  storage:{name:'Lagerskur',description:'Lite lukket lager med enkel dør, uten vindu. Funksjon i spillet kommer ved integrasjon.',l:3,w:3,h:2.4,roof:'flatRoof',pitch:20,overhang:.2,door:.9,windows:[]},
- cabin:{name:'Enkel bolig',description:'Enroms hytte med dør og to vinduer. Saltak har foreløpig åpne gavlfelt; velg flatt tak for lukket bygningsvolum.',l:4,w:3.5,h:2.4,roof:'gableRoof',pitch:30,overhang:.3,door:.9,windows:['south','east']},
+ cabin:{name:'Enkel bolig',description:'Enroms hytte med dør og to vinduer. Saltak med automatisk tilpassede gavlvegger.',l:4,w:3.5,h:2.4,roof:'gableRoof',pitch:30,overhang:.3,door:.9,windows:['south','east']},
  workshop:{name:'Verksted',description:'Større arbeidsrom med bred dør og to vinduer. Innredning og produksjonsfunksjon kommer senere.',l:5,w:4,h:2.7,roof:'flatRoof',pitch:20,overhang:.3,door:1.5,windows:['south','west']}
 };
 function blueprintOptions(type,L,W){
@@ -953,7 +1066,15 @@ function buildBlueprint(o,existing,L,W,firstId){
   }
   const roof=fitRoofOnFloor(make(o.roof,0,0,0,0),floor,{direction:0,eave:o.overhang,gable:o.overhang,pitch:o.pitch,thickness:o.roof==='flatRoof'?.12:.20,autoPitch:false},list,L,W);
   if(roof.error)throw Error('Tak: '+roof.error);
-  append(roof.module,'5. Tak');
+  if(o.roof==='gableRoof'){
+   for(const side of ['north','south']){
+    const wall=list.find(m=>m.edgeFit?.side===side);
+    const r=fitGable(make('gableWall',0,0,0,0,{w:wall.w}),roof.module,wall,[...list,roof.module],L,W);
+    if(r.error)throw Error('Gavl '+side+': '+r.error);
+    append(r.module,'5. Gavlvegger');
+   }
+  }
+  append(roof.module,o.roof==='gableRoof'?'6. Tak':'5. Tak');
   if(list.length+existing.length>MAX_MODULES)return fail('Prosjektet overskrider grensen på '+MAX_MODULES+' moduler.');
   for(const m of list){
    const error=validModule(m,L,W,existing);
@@ -1235,7 +1356,7 @@ function roofWallPair(floor,direction,others){
   if(Math.abs(x1-half)<=EPS&&x0>=-EPS)high.push(s);
  }
  if(!low.length||!high.length)return {error:'Det kreves to motstående yttervegger oppå valgt gulv. Kontroller takretning og veggplassering.'};
- if(low.length!==1||high.length!==1)return {error:'Flere vegger funnet på samme takside. CE 0.8 støtter én sammenhengende vegg per motsatt ytterkant.'};
+ if(low.length!==1||high.length!==1)return {error:'Flere vegger funnet på samme takside. CE 0.8.1 støtter én sammenhengende vegg per motsatt ytterkant.'};
  if(Math.min(low[0].z1,high[0].z1)-Math.max(low[0].z0,high[0].z0)<=EPS)return {error:'Motstående vegger må overlappe i takets lengderetning.'};
  return {angle,span,depth,low:low[0],high:high[0]};
 }
@@ -1278,6 +1399,42 @@ function sameRoofFit(a,b){
   const q=b.roofFit.seats[i];return q&&s.wallId===q.wallId&&['x0','x1','cut0','cut1','y','z'].every(k=>Math.abs(s[k]-q[k])<=EPS);
  }));
 }
+function gableWallCandidate(wall,roof){
+ if(!wall||!roof||roof.type!=='gableRoof'||!roofWallType(wall))return false;
+ const n=floorLocal(roof,wall),b=footprint(n);
+ return n.angle%180===0&&Math.abs(n.z)>b.z+EPS&&n.z-b.z>=-roof.w/2-EPS&&n.z+b.z<=roof.w/2+EPS&&n.x-b.x>=-roof.l/2-EPS&&n.x+b.x<=roof.l/2+EPS;
+}
+function fitGable(source,roof,wall,others,L,W){
+ const fail=error=>({error});
+ if(!isGable(source)||!gableWallCandidate(wall,roof))return fail('Velg saltak og endevegg parallell med takets tverrsnitt, innenfor takets grunnflate.');
+ if(roof.roofFit){
+  const floor=others.find(n=>n.id===roof.roofFit.floorId);
+  if(fitFloorType(floor)){
+   const local=floorLocal({...floor,angle:roof.angle},wall),depth=roof.roofFit.direction%180===0?floor.w:floor.l;
+   if(Math.abs(Math.abs(local.z)+wall.w/2-depth/2)>EPS)return fail('Veggen må stå langs bygningens ende, ikke under takutstikket eller inne i rommet.');
+  }
+ }
+ const n=floorLocal(roof,wall),w=source.w??wall.w,inside=!!(source.inside??source.gableFit?.inside);
+ if(!Number.isFinite(w)||w<.02-EPS||w>wall.w+EPS)return fail('Gavltykkelsen må være minst 20 mm og ikke større enn endeveggens tykkelse.');
+ const a=n.x-wall.l/2,b=n.x+wall.l/2,base=wall.y+wall.h,localZ=n.z+(inside?-1:1)*Math.sign(n.z)*(wall.w-w)/2;
+ const segments=[];
+ for(const piece of piecesOf(roof)){
+  const [p,q]=piece.polygon,lo=Math.max(a,p[0]),hi=Math.min(b,q[0]);
+  if(hi-lo<=EPS)continue;
+  const y=x=>roof.y+p[1]+(q[1]-p[1])*(x-p[0])/(q[0]-p[0])-base;
+  const h0=y(lo),h1=y(hi);
+  if(Math.min(h0,h1)<-1e-6)return fail('Endeveggen går inn i taket. Tilpass vegg eller tak før gavlen.');
+  if(Math.max(h0,h1)>EPS)segments.push([lo-n.x,hi-n.x,Math.max(0,h0),Math.max(0,h1)]);
+ }
+ segments.sort((a,b)=>a[0]-b[0]);
+ if(!segments.length)return fail('Ingen åpen gavlflate mellom vegg og tak.');
+ const h=Math.max(...segments.flatMap(s=>s.slice(2))),[x,y,z]=pointToWorld(roof,[n.x,base-roof.y,localZ]);
+ const m=normalizeBuilding({...source,x,y,z,l:wall.l,w,h,angle:roof.angle,gableFit:{roofId:roof.id,wallId:wall.id,type:source.type,l:wall.l,w,h,inside,segments}});
+ const previous=others.find(v=>v.id===source.id);
+ if(previous&&isOpening(previous)&&others.some(v=>v.id!==m.id&&containsOpeningInsert(previous,v)))return fail('Fjern innsatt vindu før gavlen tilpasses på nytt.');
+ const error=validModule(m,L,W,others,source.id);if(error)return fail(error);
+ return {module:m,area:segments.reduce((v,s)=>v+(s[1]-s[0])*(s[2]+s[3])/2,0)};
+}
 function snapModule(m,others,gridSnap,anchorSnap){
  let x=gridSnap?Math.round(m.x*4)/4:m.x,z=gridSnap?Math.round(m.z*4)/4:m.z;
  if(!anchorSnap)return {...m,x,z};
@@ -1316,6 +1473,58 @@ try{
  const meshes=new Map();
  let anchorGroup=null;
  let materialDensities=defaultDensities();
+ function gableInputs(){
+  const type=$('gableType').value,wall=modules.find(m=>String(m.id)===$('gableWall').value),roof=modules.find(m=>String(m.id)===$('gableRoof').value),existing=$('gableSource').value==='selected'?current():null;
+  const params=type==='gableFrame'?{member:$('gableMember').valueAsNumber,spacing:$('gableSpacing').valueAsNumber}:type==='gableWindowWall'?{openingW:$('gableOpeningW').valueAsNumber,openingH:$('gableOpeningH').valueAsNumber,sill:$('gableSill').valueAsNumber,offset:$('gableOffset').valueAsNumber}:{};
+  const w=$('gableThickness').value.trim()===''?(type==='gableCladding'?Math.min(wall?.w??.048,.048):wall?.w):$('gableThickness').valueAsNumber;
+  return {source:{id:existing?.id??nextId,type,w,params,inside:$('gableInside').checked},wall,roof,existing};
+ }
+ function updateGableControls(){
+  const r=$('gableRoof'),w=$('gableWall'),rOld=r.value,wOld=w.value,roofs=modules.filter(m=>m.type==='gableRoof');
+  fillOptions(r,[{id:'',label:'Velg saltak'},...roofs.map(m=>({id:m.id,label:catalog[m.type].name+' #'+m.id}))],rOld);
+  if(!r.value&&roofs.length===1)r.value=String(roofs[0].id);
+  const roof=modules.find(m=>String(m.id)===r.value);
+  fillOptions(w,[{id:'',label:'Velg endevegg'},...modules.filter(m=>gableWallCandidate(m,roof)).map(m=>({id:m.id,label:catalog[m.type].name+' #'+m.id}))],wOld);
+  if($('gableSource').value==='selected'&&!isGable(current()))$('gableSource').value='new';
+  const {source,wall,existing}=gableInputs();
+  $('gableFrameFields').hidden=source.type!=='gableFrame';$('gableWindowFields').hidden=source.type!=='gableWindowWall';
+  $('gablePreview').disabled=!roof||!wall||(!existing&&modules.length>=MAX_MODULES);
+  $('gableApply').disabled=$('gablePreview').disabled;
+ }
+ function loadGable(m){
+  if(!isGable(m))return;
+  $('gableSource').value='selected';$('gableType').value=m.type;$('gableThickness').value=String(m.w);$('gableInside').checked=m.gableFit.inside;
+  $('gableRoof').value=String(m.gableFit.roofId);updateGableControls();$('gableWall').value=String(m.gableFit.wallId);
+  for(const [id,key] of Object.entries({gableMember:'member',gableSpacing:'spacing',gableOpeningW:'openingW',gableOpeningH:'openingH',gableSill:'sill',gableOffset:'offset'}))if(key in m.params)$(id).value=String(m.params[key]);
+  updateGableControls();
+ }
+ function clearGableReport(){clearBracePreview();$('gableReport').className='';$('gableReport').textContent='Forhåndsvis for å kontrollere gavlprofilen.';}
+ function openGable(){
+  if(measuring)setMeasuring(false);setMode('select');showPanel('modules');updateGableControls();
+  const m=current();
+  if(isGable(m))loadGable(m);
+  else{$('gableSource').value='new';if(m?.type==='gableRoof')$('gableRoof').value=String(m.id);updateGableControls();if(gableWallCandidate(m,modules.find(n=>String(n.id)===$('gableRoof').value)))$('gableWall').value=String(m.id);}
+  $('gablePanel').open=true;updateGableControls();clearGableReport();$('gablePanel').scrollIntoView({block:'start'});
+ }
+ function calculateGable(preview){
+  const {source,wall,roof,existing}=gableInputs(),r=fitGable(source,roof,wall,modules,L,W);
+  clearBracePreview();const p=$('gableReport');p.className=r.error?'error':'';
+  if(r.error){p.textContent=r.error;setStatus(r.error,true);return;}
+  if(measuring)setMeasuring(false);setMode('select');
+  const m=r.module,q=quantitySummary([m],materialDensities);
+  const report='Gavl #'+m.id+' · '+qty(m.l)+' × '+qty(m.w)+' × '+qty(m.h)+' m\nGavlfelt '+qty(r.area)+' m² · netto materiale '+qty(q.net)+' m³\nTilpasset tak #'+roof.id+' og vegg #'+wall.id+'. Ingen taklast tilordnes gavlen.';
+  if(preview){fitGhost=modelMesh(m,true);transform(fitGhost,m);scene.add(fitGhost);p.textContent=report;setStatus('Forhåndsvisning av gavl. Bekreft med Plasser / tilpass.');return;}
+  if(existing){if(!commitEdit(m))return;}
+  else{if(modules.length>=MAX_MODULES)return;nextId++;modules.push(m);addMesh(m);selectModule(m.id);}
+  p.textContent=report;setStatus('Gavl #'+m.id+' tilpasset.');
+ }
+ function gableStatus(m){
+  const f=m.gableFit,roof=modules.find(n=>n.id===f.roofId),wall=modules.find(n=>n.id===f.wallId);
+  if(!roof||!wall)return 'Tak eller endevegg mangler. Tilpass gavlen på nytt.';
+  const other=modules.filter(n=>n.id!==m.id&&!containsOpeningInsert(m,n)),r=fitGable(m,roof,wall,other,L,W);
+  const same=!r.error&&samePlacement(m,r.module)&&m.gableFit.segments.length===r.module.gableFit.segments.length&&m.gableFit.segments.every((s,i)=>s.every((v,j)=>Math.abs(v-r.module.gableFit.segments[i][j])<=EPS));
+  return same?'Tilpasset tak #'+f.roofId+' og endevegg #'+f.wallId+' · ikke-bærende gavl.':'Tak, vegg eller gavl er endret. Tilpass gavlen på nytt.';
+ }
  let bpCandidate=null,bpGhost=null;
  const bpIds=['bpLength','bpWidth','bpWallHeight','bpAngle','bpX','bpZ','bpRoof','bpPitch','bpOverhang'];
  function bpRead(){
@@ -1710,7 +1919,7 @@ try{
  function refreshEditFields(m){
   const defs=m&&isBuilding(m)?defsFor(m,false):{};$('editParamBox').hidden=!Object.keys(defs).length;
   makeFields($('editParamFields'),'editParam_',defs,m?.params||{});if(Object.keys(defs).length)$('editParamBox').open=true;
-  if(m?.roofFit)for(const input of $('editParamFields').querySelectorAll('input'))input.readOnly=true;
+  if(m?.roofFit||isGable(m))for(const input of $('editParamFields').querySelectorAll('input'))input.readOnly=true;
   $('insertOpening').disabled=!m||!isOpening(m)||modules.length>=MAX_MODULES;
   $('insertOpening').textContent=m?.type==='doorWall'?'Sett inn dør':m?.type==='windowWall'?'Sett inn vindu':'Sett inn element';
   $('insertReport').textContent=isOpening(m||{})?'Åpningen har 5 mm klaring på hver kant.':'';
@@ -1831,7 +2040,7 @@ try{
   fillOptions(s,choices,oldS);
   t.disabled=!target;s.disabled=!source||!choices.length;
   $('doConnect').disabled=!source||!target||!choices.length||($('connectSource').value==='new'&&modules.length>=MAX_MODULES);
-  refreshBraceOptions();refreshWallFitOptions();updateRoofControls();refreshAnchorMarkers();
+  refreshBraceOptions();refreshWallFitOptions();updateRoofControls();updateGableControls();refreshAnchorMarkers();
  }
  function refreshAnchorMarkers(){
   disposeGroup(anchorGroup);anchorGroup=null;
@@ -1885,7 +2094,7 @@ try{
   });
   if(geos.length===1)return geos[0];const result=mergeGeometries(geos,false);geos.forEach(g=>g.dispose());return result;
  }
- function geometryKey(m){return isFitted(m)?'fitted:'+JSON.stringify(m.profile):usesPieces(m)?JSON.stringify([m.type,m.l,m.w,m.h,m.params,m.roofFit?.seats]):'box';}
+ function geometryKey(m){return isFitted(m)?'fitted:'+JSON.stringify(m.profile):usesPieces(m)?JSON.stringify([m.type,m.l,m.w,m.h,m.params,m.roofFit?.seats,m.gableFit?.segments]):'box';}
  function connectModules(){
   const source=sourceModule(),target=modules.find(n=>String(n.id)===$('connectTarget').value);
   const report=$('connectorResult');
@@ -1932,6 +2141,7 @@ try{
    mesh.geometry.dispose();mesh.userData.edge.geometry.dispose();
    mesh.geometry=geometryFor(m);mesh.userData.edge.geometry=new THREE.EdgesGeometry(mesh.geometry);mesh.userData.geometryKey=key;
   }
+  if(mesh.material&&!mesh.material.transparent)mesh.material.color.setHex(catalog[m.type].color);
   mesh.position.set(m.x-L/2,m.y+m.h/2,m.z-W/2);
   mesh.scale.set(m.l,m.h,m.w);mesh.rotation.y=-m.angle*Math.PI/180;
   mesh.updateMatrixWorld(true);
@@ -1951,7 +2161,7 @@ try{
   $('moduleCount').textContent=modules.length+' / '+MAX_MODULES;
   $('editFields').disabled=!m;$('moveMode').disabled=!m;
   for(const id of ['editL','editW','editH']){
-   $(id).readOnly=!!m&&(isFitted(m)||!!m.roofFit||(id==='editH'&&isRoof(m)));$(id).min=m&&isBuilding(m)?'0.02':'0.05';
+   $(id).readOnly=!!m&&(isFitted(m)||!!m.roofFit||isGable(m)||(id==='editH'&&isRoof(m)));$(id).min=m&&isBuilding(m)?'0.02':'0.05';
   }
   refreshEditFields(m);
   $('moduleInfo').textContent=m?catalog[m.type].name+' #'+m.id+' · '+fmt.format(m.l)+' × '+fmt.format(m.w)+' × '+fmt.format(m.h)+' m':'Velg en modul i 3D-visningen eller listen.';
@@ -1959,6 +2169,7 @@ try{
   else for(const id of ['editX','editZ','editY','editL','editW','editH'])$(id).value='';
   const matches=m?matchingConnections(m,modules):[];
   $('connectionsInfo').textContent=!m?'Ingen modul valgt.':'Geometriske punktforbindelser: '+matches.length+(matches.length?'\n'+matches.map(a=>a.label).join('\n'):'');
+  if(isGable(m))$('connectionsInfo').textContent+='\n'+gableStatus(m);
   if(m&&m.roofFit)$('connectionsInfo').textContent+='\n'+roofFitStatus(m);
   if(m&&m.edgeFit)$('connectionsInfo').textContent+='\n'+edgeFitStatus(m);
   if(m&&isFitted(m))$('connectionsInfo').textContent+='\n'+checkFitStatus(m)+'\nSenterlinje: '+fmt.format(m.fit.length)+' m · Helning: '+fmt.format(m.fit.slope)+'°';
@@ -2182,6 +2393,12 @@ try{
  initMaterialDensities();
  for(const id of ['tabStructure','structureQuick'])$(id).addEventListener('click',openStructure);
  for(const id of ['tabBlueprint','blueprintQuick'])$(id).addEventListener('click',openBlueprints);
+ $('gableQuick').addEventListener('click',openGable);
+ $('gablePreview').addEventListener('click',()=>calculateGable(true));
+ $('gableApply').addEventListener('click',()=>calculateGable(false));
+ $('gablePanel').addEventListener('toggle',()=>{updateGableControls();if(!$('gablePanel').open)clearBracePreview();});
+ $('gableSource').addEventListener('change',()=>{if($('gableSource').value==='selected')loadGable(current());updateGableControls();clearGableReport();});
+ for(const id of ['gableRoof','gableWall','gableType','gableThickness','gableMember','gableSpacing','gableOpeningW','gableOpeningH','gableSill','gableOffset','gableInside'])$(id).addEventListener('change',()=>{updateGableControls();clearGableReport();});
  $('blueprintType').addEventListener('change',bpLoadPreset);
  for(const id of bpIds)$(id).addEventListener('input',()=>{$('bpPitch').disabled=$('bpRoof').value==='flatRoof';bpInvalidate();});
  $('bpCenter').addEventListener('click',()=>{$('bpX').value=String(L/2);$('bpZ').value=String(W/2);bpInvalidate();});
