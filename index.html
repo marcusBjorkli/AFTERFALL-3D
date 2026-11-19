@@ -288,6 +288,7 @@ function slopeValidate(changes){
  return {ok:true};
 }
 function slopeBlockMessage(result){
+ if(result.reason==='Byggeplassen er reservert.')return 'Byggeplassen er reservert. Terrengendring er sperret.';
  return `Skråningskontroll${result.protectedEdge?' ved godkjent byggegrunn':''}: ${result.material} (grense ${result.degrees}°, profil ${result.measured.toFixed(1)}°). Utvid arbeidsområdet sideveis.`;
 }
 
@@ -2123,7 +2124,7 @@ function constructionReady(q){
 }
 function constructionUpdateHud(){
  const q=constructionHere(),plan=q&&constructionPlans.get(q.id),button=$('constructionToggle'),hud=$('constructionHud');
- const modal=constructionOpen||constructionInfoOpen||paused;
+ const modal=constructionOpen||constructionInfoOpen||paused||pileMenuOpen||inventoryOpen||sawOpenFlag||$('gradeOverlay').classList.contains('show');
  button.hidden=!q||modal;button.textContent=plan?'Byggeplass':'Bygg';
  hud.hidden=!plan||modal;
  if(plan&&!modal){
@@ -2137,6 +2138,7 @@ function constructionRender(){
  if(!scene)return;
  if(constructionGroup){scene.remove(constructionGroup);const disposed=new Set();constructionGroup.traverse(o=>{for(const item of [o.geometry,o.material])if(item&&!disposed.has(item)){item.dispose();disposed.add(item);}});}
  const group=new THREE.Group();group.name='Construction set-out CE 1.1';
+ if(!constructionPlans.size){constructionGroup=group;scene.add(group);return;}
  const postMat=new THREE.MeshStandardMaterial({color:0x8d633b,roughness:1});
  const topMat=new THREE.MeshStandardMaterial({color:0xe6bd70,roughness:1});
  const ropeMat=new THREE.MeshStandardMaterial({color:0xd9c49a,roughness:.95});
@@ -2171,7 +2173,7 @@ function constructionShowInfo(q,plan){
  $('constructionInfo').hidden=false;constructionUpdateHud();
 }
 function constructionBegin(){
- if(paused||constructionOpen||constructionInfoOpen)return;
+ if(paused||constructionOpen||constructionInfoOpen||pileMenuOpen||inventoryOpen||sawOpenFlag||$('gradeOverlay').classList.contains('show'))return;
  const q=constructionHere();
  if(!q){toolMessage('Gå inn på et godkjent planeringsområde.');return;}
  const existing=constructionPlans.get(q.id);if(existing){constructionShowInfo(q,existing);return;}
@@ -2206,6 +2208,7 @@ async function constructionReceive(e){
  const q=gradingProjects.find(q=>q.id===session.site.id),site=constructionReady(q);
  if(!site||!sameSite(site,session.site)||!containsPlayer(q,p.x,p.z)){respond(false,'Byggeplassen er ikke lenger godkjent, eller spilleren står utenfor.');return;}
  if(constructionPlans.has(site.id)){respond(false,'Det finnes allerede en byggeplan på dette området.');return;}
+ if([...constructionPlans.values()].some(p=>p.planId===id)){respond(false,'Byggeplan-ID er allerede brukt på en annen byggeplass.');return;}
  let result;
  try{
   if(JSON.stringify(msg.plan).length>24*1024*1024)throw Error('Byggeplanen er for stor.');
