@@ -219,6 +219,7 @@ body.transfer-pending #modebar,body.transfer-pending .panelTabs{pointer-events:n
 <button id="buildDownload" class="wide" type="button">Eksporter byggeplan til spill</button>
 <button id="buildContinue" class="wide" type="button">Fortsett å prosjektere</button>
 </div>
+<button id="buildRecover" class="wide" type="button" hidden>Åpne sist lagrede testplan</button>
 <details id="developerTools" class="matDetails"><summary>Utviklerverktøy (test)</summary><p>Teknisk prosjektlagring og rapporter fra CE 0.9. Ikke del av spillerens byggemeny.</p><button id="buildDeveloper" type="button" class="wide">Åpne teknisk prosjektmeny</button><button id="buildTestSite" type="button" class="wide">Endre simulert byggeplass</button></details>
 </section>
 <section id="modulePanel">
@@ -1332,6 +1333,24 @@ function buildFootprint(ms,site){
  });
  return {kind:'rectangular-setout-envelope',basis:floorBoxes.length?'floorDeck':groundBoxes.length?'grounded':'projection',length:x1-x0,width:z1-z0,area:(x1-x0)*(z1-z0),local:outline,world:outline.map(p=>siteWorldPoint(site,p)),foundations,groundLevel:site.origin[1]};
 }
+function verifyBuildFits(ms,L,W){
+ const byId=new Map(ms.map(m=>[m.id,m]));
+ for(const m of ms){
+  const fail=label=>{throw Error('Modul #'+m.id+': '+label+' er endret. Tilpass modulen på nytt før bygging.');};
+  if(m.edgeFit){
+   const f=m.edgeFit,other=ms.filter(n=>!containsOpeningInsert(m,n)),r=fitWallOnEdge(m,byId.get(f.floorId),f.side,other,L,W);
+   if(r.error||!samePlacement(m,r.module))fail('Veggtilpasningen');
+  }
+  if(m.roofFit){
+   const f=m.roofFit,r=fitRoofOnFloor(m,byId.get(f.floorId),f,ms,L,W);
+   if(r.error||!sameRoofFit(m,r.module))fail('Taktilpasningen');
+  }
+  if(m.gableFit){
+   const f=m.gableFit,other=ms.filter(n=>n.id!==m.id&&!containsOpeningInsert(m,n)),r=fitGable(m,byId.get(f.roofId),byId.get(f.wallId),other,L,W);
+   if(r.error||!samePlacement(m,r.module)||f.segments.length!==r.module.gableFit.segments.length||!f.segments.every((s,i)=>s.every((v,j)=>Math.abs(v-r.module.gableFit.segments[i][j])<=EPS)))fail('Gavltilpasningen');
+  }
+ }
+}
 function makeBuildPlan(project,site,id){
  try{
   const vs=validateBuildSite(site);requireProject(!vs.error,vs.error);site=vs.site;
@@ -1341,6 +1360,7 @@ function makeBuildPlan(project,site,id){
   requireProject(p.plot.length===site.length&&p.plot.width===site.width,'Byggeplanen må ha nøyaktig samme mål som den godkjente byggeplassen.');
   requireProject(typeof id==='string'&&id.length>0&&id.length<=160,'Ugyldig byggeplan-ID.');
   requireProject(!r.warnings.length,'Rett manglende modulreferanser før byggeplanen godkjennes.');
+  verifyBuildFits(ms,p.plot.length,p.plot.width);
   const q=quantitySummary(ms,p.densities);
   requireProject(!q.materials.some(m=>m.key==='test'),'Testmoduler uten definert byggemateriale kan ikke overføres til spill.');
   requireProject(q.unknownVolume<=EPS,'Angi densitet for alle brukte byggematerialer før overføring.');
@@ -1754,7 +1774,7 @@ try{
  let materialDensities=defaultDensities();
  const gameMode=new URLSearchParams(location.search).get('mode')==='game';
  const bridgeHost=window.parent!==window?window.parent:(window.opener||null);
- let buildSite=null,bridgeSession=null,buildDraft=null,submittedPlan=null,acceptedPlan=null,transferPending=false;
+ let buildSite=null,bridgeSession=null,buildDraft=null,submittedPlan=null,acceptedPlan=null,acceptedSignature='',transferPending=false;
  const demoSite=()=>({id:'demo-site',length:L,width:W,origin:[0,0,0],angle:0,leveled:true,approved:true});
  const currentBuildSite=()=>gameMode?buildSite:demoSite();
  const buildId=()=>globalThis.crypto?.randomUUID?.()||('plan-'+Date.now()+'-'+Math.random().toString(36).slice(2));
@@ -1774,7 +1794,7 @@ try{
  }
  function buildChanged(){
   if(buildDraft&&buildDraft.key!==projectSignature(projectSnapshot()))buildDraft=null;
-  if(!gameMode&&acceptedPlan&&projectSignature(projectSnapshot())!==projectSignature(acceptedPlan.project))acceptedPlan=null;
+  if(!gameMode&&acceptedPlan&&projectSignature(projectSnapshot())!==acceptedSignature)acceptedPlan=null;
   renderBuildHome();
  }
  function openBuildHome(){
@@ -1812,15 +1832,45 @@ try{
     $('buildRetry').hidden=false;
    }catch(e){transferPending=false;submittedPlan=null;renderBuildHome();buildNotice(e.message,true);}
   }else{
-   try{localStorage.setItem(BUILD_DEMO_STORE,JSON.stringify(plan));buildNotice('Byggeplan lagret lokalt i testmiljøet. Ingen bygning er oppført.');}
+   try{localStorage.setItem(BUILD_DEMO_STORE,JSON.stringify(plan));savedProjectSignature=projectSignature(projectSnapshot());projectChanged();buildNotice('Byggeplan lagret lokalt i testmiljøet. Ingen bygning er oppført.');}
    catch(e){buildNotice('Lokal lagring utilgjengelig. Eksporter byggeplanen før du lukker editoren.',true);}
-   acceptedPlan=plan;buildDraft=null;renderBuildHome();
+   acceptedPlan=plan;acceptedSignature=projectSignature(projectSnapshot());buildDraft=null;$('buildRecover').hidden=!loadDemoPlan();renderBuildHome();
   }
  }
+ function loadDemoPlan(){
+  if(gameMode)return null;
+  try{
+   const raw=localStorage.getItem(BUILD_DEMO_STORE);
+   if(!raw||raw.length>12*PROJECT_LIMIT)return null;
+   const p=JSON.parse(raw);
+   if(p.format!==BUILD_FORMAT||p.schemaVersion!==BUILD_SCHEMA||p.site?.id!=='demo-site')return null;
+   const r=makeBuildPlan(p.project,p.site,p.planId);
+   return r.error?null:r.plan;
+  }catch{return null;}
+ }
+ function recoverDemoPlan(){
+  const p=loadDemoPlan();
+  if(!p){buildNotice('Ingen gyldig lagret testplan.',true);return;}
+  if(!confirmProjectReplacement())return;
+  const r=validateProject(p.project);
+  if(!restoreProject(r))return;
+  acceptedPlan=p;acceptedSignature=projectSignature(projectSnapshot());
+  document.body.classList.remove('developer-mode');openBuildHome();
+  buildNotice('Sist lagrede testplan åpnet. Ingen bygging har skjedd i hovedspillet.');
+ }
+ // Host contract (same-origin iframe or opener):
+ // 1. editor-ready -> host validates an actual leveled area and returns init-site
+ //    {protocol,type,session,site:{id,length,width,origin:[x,y,z],angle,leveled:true,approved:true}}.
+ // 2. site-ready acknowledges the bound session/site.
+ // 3. submit-plan {session,plan} -> host validates authoritative site and plan,
+ //    persists by planId idempotently, reserves site, creates planned construction (zero mounted/delivered).
+ // 4. plan-result {session,planId,accepted,reason?}. Only accepted:true allows editor exit.
+ //    Repeated identical planId must return same outcome, not create another building.
+ // The real host and world-side persistence are not implemented in this branch.
  function initBuildBridge(){
   document.body.classList.toggle('game-mode',gameMode);
   $('buildIntro').textContent=gameMode?'Velg ferdigtegning eller fri prosjektering på den planerte byggeplassen. Bygget oppføres senere i spillverdenen.':'Selvstendig test: byggeflaten simulerer et planert område. Ingen forbindelse til hovedspillet.';
-  if(!gameMode){renderBuildHome();return;}
+  if(!gameMode){$('buildRecover').hidden=!loadDemoPlan();renderBuildHome();return;}
   window.addEventListener('message',e=>{
    if(e.origin!==location.origin||e.source!==bridgeHost||!plainObject(e.data)||e.data.protocol!==BUILD_PROTOCOL)return;
    const msg=e.data;
@@ -2924,6 +2974,7 @@ try{
  $('buildRetry').addEventListener('click',()=>{if(transferPending&&submittedPlan){try{sendBridge('submit-plan',{session:bridgeSession,plan:submittedPlan});buildNotice('Samme byggeplan sendt på nytt. Venter på spillverten.');}catch(e){buildNotice(e.message,true);}}});
  $('buildDownload').addEventListener('click',()=>{if(acceptedPlan)downloadProjectFile(JSON.stringify(acceptedPlan,null,2),'application/json;charset=utf-8','.build-plan.json');});
  $('buildContinue').addEventListener('click',()=>{acceptedPlan=null;renderBuildHome();showPanel('modules');});
+ $('buildRecover').addEventListener('click',recoverDemoPlan);
  $('projectName').addEventListener('input',projectChanged);
  $('projectSlots').addEventListener('change',()=>{$('projectOpen').disabled=!$('projectSlots').value;$('projectDelete').disabled=!$('projectSlots').value;});
  $('projectSave').addEventListener('click',saveLocalProject);$('projectOpen').addEventListener('click',openLocalProject);
@@ -2937,7 +2988,7 @@ try{
  $('projectDrawings').addEventListener('click',exportDrawings);
  $('projectBack').addEventListener('click',()=>showPanel('modules'));
  for(const id of ['gridStep','snapModules','snapAnchors','snap','showAnchors','bpPlanRoof'])$(id).addEventListener('change',projectChanged);
- window.addEventListener('beforeunload',e=>{if(!acceptedPlan&&projectIsDirty()){e.preventDefault();e.returnValue='';}});
+ window.addEventListener('beforeunload',e=>{if(projectIsDirty()){e.preventDefault();e.returnValue='';}});
  $('gableQuick').addEventListener('click',openGable);
  $('gablePreview').addEventListener('click',()=>calculateGable(true));
  $('gableApply').addEventListener('click',()=>calculateGable(false));
