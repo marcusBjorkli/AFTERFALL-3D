@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#101c20">
-<title>AFTERFALL | Construction Editor CE 0.8.1</title>
+<title>AFTERFALL | Construction Editor CE 0.9</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:#101c20;color:#e9f0ed;font:14px system-ui,sans-serif}
 body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
@@ -163,16 +163,25 @@ main.blueprints-open{grid-template-columns:minmax(330px,43%) minmax(0,1fr)}
 #gablePanel summary{font-weight:700;cursor:pointer;color:#c9e6d9}
 #gablePanel .fields>*{min-width:0}#gablePanel input,#gablePanel select{min-width:0}
 #gableReport{white-space:pre-line;color:#c2e3d7}#gableReport.error{color:#ffb6a2}
+
+#projectPanel{min-width:0;overflow-wrap:anywhere}
+#projectPanel input,#projectPanel select{font-size:16px;min-width:0}
+#projectReport{white-space:pre-line;color:#c2e3d7}
+#projectReport.error{color:#ffb6a2}
+#projectDirty{color:#eac77d;font-size:12px}
+#projectPanel .buttons{margin-top:8px;flex-wrap:wrap}
+#projectPanel .matDetails{min-width:0}
+#projectPanel .wide{margin-top:6px}
 </style>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}
 </script>
 </head>
 <body>
-<header><span class="brand">AFTERFALL</span><span class="version">CE 0.8.1</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
+<header><span class="brand">AFTERFALL</span><span class="version">CE 0.9</span><small>Konstruksjonseditor · selvstendig testmiljø</small></header>
 <main>
 <aside>
-<div class="panelTabs" aria-label="Verktøypaneler"><button id="tabModules" type="button" aria-pressed="true">Moduler</button><button id="tabSite" type="button" aria-pressed="false">Byggeflate / mål</button><button id="tabMaterials" type="button" aria-pressed="false">Materialer</button><button id="tabStructure" type="button" aria-pressed="false">Konstruksjon</button><button id="tabBlueprint" type="button" aria-pressed="false" style="grid-column:1/-1">Byggetegninger</button></div>
+<div class="panelTabs" aria-label="Verktøypaneler"><button id="tabModules" type="button" aria-pressed="true">Moduler</button><button id="tabSite" type="button" aria-pressed="false">Byggeflate / mål</button><button id="tabMaterials" type="button" aria-pressed="false">Materialer</button><button id="tabStructure" type="button" aria-pressed="false">Konstruksjon</button><button id="tabBlueprint" type="button" aria-pressed="false">Byggetegninger</button><button id="tabProject" type="button" aria-pressed="false">Prosjekt</button></div>
 <section id="modulePanel">
 <h1>Modulbibliotek</h1>
 <p>Standardmoduler med geometriske festepunkter. Bæreevne og materialbehov beregnes i senere versjoner.</p>
@@ -300,7 +309,7 @@ main.blueprints-open{grid-template-columns:minmax(330px,43%) minmax(0,1fr)}
 <button id="doConnect" class="primary" type="button" disabled>Koble moduler</button>
 <p id="connectorResult" aria-live="polite">Velg to festepunkter. Kilden flyttes i X, Y og Z. Punktene må vende mot hverandre.</p>
 </section>
-<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.8.1. Tilpassede avstivere må beregnes på nytt hvis festemodulene flyttes.</p>
+<p>Posisjoner måles fra platens hjørne. X/Z angir modulens sentrum; Y er underkant. Endringer lagres ikke ved omlasting i CE 0.9. Tilpassede avstivere må beregnes på nytt hvis festemodulene flyttes.</p>
 </section>
 <section id="sitePanel" hidden>
 <h1>Byggeflate</h1>
@@ -336,7 +345,7 @@ main.blueprints-open{grid-template-columns:minmax(330px,43%) minmax(0,1fr)}
 <p>Like deler grupperes. Løpemeter er for trevirkeformede deler; råemnelengde inkluderer geometrisk endekutt. Takflater og veggpaneler oppgis som modellerte seksjoner, ikke ferdig bestillingsliste.</p>
 <div id="materialParts"></div></details>
 <details class="matDetails"><summary>Densiteter (kg/m³)</summary><p>Justerbare antakelser for spillmodellen. Taket er ett sammensatt modellemne; testmoduler uten valgt densitet får ukjent masse. Verdiene er ikke materialsertifikater.</p><div id="materialDensityFields"></div><button id="resetDensities" type="button" class="wide">Tilbakestill densiteter</button></details>
-<p>Ingen tillegg for festemidler, fukt, standard lagerlengder, sagspor eller øvrig kappsvinn. Vegg med åpning regnes foreløpig som ett massivt panel med utsparing. Lagrede byggeprosjekter og eksport kommer senere.</p>
+<p>Ingen tillegg for festemidler, fukt, standard lagerlengder, sagspor eller øvrig kappsvinn. Vegg med åpning regnes foreløpig som ett massivt panel med utsparing. Prosjektlagring og eksport finnes under Prosjekt.</p>
 <button id="materialBack" class="wide" type="button">Tilbake til moduler</button>
 </section>
 <section id="structPanel" hidden>
@@ -384,7 +393,29 @@ main.blueprints-open{grid-template-columns:minmax(330px,43%) minmax(0,1fr)}
 <p>Skjematiske ortografiske tegninger i prosjektets akser (meter). Plan uten tak er en ovenfravisning, ikke et horisontalt snitt. Skala tilpasses visningen.</p>
 <div id="blueprintDrawings"></div>
 <button id="bpBack" class="wide" type="button">Tilbake til fri prosjektering</button>
-<p>Ferdigtegningene er spillprototyper. Saltak får automatisk to tilpassede gavlvegger. Ingen lagring, eksport, installasjoner, inventar, fysiske byggehandlinger eller materialtrekk i CE 0.8.1.</p>
+<p>Ferdigtegningene er spillprototyper. Saltak får automatisk to tilpassede gavlvegger. Lagring og eksport finnes under Prosjekt. Ingen installasjoner, inventar, fysiske byggehandlinger eller materialtrekk i CE 0.9.</p>
+</section>
+<section id="projectPanel" hidden>
+<h1>Prosjektlagring og eksport</h1>
+<p id="projectDirty" aria-live="polite"></p>
+<label for="projectName">Prosjektnavn</label><input id="projectName" type="text" maxlength="80" value="Nytt prosjekt">
+<p>Lagrer byggeflate, plasserte moduler, alle parametriske tilpasninger, modul-ID-er, densiteter og utvalgte visningsinnstillinger. Forhåndsvisninger og målelinjer lagres ikke.</p>
+<div class="buttons"><button id="projectSave" class="primary" type="button">Lagre lokalt</button><button id="projectNew" type="button">Nytt prosjekt</button></div>
+<h2>Lokalt lagrede prosjekter</h2>
+<p>Lagres i denne nettleseren på denne enheten. Ikke synkronisert. Eksporter JSON som sikkerhetskopi.</p>
+<label for="projectSlots">Velg prosjekt</label><select id="projectSlots"></select>
+<div class="buttons"><button id="projectOpen" type="button" disabled>Åpne</button><button id="projectDelete" type="button" disabled>Slett lagret kopi</button></div>
+<h2>Import / eksport</h2>
+<button id="projectExport" class="wide" type="button">Eksporter prosjekt (.json)</button>
+<button id="projectImport" class="wide" type="button">Importer prosjekt (.json)</button>
+<input id="projectFile" type="file" accept=".json,application/json" hidden>
+<button id="projectMaterials" class="wide" type="button">Eksporter materialliste (.csv)</button>
+<button id="projectParts" class="wide" type="button">Eksporter stykkliste (.csv)</button>
+<button id="projectStructure" class="wide" type="button">Eksporter konstruksjonsgraf (.json)</button>
+<button id="projectDrawings" class="wide" type="button">Eksporter plan og fasader (.svg)</button>
+<p>Rapporter genereres på nytt fra gjeldende geometri. CSV bruker semikolon og desimalkomma. SVG er en skjematisk tegning uten fast utskriftsskala.</p>
+<p id="projectReport" role="status"></p>
+<button id="projectBack" class="wide" type="button">Tilbake til modell</button>
 </section>
 </aside>
 <section id="viewport" aria-label="3D-visning av byggeflate">
@@ -392,7 +423,7 @@ main.blueprints-open{grid-template-columns:minmax(330px,43%) minmax(0,1fr)}
 <button data-view="orbit" aria-pressed="true">3D</button><button data-view="top" aria-pressed="false">Ovenfra</button><button data-view="front" aria-pressed="false">Foran</button><button data-view="right" aria-pressed="false">Høyre</button><span class="divider"></span>
 <button id="fit">Tilpass</button><button id="zoomIn" aria-label="Zoom inn">+</button><button id="zoomOut" aria-label="Zoom ut">−</button>
 </div>
-<div id="modebar"><button id="selectMode" type="button" aria-pressed="true">Velg</button><button id="placeMode" type="button" aria-pressed="false">Plasser</button><button id="moveMode" type="button" aria-pressed="false" disabled>Flytt</button><button id="cancelMode" type="button" disabled>Avbryt</button><button id="wallFitQuick" type="button">Veggtilpasning</button><button id="roofFitQuick" type="button">Taktilpasning</button><button id="materialsQuick" type="button">Mengder</button><button id="structureQuick" type="button">Kontroll</button><button id="blueprintQuick" type="button">Tegninger</button><button id="gableQuick" type="button">Gavltilpasning</button><span id="currentMode">Velg en modul</span></div>
+<div id="modebar"><button id="selectMode" type="button" aria-pressed="true">Velg</button><button id="placeMode" type="button" aria-pressed="false">Plasser</button><button id="moveMode" type="button" aria-pressed="false" disabled>Flytt</button><button id="cancelMode" type="button" disabled>Avbryt</button><button id="wallFitQuick" type="button">Veggtilpasning</button><button id="roofFitQuick" type="button">Taktilpasning</button><button id="materialsQuick" type="button">Mengder</button><button id="structureQuick" type="button">Kontroll</button><button id="blueprintQuick" type="button">Tegninger</button><button id="gableQuick" type="button">Gavltilpasning</button><button id="projectQuick" type="button">Prosjekt</button><span id="currentMode">Velg en modul</span></div>
 <p id="status" role="status" aria-live="polite">Laster 3D-miljø …</p>
 <div id="stage">
 <div id="overlay"><b id="size">12 × 10 m</b><br>Areal: <span id="area">120</span> m²<br>Y = 0 m · <span id="viewName">3D</span></div>
@@ -401,7 +432,7 @@ main.blueprints-open{grid-template-columns:minmax(330px,43%) minmax(0,1fr)}
 </div>
 </section>
 </main>
-<footer>CE 0.8.1 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
+<footer>CE 0.9 · Selvstendig editor · Ingen endringer i spillet · Testmål 1–100 m</footer>
 <script type="module">
 const $=id=>document.getElementById(id);
 const status=$('status'),stage=$('stage'),form=$('dimensions'),lengthInput=$('length'),widthInput=$('width');
@@ -1010,7 +1041,7 @@ function structureAnalysis(modules,densities=defaultDensities()){
  for(const n of list){n.status=n.issues.some(i=>i.level==='error')?'error':n.issues.length?'warn':'ok';}
  return {nodes:list,edges,sideEdges,assemblies,ownForce:quantities.mass*GRAVITY,unknownVolume:quantities.unknownVolume,groundForce,unresolvedForce,groundUnknown,unresolvedUnknown,errors:list.filter(n=>n.status==='error').length,warnings:list.filter(n=>n.status==='warn').length,cycles:list.filter(n=>!n.processed).length};
 }
-// CE 0.8.1: blueprints instantiate the same modules used for free construction.
+// CE 0.9: blueprints instantiate the same modules used for free construction.
 const blueprintCatalog={
  storage:{name:'Lagerskur',description:'Lite lukket lager med enkel dør, uten vindu. Funksjon i spillet kommer ved integrasjon.',l:3,w:3,h:2.4,roof:'flatRoof',pitch:20,overhang:.2,door:.9,windows:[]},
  cabin:{name:'Enkel bolig',description:'Enroms hytte med dør og to vinduer. Saltak med automatisk tilpassede gavlvegger.',l:4,w:3.5,h:2.4,roof:'gableRoof',pitch:30,overhang:.3,door:.9,windows:['south','east']},
@@ -1100,6 +1131,128 @@ function drawingModel(modules,view,hideRoof=false){
  faces.sort((a,b)=>a.depth-b.depth||a.id-b.id);
  const all=faces.flatMap(f=>f.polygon);
  return {faces,bounds:bounds2(all)};
+}
+// CE 0.9: canonical editable project data, not cached quantities or mesh objects.
+const PROJECT_FORMAT='afterfall.construction-project',PROJECT_SCHEMA=1,PROJECT_LIMIT=2*1024*1024;
+const PROJECT_STORE='afterfall.ce.projects.v1',PROJECT_SLOTS=20;
+const projectId=v=>Number.isSafeInteger(v)&&v>0&&v<1e9;
+const plainObject=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
+const finiteArray=(v,n)=>Array.isArray(v)&&v.length===n&&v.every(Number.isFinite);
+function requireProject(ok,message){if(!ok)throw Error(message);}
+function cleanProjectName(name){return typeof name==='string'?name.trim().slice(0,80):'';}
+function snapshotProject(name,L,W,modules,nextId,densities,settings){
+ return {format:PROJECT_FORMAT,schemaVersion:PROJECT_SCHEMA,editorVersion:'0.9',name:cleanProjectName(name)||'Nytt prosjekt',savedAt:new Date().toISOString(),plot:{length:L,width:W},nextId,modules:JSON.parse(JSON.stringify(modules)),densities:{...densities},settings:{...settings}};
+}
+function projectSignature(p){return JSON.stringify([p.name,p.plot,p.nextId,p.modules,p.densities,p.settings]);}
+function readModuleRecord(record){
+ requireProject(plainObject(record)&&projectId(record.id)&&typeof record.type==='string'&&Object.hasOwn(catalog,record.type),'Ukjent eller ugyldig modul.');
+ const m={};
+ for(const k of ['id','type','x','y','z','l','w','h','angle'])m[k]=record[k];
+ requireProject(['x','y','z','l','w','h','angle'].every(k=>Number.isFinite(m[k])),'Ugyldige mål for modul #'+m.id+'.');
+ const d=catalog[m.type];
+ if(d.params){
+  requireProject(plainObject(record.params),'Parametere mangler for #'+m.id+'.');
+  m.params={};
+  for(const k of Object.keys(d.params)){requireProject(Number.isFinite(record.params[k]),'Ugyldig parameter '+k+' i #'+m.id+'.');m.params[k]=record.params[k];}
+ }
+ if(isFitted(m)){
+  const f=record.fit,p=record.profile;
+  requireProject(plainObject(f)&&Array.isArray(p)&&p.length===4&&p.every(q=>finiteArray(q,2))&&finiteArray(record.low,3)&&finiteArray(record.high,3),'Ugyldig avstiverprofil #'+m.id+'.');
+  requireProject(projectId(f.postId)&&projectId(f.beamId)&&f.postId!==f.beamId&&typeof f.postPoint==='string'&&f.postPoint.length<=80&&typeof f.beamPoint==='string'&&f.beamPoint.length<=80,'Ugyldige avstiverreferanser #'+m.id+'.');
+  const nums=['thickness','width','length','slope','sideCut','topCut','stockLength'];
+  requireProject(nums.every(k=>Number.isFinite(f[k])&&f[k]>0)&&f.thickness>=.05-EPS&&f.thickness<=.3+EPS&&f.width>=.05-EPS&&f.width<=.3+EPS&&f.slope<90&&f.stockLength>=f.length-EPS,'Ugyldige avstivermål #'+m.id+'.');
+  const turn=p.map((a,i)=>{const b=p[(i+1)%4],c=p[(i+2)%4];return (b[0]-a[0])*(c[1]-b[1])-(b[1]-a[1])*(c[0]-b[0]);});
+  requireProject((turn.every(v=>v>EPS)||turn.every(v=>v<-EPS))&&p.every(q=>q[1]>=-EPS&&q[1]<=m.h+EPS)&&Math.abs(Math.min(...p.map(q=>q[1])))<=EPS,'Avstiverprofil er ikke konveks eller innenfor modulens mål.');
+  requireProject(record.low[0]>=-m.l/2-EPS&&record.low[0]<=m.l/2+EPS&&record.high[0]>=-m.l/2-EPS&&record.high[0]<=m.l/2+EPS&&[record.low,record.high].every(q=>q[1]>=-EPS&&q[1]<=m.h+EPS&&Math.abs(q[2])<=m.w/2+EPS),'Ugyldige festepunkter i avstiver.');
+  m.profile=p.map(q=>q.slice());m.low=record.low.slice();m.high=record.high.slice();m.fit={postId:f.postId,postPoint:f.postPoint,beamId:f.beamId,beamPoint:f.beamPoint,...Object.fromEntries(nums.map(k=>[k,f[k]]))};
+ }
+ if(record.edgeFit!=null&&fitWallType(m)){
+  const f=record.edgeFit;
+  requireProject(plainObject(f)&&projectId(f.floorId)&&Object.hasOwn(edgeNames,f.side)&&[f.startTrim,f.endTrim].every(v=>Number.isFinite(v)&&v>=-EPS&&v<=100)&&[f.startIds,f.endIds].every(a=>Array.isArray(a)&&a.length<=MAX_MODULES&&a.every(projectId)),'Ugyldig veggtilpasning #'+m.id+'.');
+  m.edgeFit={floorId:f.floorId,side:f.side,startTrim:f.startTrim,endTrim:f.endTrim,startIds:f.startIds.slice(),endIds:f.endIds.slice()};
+ }
+ if(record.roofFit!=null&&fitRoofType(m)){
+  const f=record.roofFit,nums=['direction','eave','gable','pitch','thickness','l','w'];
+  requireProject(plainObject(f)&&projectId(f.floorId)&&f.type===m.type&&nums.every(k=>Number.isFinite(f[k]))&&[0,90,180,270].includes(f.direction)&&[f.eave,f.gable].every(v=>v>=0&&v<=1)&&typeof f.autoPitch==='boolean'&&Array.isArray(f.seats)&&f.seats.length===2,'Ugyldig taktilpasning #'+m.id+'.');
+  const seats=f.seats.map(s=>{
+   const keys=['x0','x1','cut0','cut1','z','y'];
+   requireProject(plainObject(s)&&projectId(s.wallId)&&keys.every(k=>Number.isFinite(s[k])),'Ugyldig takanlegg #'+m.id+'.');
+   return {wallId:s.wallId,...Object.fromEntries(keys.map(k=>[k,s[k]]))};
+  });
+  m.roofFit={floorId:f.floorId,type:m.type,...Object.fromEntries(nums.map(k=>[k,f[k]])),autoPitch:f.autoPitch,seats};
+ }
+ // Retain the detached flag where the editor uses null.
+ if(record.roofFit===null&&fitRoofType(m))m.roofFit=null;
+ if(isGable(m)){
+  const f=record.gableFit;
+  requireProject(plainObject(f)&&projectId(f.roofId)&&projectId(f.wallId)&&f.type===m.type&&['l','w','h'].every(k=>Number.isFinite(f[k]))&&typeof f.inside==='boolean'&&Array.isArray(f.segments)&&f.segments.length>=1&&f.segments.length<=32&&f.segments.every(a=>finiteArray(a,4)),'Ugyldig gavltilpasning #'+m.id+'.');
+  m.gableFit={roofId:f.roofId,wallId:f.wallId,type:m.type,l:f.l,w:f.w,h:f.h,inside:f.inside,segments:f.segments.map(a=>a.slice())};
+  if(typeof record.inside==='boolean')m.inside=record.inside;
+ }
+ return m;
+}
+function validateProject(p){
+ try{
+  requireProject(plainObject(p)&&p.format===PROJECT_FORMAT,'Filen er ikke et AFTERFALL-konstruksjonsprosjekt.');
+  requireProject(p.schemaVersion===PROJECT_SCHEMA,'Prosjektets dataversjon støttes ikke. Forventet schemaVersion '+PROJECT_SCHEMA+'.');
+  requireProject(typeof p.name==='string'&&cleanProjectName(p.name)&&p.name.length<=80,'Ugyldig prosjektnavn.');
+  requireProject(plainObject(p.plot)&&validDimension(p.plot.length)&&validDimension(p.plot.width),'Ugyldig byggeflate.');
+  requireProject(Array.isArray(p.modules)&&p.modules.length<=MAX_MODULES,'Ugyldig modulliste eller for mange moduler.');
+  const L=p.plot.length,W=p.plot.width,list=p.modules.map(readModuleRecord),ids=new Set(list.map(m=>m.id));
+  requireProject(ids.size===list.length,'Prosjektet inneholder dupliserte modul-ID-er.');
+  const maxId=Math.max(0,...ids);
+  requireProject(projectId(p.nextId)&&p.nextId>maxId,'Neste modul-ID må være større enn alle eksisterende ID-er.');
+  requireProject(plainObject(p.densities),'Materialdensiteter mangler.');
+  const densities={};
+  for(const k of Object.keys(materialCatalog)){
+   const v=p.densities[k];requireProject(v===null||Number.isFinite(v)&&v>=1&&v<=20000,'Ugyldig densitet for '+materialCatalog[k].name+'.');densities[k]=v;
+  }
+  const settings=p.settings;
+  requireProject(plainObject(settings)&&['0','0.25','1'].includes(settings.gridStep)&&['orbit','top','front','right'].includes(settings.view)&&['snapModules','snapAnchors','snap','showAnchors','planRoof'].every(k=>typeof settings[k]==='boolean'),'Ugyldige visningsinnstillinger.');
+  const warnings=[];
+  for(let i=0;i<list.length;i++){
+   const m=list[i],err=validModule(m,L,W,[]);
+   requireProject(!err,'Modul #'+m.id+': '+err);
+   const parts=piecesOf(m);
+   requireProject(parts.length>0&&parts.length<=1024&&parts.every(a=>Number.isFinite(pieceVolume(a))&&pieceVolume(a)>0),'Ugyldig eller tom geometri i modul #'+m.id+'.');
+   const refs=[...(m.fit?[m.fit.postId,m.fit.beamId]:[]),...(m.edgeFit?[m.edgeFit.floorId,...m.edgeFit.startIds,...m.edgeFit.endIds]:[]),...(m.roofFit?[m.roofFit.floorId,...m.roofFit.seats.map(s=>s.wallId)]:[]),...(m.gableFit?[m.gableFit.roofId,m.gableFit.wallId]:[])];
+   requireProject(refs.every(id=>id<m.id||id<p.nextId)&&!refs.includes(m.id),'Ugyldig selvreferanse eller fremtidig referanse i #'+m.id+'.');
+   for(const id of new Set(refs))if(!ids.has(id))warnings.push('Modul #'+m.id+' refererer til slettet modul #'+id+'.');
+  }
+  // Validate every record before pairwise collision checks.
+  for(let i=0;i<list.length;i++)for(let j=0;j<i;j++)requireProject(!solidOverlap(list[i],list[j]),'Modul #'+list[i].id+' overlapper #'+list[j].id+'.');
+  const data={format:PROJECT_FORMAT,schemaVersion:PROJECT_SCHEMA,editorVersion:'0.9',name:cleanProjectName(p.name),savedAt:typeof p.savedAt==='string'&&p.savedAt.length<=40?p.savedAt:'',plot:{length:L,width:W},nextId:p.nextId,modules:list,densities,settings:{gridStep:settings.gridStep,view:settings.view,...Object.fromEntries(['snapModules','snapAnchors','snap','showAnchors','planRoof'].map(k=>[k,settings[k]]))}};
+  // All reports are recalculated; imported caches are never trusted.
+  quantitySummary(list,densities);
+  return {project:data,warnings};
+ }catch(e){return {error:e.message};}
+}
+function parseProject(raw){
+ if(typeof raw!=='string'||raw.length>PROJECT_LIMIT)return {error:'Prosjektfilen er for stor (maks 2 MB).'};
+ try{return validateProject(JSON.parse(raw));}catch(e){return {error:'Ugyldig JSON: '+e.message};}
+}
+function projectCSV(rows){
+ const field=v=>{
+  if(v===null||v===undefined)return '';
+  if(typeof v==='number')return Number.isFinite(v)?String(v).replace('.',','):'';
+  let s=String(v);if(/^[\s]*[=+\-@]/.test(s))s="'"+s;
+  return '"'+s.replaceAll('"','""')+'"';
+ };
+ return '\uFEFF'+rows.map(r=>r.map(field).join(';')).join('\r\n')+'\r\n';
+}
+function materialCSV(ms,d){
+ const q=quantitySummary(ms,d);
+ return projectCSV([['Materiale','Antall deler','Netto m3','Raavolum m3','Netto kg (kjent)','Raa kg (kjent)','Ukjent netto m3','Ukjent raa m3','Densitet kg/m3','Netto lm','Raa lm'],
+ ...q.materials.map(a=>[materialCatalog[a.key].name,a.count,a.net,a.raw,a.mass,a.rawMass,a.unknown,a.unknownRaw,d[a.key],a.length,a.rawLength])]);
+}
+function partsCSV(ms,d){
+ const q=quantitySummary(ms,d);
+ return projectCSV([['Del','Materiale','Antall','Modul-ID-er','Maal 1 mm','Maal 2 mm','Maal 3 mm','Maaltype','Netto m3 totalt','Raa m3 totalt','Netto kg totalt','Raa kg totalt','Netto lm totalt','Raa lm totalt','Areal m2 totalt','Arealtype','Helning grader'],
+ ...q.groups.map(g=>[g.label,materialCatalog[g.material].name,g.count,g.ids.join(', '),...g.dimensions.map(v=>v*1000),g.dimKind||'L x B x H',g.net*g.count,g.raw*g.count,d[g.material]===null?null:g.net*g.count*d[g.material],d[g.material]===null?null:g.raw*g.count*d[g.material],g.length===undefined?null:g.length*g.count,g.rawLength===undefined?null:g.rawLength*g.count,g.area===undefined?null:g.area*g.count,g.areaKind?areaLabels[g.areaKind]:null,g.slope])]);
+}
+function structureExport(ms,d){
+ const s=structureAnalysis(ms,d);
+ return {format:'afterfall.construction-analysis',schemaVersion:1,units:{force:'N',area:'m2',pressure:'Pa',length:'m'},model:'Kun egenlast. Forenklet spillmodell, ikke sikkerhetsgodkjenning.',ownForce:s.ownForce,groundForce:s.groundForce,unresolvedForce:s.unresolvedForce,unknownVolume:s.unknownVolume,groundUnknown:s.groundUnknown,unresolvedUnknown:s.unresolvedUnknown,errors:s.errors,warnings:s.warnings,nodes:s.nodes.map(n=>({id:n.id,type:n.m.type,own:n.own,received:n.received,total:n.total,unknown:n.unknown,grounded:n.grounded,status:n.status,span:n.span,utilization:n.utilization,issues:n.issues})),edges:s.edges,assemblies:s.assemblies,sideEdges:s.sideEdges};
 }
 function solid(m,piece=null){
  const part=piece||{polygon:profileOf(m),z0:-m.w/2,z1:m.w/2};
@@ -1356,7 +1509,7 @@ function roofWallPair(floor,direction,others){
   if(Math.abs(x1-half)<=EPS&&x0>=-EPS)high.push(s);
  }
  if(!low.length||!high.length)return {error:'Det kreves to motstående yttervegger oppå valgt gulv. Kontroller takretning og veggplassering.'};
- if(low.length!==1||high.length!==1)return {error:'Flere vegger funnet på samme takside. CE 0.8.1 støtter én sammenhengende vegg per motsatt ytterkant.'};
+ if(low.length!==1||high.length!==1)return {error:'Flere vegger funnet på samme takside. CE 0.9 støtter én sammenhengende vegg per motsatt ytterkant.'};
  if(Math.min(low[0].z1,high[0].z1)-Math.max(low[0].z0,high[0].z0)<=EPS)return {error:'Motstående vegger må overlappe i takets lengderetning.'};
  return {angle,span,depth,low:low[0],high:high[0]};
 }
@@ -1473,6 +1626,141 @@ try{
  const meshes=new Map();
  let anchorGroup=null;
  let materialDensities=defaultDensities();
+ let savedProjectSignature='',projectLoading=false;
+ function projectSnapshot(){
+  return snapshotProject($('projectName').value,L,W,modules,nextId,materialDensities,{gridStep:$('gridStep').value,view,snapModules:$('snapModules').checked,snapAnchors:$('snapAnchors').checked,snap:$('snap').checked,showAnchors:$('showAnchors').checked,planRoof:$('bpPlanRoof').checked});
+ }
+ function projectIsDirty(){return projectSignature(projectSnapshot())!==savedProjectSignature;}
+ function projectChanged(){
+  if(projectLoading)return;
+  $('projectDirty').textContent=projectIsDirty()?'Endringer siden siste lokale lagring eller åpning.':'Ingen ulagrede endringer.';
+ }
+ function projectNotice(message,error=false){
+  $('projectReport').textContent=message;$('projectReport').className=error?'error':'';setStatus(message,error);
+ }
+ function localProjectList(){
+  const raw=localStorage.getItem(PROJECT_STORE);
+  if(!raw)return [];
+  const list=JSON.parse(raw);
+  if(!Array.isArray(list)||list.length>PROJECT_SLOTS)throw Error('Lokalt prosjektregister er ugyldig. Importer en JSON-sikkerhetskopi.');
+  if(list.some(p=>!plainObject(p)||typeof p.name!=='string'||!cleanProjectName(p.name)))throw Error('Lokalt prosjektregister inneholder ugyldige oppføringer.');
+  return list;
+ }
+ function refreshProjectSlots(){
+  const select=$('projectSlots'),old=select.value;
+  try{
+   const list=localProjectList();fillOptions(select,[{id:'',label:'Velg lagret prosjekt'},...list.map(p=>({id:p.name,label:p.name+' · '+(p.modules?.length??'?')+' moduler'}))],old);
+   $('projectSave').disabled=false;
+  }catch(e){
+   select.replaceChildren(new Option('Lokal lagring utilgjengelig',''));$('projectSave').disabled=true;
+   $('projectReport').textContent='Lokal lagring utilgjengelig: '+e.message+' Bruk JSON-eksport.';$('projectReport').className='error';
+  }
+  $('projectOpen').disabled=!select.value;$('projectDelete').disabled=!select.value;
+  projectChanged();
+ }
+ function saveLocalProject(){
+  try{
+   const p=projectSnapshot(),r=validateProject(p);if(r.error)throw Error(r.error);
+   const list=localProjectList(),i=list.findIndex(a=>a.name===p.name);
+   if(i>=0&&!window.confirm('Erstatte lagret kopi av «'+p.name+'»?'))return;
+   if(i<0&&list.length>=PROJECT_SLOTS)throw Error('Maks '+PROJECT_SLOTS+' lokale prosjekter. Eksporter eller slett en lagret kopi.');
+   if(i>=0)list[i]=p;else list.push(p);
+   localStorage.setItem(PROJECT_STORE,JSON.stringify(list));
+   $('projectName').value=p.name;savedProjectSignature=projectSignature(projectSnapshot());refreshProjectSlots();
+   $('projectSlots').value=p.name;refreshProjectSlots();projectNotice('Lagret «'+p.name+'» lokalt. '+(r.warnings.length?r.warnings.length+' referanseadvarsler.':''));
+  }catch(e){projectNotice('Kunne ikke lagre: '+e.message+' Eksporter JSON som sikkerhetskopi.',true);}
+ }
+ function confirmProjectReplacement(){return !projectIsDirty()||window.confirm('Det åpne prosjektet har ulagrede endringer. Erstatt det likevel?');}
+ function restoreProject(r){
+  if(r.error){projectNotice(r.error,true);return false;}
+  const p=r.project,prepared=[];
+  // Create meshes without editing the active scene, in case preparation fails.
+  try{
+   for(const m of p.modules)prepared.push([m,modelMesh(m)]);
+  }catch(e){for(const [,mesh] of prepared)disposeGroup(mesh);projectNotice('Kunne ikke klargjøre prosjektet: '+e.message,true);return false;}
+  projectLoading=true;
+  try{
+   if(bpCandidate)bpInvalidate();if(measuring)setMeasuring(false);setMode('select');clearMeasurement();
+   for(const id of [...meshes.keys()])removeMesh(id);
+   modules=p.modules;nextId=p.nextId;selectedId=null;
+   materialDensities={...p.densities};structuralCache=null;initMaterialDensities();
+   for(const [m,mesh] of prepared){moduleGroup.add(mesh);meshes.set(m.id,mesh);}
+   $('projectName').value=p.name;
+   $('gridStep').value=p.settings.gridStep;
+   for(const k of ['snapModules','snapAnchors','snap','showAnchors'])$(k).checked=p.settings[k];
+   $('bpPlanRoof').checked=p.settings.planRoof;$('structColors').checked=false;
+   lengthInput.value=String(p.plot.length);widthInput.value=String(p.plot.width);
+   updatePlate(p.plot.length,p.plot.width);setView(p.settings.view);
+   bpLoadPreset();refreshSelection();showPanel('project');
+   savedProjectSignature=projectSignature(projectSnapshot());
+  }finally{projectLoading=false;}
+  refreshProjectSlots();
+  projectNotice('Åpnet «'+p.name+'» · '+modules.length+' moduler.'+(r.warnings.length?'\n'+r.warnings.slice(0,8).join('\n')+(r.warnings.length>8?'\n… '+r.warnings.length+' referanseadvarsler totalt.':''):''));
+  return true;
+ }
+ function openLocalProject(){
+  try{
+   const p=localProjectList().find(p=>p.name===$('projectSlots').value);if(!p)throw Error('Velg et lagret prosjekt.');
+   const r=validateProject(p);if(r.error)throw Error(r.error);
+   if(confirmProjectReplacement())restoreProject(r);
+  }catch(e){projectNotice(e.message,true);}
+ }
+ function deleteLocalProject(){
+  const name=$('projectSlots').value;if(!name)return;
+  if(!window.confirm('Slette den lokale kopien av «'+name+'»? Det åpne prosjektet og eksporterte filer beholdes.'))return;
+  try{
+   localStorage.setItem(PROJECT_STORE,JSON.stringify(localProjectList().filter(p=>p.name!==name)));
+   // A deleted copy should no longer be presented as saved.
+   if(name===cleanProjectName($('projectName').value))savedProjectSignature='';
+   refreshProjectSlots();projectNotice('Lokal kopi slettet. Åpent prosjekt er uendret.');
+  }catch(e){projectNotice(e.message,true);}
+ }
+ function newProject(){
+  if(!confirmProjectReplacement())return;
+  const p=snapshotProject('Nytt prosjekt',L,W,[],1,defaultDensities(),{gridStep:'1',view:'orbit',snapModules:true,snapAnchors:true,snap:true,showAnchors:true,planRoof:false});
+  restoreProject(validateProject(p));
+  savedProjectSignature=projectSignature(projectSnapshot());projectChanged();projectNotice('Nytt tomt prosjekt. Eksisterende byggeflatemål beholdt.');
+ }
+ function filenameBase(){return (cleanProjectName($('projectName').value)||'AFTERFALL').replace(/[<>:"/\\|?*\x00-\x1f]/g,'_').replace(/[. ]+$/,'').slice(0,80)||'AFTERFALL';}
+ function downloadProjectFile(contents,mime,suffix){
+  const url=URL.createObjectURL(new Blob([contents],{type:mime})),a=document.createElement('a');
+  a.href=url;a.download=filenameBase()+suffix;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+ }
+ function exportProject(){
+  const p=projectSnapshot(),r=validateProject(p);if(r.error){projectNotice(r.error,true);return;}
+  downloadProjectFile(JSON.stringify(p,null,2),'application/json;charset=utf-8','.afterfall.json');
+  // Download initiation is not proof of successful disk write.
+  projectNotice('JSON-eksport startet. Kontroller at filen er lagret før du lukker siden.');
+ }
+ async function importProjectFile(file){
+  if(!file)return;
+  if(file.size>PROJECT_LIMIT){projectNotice('Prosjektfilen er for stor (maks 2 MB).',true);return;}
+  try{
+   const r=parseProject(await file.text());if(r.error){projectNotice(r.error,true);return;}
+   if(confirmProjectReplacement())restoreProject(r);
+  }catch(e){projectNotice('Kunne ikke lese filen: '+e.message,true);}
+ }
+ function exportDrawings(){
+  const ns='http://www.w3.org/2000/svg',host=document.createElement('div');
+  bpDrawing(host,modules,'plan','Plan – ovenfra',!$('bpPlanRoof').checked);
+  bpDrawing(host,modules,'front','Fasade – forfra (+Z)',false);
+  bpDrawing(host,modules,'right','Fasade – fra høyre (+X)',false);
+  const root=document.createElementNS(ns,'svg');root.setAttribute('width','760');root.setAttribute('height','820');root.setAttribute('viewBox','0 0 760 820');
+  bpSVG('rect',{width:760,height:820,fill:'#f4f5f0'},root);
+  bpSVG('text',{x:20,y:27,'font-size':17,'font-family':'sans-serif',fill:'#34494e'},root,cleanProjectName($('projectName').value)||'AFTERFALL');
+  const svgs=[...host.querySelectorAll('svg')],titles=['Plan – ovenfra','Fasade – forfra (+Z)','Fasade – fra høyre (+X)'];
+  for(const [i,s] of svgs.entries()){
+   const x=i===2?385:10,y=i===0?60:340;
+   bpSVG('text',{x:x+12,y:y-8,'font-size':13,'font-family':'sans-serif',fill:'#34494e'},root,titles[i]);
+   s.setAttribute('x',x);s.setAttribute('y',y);s.setAttribute('width','365');s.setAttribute('height','248');root.append(s);
+  }
+  bpSVG('text',{x:20,y:790,'font-size':12,'font-family':'sans-serif',fill:'#34494e'},root,'AFTERFALL CE 0.9 · Skjematisk · uten fast utskriftsskala');
+  if(!svgs.length)bpSVG('text',{x:20,y:85,'font-size':13,fill:'#34494e'},root,'Ingen plasserte moduler.');
+  downloadProjectFile(new XMLSerializer().serializeToString(root),'image/svg+xml;charset=utf-8','-tegninger.svg');
+ }
+ function openProject(){
+  if(measuring)setMeasuring(false);if(mode!=='select')setMode('select');showPanel('project');document.querySelector('aside').scrollTop=0;
+ }
  function gableInputs(){
   const type=$('gableType').value,wall=modules.find(m=>String(m.id)===$('gableWall').value),roof=modules.find(m=>String(m.id)===$('gableRoof').value),existing=$('gableSource').value==='selected'?current():null;
   const params=type==='gableFrame'?{member:$('gableMember').valueAsNumber,spacing:$('gableSpacing').valueAsNumber}:type==='gableWindowWall'?{openingW:$('gableOpeningW').valueAsNumber,openingH:$('gableOpeningH').valueAsNumber,sill:$('gableSill').valueAsNumber,offset:$('gableOffset').valueAsNumber}:{};
@@ -1710,7 +1998,7 @@ try{
     if(input.value.trim()==='')materialDensities[key]=null;
     else if(Number.isFinite(val)&&val>=1&&val<=20000)materialDensities[key]=val;
     else {input.value=materialDensities[key]??'';setStatus('Densitet må være 1–20 000 kg/m³, eller tom for ukjent.',true);}
-    renderMaterials();renderStructure();bpProjectChanged();
+    renderMaterials();renderStructure();bpProjectChanged();projectChanged();
    });
    wrap.append(lab,input);host.append(wrap);
   }
@@ -2117,14 +2405,14 @@ try{
  }
  function showPanel(which){
   if(which!=='blueprints'&&bpCandidate)bpInvalidate();
-  $('modulePanel').hidden=which!=='modules';$('sitePanel').hidden=which!=='site';$('materialPanel').hidden=which!=='materials';$('structPanel').hidden=which!=='structure';$('blueprintPanel').hidden=which!=='blueprints';
+  $('modulePanel').hidden=which!=='modules';$('sitePanel').hidden=which!=='site';$('materialPanel').hidden=which!=='materials';$('structPanel').hidden=which!=='structure';$('blueprintPanel').hidden=which!=='blueprints';$('projectPanel').hidden=which!=='project';
   $('tabModules').setAttribute('aria-pressed',String(which==='modules'));
   $('tabSite').setAttribute('aria-pressed',String(which==='site'));$('tabMaterials').setAttribute('aria-pressed',String(which==='materials'));
-  $('tabStructure').setAttribute('aria-pressed',String(which==='structure'));$('tabBlueprint').setAttribute('aria-pressed',String(which==='blueprints'));
-  document.querySelector('main').classList.toggle('materials-open',which==='materials'||which==='structure');
+  $('tabStructure').setAttribute('aria-pressed',String(which==='structure'));$('tabBlueprint').setAttribute('aria-pressed',String(which==='blueprints'));$('tabProject').setAttribute('aria-pressed',String(which==='project'));
+  document.querySelector('main').classList.toggle('materials-open',which==='materials'||which==='structure'||which==='project');
   document.querySelector('main').classList.toggle('blueprints-open',which==='blueprints');
   document.querySelector('main').classList.toggle('blueprint-paper',which==='blueprints'&&$('bpPaper').checked);
-  if(which==='materials')renderMaterials();if(which==='structure')renderStructure();if(which==='blueprints')renderBlueprintDrawings();
+  if(which==='materials')renderMaterials();if(which==='structure')renderStructure();if(which==='blueprints')renderBlueprintDrawings();if(which==='project')refreshProjectSlots();
  }
  function current(){return modules.find(m=>m.id===selectedId)||null;}
  function modelMesh(m,preview=false){
@@ -2173,7 +2461,7 @@ try{
   if(m&&m.roofFit)$('connectionsInfo').textContent+='\n'+roofFitStatus(m);
   if(m&&m.edgeFit)$('connectionsInfo').textContent+='\n'+edgeFitStatus(m);
   if(m&&isFitted(m))$('connectionsInfo').textContent+='\n'+checkFitStatus(m)+'\nSenterlinje: '+fmt.format(m.fit.length)+' m · Helning: '+fmt.format(m.fit.slope)+'°';
-  refreshConnectors();renderMaterials();renderStructure();bpProjectChanged();
+  refreshConnectors();renderMaterials();renderStructure();bpProjectChanged();projectChanged();
  }
  function selectModule(id){
   selectedId=modules.some(m=>m.id===id)?id:null;refreshSelection();
@@ -2315,7 +2603,7 @@ try{
   plot.add(lines([a,e,c,b,e,c,b,e,c,b,e,d,b,e,d,a,e,d,a,e,d,a,e,c],0xc4e8dc));
   scene.add(plot);updateGrid();
   $('size').textContent=fmt.format(L)+' × '+fmt.format(W)+' m';$('area').textContent=fmt.format(L*W);
-  refreshAnchorMarkers();bpProjectChanged();setStatus('Byggeflate oppdatert.');fitCamera();return true;
+  refreshAnchorMarkers();bpProjectChanged();projectChanged();setStatus('Byggeflate oppdatert.');fitCamera();return true;
  }
  function clearMeasurement(){
   points=[];disposeGroup(measureGroup);measureGroup=null;measurementCenter=null;
@@ -2390,10 +2678,25 @@ try{
  for(const id of ['tabMaterials','materialsQuick'])$(id).addEventListener('click',openMaterials);
  $('materialBack').addEventListener('click',()=>showPanel('modules'));
  $('materialScope').addEventListener('change',renderMaterials);
- $('resetDensities').addEventListener('click',()=>{materialDensities=defaultDensities();initMaterialDensities();renderMaterials();renderStructure();bpProjectChanged();});
+ $('resetDensities').addEventListener('click',()=>{materialDensities=defaultDensities();initMaterialDensities();renderMaterials();renderStructure();bpProjectChanged();projectChanged();});
  initMaterialDensities();
  for(const id of ['tabStructure','structureQuick'])$(id).addEventListener('click',openStructure);
  for(const id of ['tabBlueprint','blueprintQuick'])$(id).addEventListener('click',openBlueprints);
+ for(const id of ['tabProject','projectQuick'])$(id).addEventListener('click',openProject);
+ $('projectName').addEventListener('input',projectChanged);
+ $('projectSlots').addEventListener('change',()=>{$('projectOpen').disabled=!$('projectSlots').value;$('projectDelete').disabled=!$('projectSlots').value;});
+ $('projectSave').addEventListener('click',saveLocalProject);$('projectOpen').addEventListener('click',openLocalProject);
+ $('projectDelete').addEventListener('click',deleteLocalProject);$('projectNew').addEventListener('click',newProject);
+ $('projectExport').addEventListener('click',exportProject);
+ $('projectImport').addEventListener('click',()=>{$('projectFile').value='';$('projectFile').click();});
+ $('projectFile').addEventListener('change',()=>importProjectFile($('projectFile').files[0]));
+ $('projectMaterials').addEventListener('click',()=>downloadProjectFile(materialCSV(modules,materialDensities),'text/csv;charset=utf-8','-materialer.csv'));
+ $('projectParts').addEventListener('click',()=>downloadProjectFile(partsCSV(modules,materialDensities),'text/csv;charset=utf-8','-stykkliste.csv'));
+ $('projectStructure').addEventListener('click',()=>downloadProjectFile(JSON.stringify(structureExport(modules,materialDensities),null,2),'application/json;charset=utf-8','-konstruksjonsgraf.json'));
+ $('projectDrawings').addEventListener('click',exportDrawings);
+ $('projectBack').addEventListener('click',()=>showPanel('modules'));
+ for(const id of ['gridStep','snapModules','snapAnchors','snap','showAnchors','bpPlanRoof'])$(id).addEventListener('change',projectChanged);
+ window.addEventListener('beforeunload',e=>{if(projectIsDirty()){e.preventDefault();e.returnValue='';}});
  $('gableQuick').addEventListener('click',openGable);
  $('gablePreview').addEventListener('click',()=>calculateGable(true));
  $('gableApply').addEventListener('click',()=>calculateGable(false));
@@ -2463,7 +2766,7 @@ try{
   if(e.key==='Delete'&&mode==='select'&&!measuring)deleteSelected();
  });
  refreshSelection();
- const observer=new ResizeObserver(resize);observer.observe(stage);resize();setView('orbit');updatePlate(12,10);
+ const observer=new ResizeObserver(resize);observer.observe(stage);resize();setView('orbit');updatePlate(12,10);savedProjectSignature=projectSignature(projectSnapshot());projectChanged();
  function updateLabel(){
   const label=$('measureLabel');
   if(!measurementCenter||view!=='top'){label.hidden=true;return;}
