@@ -244,6 +244,7 @@ function slopeMaterial(x,z,proposedCm){
  const key=earthKey(x,z),stack=earthFillLayers.get(key)||[];
  // Existing placed fill governs the near-surface slope. For a new fill,
  // the candidate material is supplied by the pending action.
+ if(proposedCm?.surfaceType)return proposedCm.surfaceType;
  if(proposedCm?.fillType&&proposedCm.delta>0)return proposedCm.fillType;
  if(stack.length&&(!proposedCm||proposedCm.delta>=0))return stack[stack.length-1].type;
  const before=earthEdits.get(key)||0;
@@ -256,7 +257,7 @@ function slopeValidate(changes){
  for(const e of changes){
   const [x,z]=e.key.split(',').map(Number);
   if(gradingProjects.some(q=>constructionPlans.has(q.id)&&containsPlayer(q,x,z)))return {ok:false,reason:'Byggeplassen er reservert.',message:'Byggeplassen er reservert.'};
-  candidates.set(e.key,{x,z,delta:e.after-e.before,fillType:e.after>e.before?e.type:null});
+  candidates.set(e.key,{x,z,delta:e.after-e.before,fillType:e.after>e.before?e.type:null,surfaceType:e.surfaceType});
  }
  const height=(x,z,after)=>originalGround(x,z)+((earthEdits.get(earthKey(x,z))||0)+(after?(candidates.get(earthKey(x,z))?.delta||0):0))*.01;
  // Evaluate 1, 2 and 3 metre profiles around every changed node.
@@ -313,7 +314,7 @@ function dmNode(x,z,fill,target){
  const y=dmNext(height,fill,target);
  if(y===null||Math.abs(y-height)<=DM_EPS)return null;
  const after=(y-base)*100,cm=Math.abs(after-before);
- if(Math.abs(after)>5000||(!fill&&-after*.01>geoLimit(x,z)+DM_EPS))return null;
+ if(Math.abs(after)>5000)return null;
  return {x,z,key,before,after,cm,volume:cm*.01,height,y,type:'soil'};
 }
 function dmCut(e){
@@ -336,11 +337,11 @@ function dmCut(e){
  }
  return {stack,byType};
 }
-function dmTransaction(cut,fill,material,origin){
+function dmTransaction(cut,fill,material,origin,cutResult=null){
  const plan={items:{...inventoryState.items},piles:new Map([...piles].map(([k,v])=>[k,{...v}])),seq:pileSequence,layers:new Map(),changes:[],localL:0,stockL:0};
- const produced=cut?dmCut(cut):null;if(cut&&!produced)return {error:'Fast berg eller beskyttet lag. Spaden kan ikke utføre hele trinnet.'};
+ const produced=cut?(cutResult||dmCut(cut)):null;if(cut&&!produced)return {error:'Fast berg eller beskyttet lag. Spaden kan ikke utføre hele trinnet.'};
  const available=produced?.byType||new Map();
- if(cut){plan.layers.set(cut.key,produced.stack);plan.changes.push({...cut,type:[...available.keys()][0]||'soil'});}
+ if(cut){plan.layers.set(cut.key,produced.stack);plan.changes.push({...cut,type:[...available.keys()][0]||'soil',surfaceType:produced.stack.at(-1)?.type||geoLayer(cut.x,cut.z,Math.max(0,-cut.after*.01))});}
  const distance=q=>Math.hypot(origin.x-q.x,origin.z-q.z);
  const nearby=type=>[...plan.piles.values()].filter(q=>q.material===type&&distance(q)<=5).sort((a,b)=>distance(a)-distance(b));
  if(fill){
@@ -358,6 +359,8 @@ function dmTransaction(cut,fill,material,origin){
   }
   plan.layers.set(fill.key,stack);plan.changes.push({...fill,type:lastType});
  }
+ const slope=slopeValidate(plan.changes);
+ if(!slope.ok)return {error:slopeBlockMessage(slope)};
  for(const [type,l] of available){
   if(l<=DM_EPS)continue;
   let pile=nearby(type).find(q=>!earthRestricted(q.x,q.z)&&(!gradingAt(q.x,q.z)||gradingAt(q.x,q.z).status==='active'));
@@ -374,10 +377,9 @@ function dmTransaction(cut,fill,material,origin){
    const {x,z}=candidates[0];let id;do{id='pile-'+SEED+'-'+(++plan.seq);}while(plan.piles.has(id));
    pile={id,x,z,material:type,qty:0};plan.piles.set(id,pile);
   }
-  pile.qty+=l;plan.stockL+=l;
+  pile.qty+=l*.001/RESOURCE_CATALOG[type].volume;plan.stockL+=l;
  }
  if(earthEdits.size+plan.changes.filter(e=>!earthEdits.has(e.key)).length>EARTH_LIMIT)return {error:'Grense for terrengendringer nådd.'};
- const slope=slopeValidate(plan.changes);if(!slope.ok)return {error:slopeBlockMessage(slope)};
  return plan;
 }
 function dmCommit(plan){
@@ -770,26 +772,32 @@ function rebuildTouched(changes){
  }
  for(const key of touched){dirtyChunks.add(key);const c=terrainChunks.get(key);if(c){disposeChunk(c);terrainChunks.set(key,createTerrainChunk(c.cx,c.cz,c.lod))}}
 }
+function dmRockCut(e,type){
+ const stack=earthFillLayers.get(e.key)||[];
+ const loose=Math.max(0,stack.reduce((v,l)=>v+l.cm,0),e.before+geoLimit(e.x,e.z)*100);
+ const cm=Math.min(e.cm,loose);
+ if(e.cm-cm<=DM_EPS)return {error:'Bruk spade – hele trinnet består av løsmasser.'};
+ // Preserve any residual loose volume before excavating the rock portion.
+ const result=cm>DM_EPS?dmCut({...e,cm}):{stack:[],byType:new Map()};
+ if(!result)return {error:'Kunne ikke beregne løsmasselagene over berget.'};
+ result.byType.set(type,(result.byType.get(type)||0)+(e.cm-cm)*10);
+ return result;
+}
 function rockBreak(){
  const aim=earthAim();if(!aim||earthRestricted(aim.x,aim.z)){toolMessage('Sikt på fast berg innen 6,5 m.');return}
- const x=Math.round(aim.x),z=Math.round(aim.z),key=earthKey(x,z);
- if(earthRestricted(x,z)||(gradingAt(x,z)&&gradingAt(x,z).status!=='active')){toolMessage('Beskyttet terrengnode.');return;}
- const before=earthEdits.get(key)||0,depth=Math.max(0,-before*.01);
- if(depth<geoLimit(x,z)-.08){toolMessage('Grav først ned til fast berg.');return}
- const cm=6,volume=cm*.01;
+ const x=Math.round(aim.x),z=Math.round(aim.z),key=earthKey(x,z),q=gradingAt(x,z);
+ if(earthRestricted(x,z)||(q&&(q.status!=='active'||q.id!==activeGradeId))){toolMessage('Beskyttet terrengnode.');return;}
+ const e=dmNode(x,z,false,q?q.level:null);
+ if(!e){toolMessage('Målkote eller høydegrense nådd.');return;}
  const mineral=buriedOreKind(Math.floor(x/64),Math.floor(z/64),(x*13+z*7)%16);
  const type=(noise(x/7+43,z/7-51)>.84)?mineral:'stone';
- const qty=volume/RESOURCE_CATALOG[type].volume;
- if(loadCapacity(type)+1e-7<qty){toolMessage('Inventaret er fullt. Legg fra deg ressurser før bergbryting.');return}
+ const cut=dmRockCut(e,type);if(cut.error){toolMessage(cut.error);return;}
  const damage=(rockDamage.get(key)||0)+1;
- if(damage<3){rockDamage.set(key,damage);worldSave();toolMessage('Bergslag '+damage+'/3');return}
- rockDamage.delete(key);
- const delta=-cm;
- const rockSlope=slopeValidate([{key,before,after:before+delta,type}]);
- if(!rockSlope.ok){toolMessage(slopeBlockMessage(rockSlope));return}
- earthEdits.set(key,before+delta);
- inventoryState.items[type]=Math.round(((inventoryState.items[type]||0)+qty)*1000)/1000;
- worldSave();rebuildTouched([{key}]);loadHudUpdate();toolMessage('Brutt 60 L berg · '+RESOURCE_CATALOG[type].name+' lagt i inventar');
+ if(damage<3){rockDamage.set(key,damage);worldSave();toolMessage('Bergslag '+damage+'/3');return;}
+ const result=dmTransaction(e,null,'soil',p,cut);
+ if(result.error){toolMessage(result.error);return;}
+ rockDamage.delete(key);dmCommit(result);
+ toolMessage('Bergtrinn utført · '+(e.volume*1000).toFixed(1)+' L til lagerhaug.');
 }
 
 // v0.6.4.2: Stabil objektidentitet uavhengig av LOD og genereringsrekkefølge.
@@ -1236,8 +1244,8 @@ function baseGround(x,z){
  return Math.min(base,channel*(1-t)+base*t);
 }
 function ground(x,z){
- const q=gradingAt(x,z);
- if(q&&q.schemaVersion===2&&(!Number.isInteger(x)||!Number.isInteger(z))){
+ const q=(!Number.isInteger(x)||!Number.isInteger(z))?gradingAt(x,z):null;
+ if(q&&q.schemaVersion===2){
   const x0=Math.floor(x),z0=Math.floor(z),x1=Math.min(q.x1,x0+1),z1=Math.min(q.z1,z0+1);
   if([[x0,z0],[x0,z1],[x1,z0],[x1,z1]].every(([a,b])=>gradeNodeDone(baseGround(a,b)+(earthEdits.get(earthKey(a,b))||0)*.01,q.level)))return q.level;
  }
@@ -1897,7 +1905,7 @@ function gradeProgressRefresh(q,r){
  hud.hidden=false;
  $('gradeProgressLabel').textContent='📐 Planert: '+r.progress.toFixed(1).replace('.',',')+' %';
  $('gradeProgressFill').style.width=r.progress.toFixed(2)+'%';
- $('gradeProgressDetail').textContent='Gjenstår: '+r.remaining.toFixed(2).replace('.',',')+' m³ · Kote '+q.level.toFixed(1).replace('.',',');
+ $('gradeProgressDetail').textContent='Gjenstår: '+(r.remaining>0&&r.remaining<.01?'<0,01':r.remaining.toFixed(2).replace('.',','))+' m³ · Kote '+q.level.toFixed(1).replace('.',',');
 }
 function gradeProjectListRefresh(){
  const list=$('gradeProjectList');list.replaceChildren();
@@ -1906,7 +1914,7 @@ function gradeProjectListRefresh(){
   const r=gradeSummary(q),row=document.createElement('div');row.className='gradeProjectRow'+(q.id===activeGradeId?' selected':'');
   const name=document.createElement('strong');name.textContent=q.name||'Planeringsprosjekt';row.append(name);
   const details=document.createElement('div');details.innerHTML='<small></small>';
-  details.firstChild.textContent='Kote '+q.level.toFixed(1)+' m · '+r.progress.toFixed(1)+' % · '+(q.status==='archived'?'Arkivert':q.status==='completed'?'Godkjent':'Pågår');
+  details.firstChild.textContent='Kote '+q.level.toFixed(1)+' m · '+r.progress.toFixed(1)+' % · '+(q.status==='archived'?'Arkivert':q.status==='completed'?'Godkjent':'Pågår')+(constructionPlans.has(q.id)&&q.schemaVersion!==GRADE_SCHEMA.version?' · eldre kotegrunnlag':'');
   row.append(details);
   if(constructionPlans.has(q.id)){const label=document.createElement('small');label.textContent=' Byggeplass reservert · 0 % bygget';row.append(label);}
   if(q.status==='active'){
