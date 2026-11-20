@@ -1,0 +1,25 @@
+<!doctype html><html lang="no"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>AFTERFALL – B.6 diagnostikk</title><style>body{font:16px system-ui;background:#10231d;color:#e7efe8;padding:24px;max-width:850px;margin:auto}section{background:#20382e;border:1px solid #63826f;border-radius:14px;padding:18px;margin:16px 0}.good{color:#b8e2a7}.bad{color:#f9ad9f}pre{white-space:pre-wrap;overflow-wrap:anywhere}button{padding:12px;background:#355847;color:white;border-radius:8px}</style></head><body><h1>AFTERFALL – CE 1.1.4B.6</h1><p>Lokale regresjonstester for fysisk kollisjon og materiallevering. Kjører kun mot testdata og endrer ikke spillerens lagring.</p><section><div id="summary">Starter tester …</div><pre id="results"></pre></section><script type="module">
+import {createConstructionCollision,walkableHeight,constructionCollidesAt} from './construction-collision-114b52.js?v=114b6';
+import {distanceToBuildingSite,deliverBuildFromPiles} from './construction-supply-114b6.js';
+const log=[],test=(name,fn)=>{try{if(!fn())throw Error('Forventet sann verdi');log.push({name,ok:true})}catch(e){log.push({name,ok:false,error:String(e)})}};
+const poly=(lo,hi,y0,y1)=>[[lo,y0],[hi,y0],[hi,y1],[lo,y1]],module=(type,c,angle=0,l=1,w=.08,h=2.1)=>({type,moduleId:type==='doorLeaf'?2:1,center:c,angle,length:l,width:w,height:h,pieces:[{polygon:poly(-l/2,l/2,0,h),z0:-w/2,z1:w/2}]});
+const idx=createConstructionCollision([{siteId:'site',modules:[module('solidWall',[10,0,10],0,3),module('doorLeaf',[10,0,12])]}]);
+const open=new Set(['site:2']);
+test('Kollisjon mot vegg',()=>constructionCollidesAt(10,10.1,0,idx));
+test('Lukket dør stopper spilleren',()=>constructionCollidesAt(10,12.1,0,idx));
+test('Åpen dør gir fri åpning',()=>!constructionCollidesAt(10,12.1,0,idx,open));
+test('Utsvingt dørblad er fysisk',()=>constructionCollidesAt(9.48,11.5,0,idx,open));
+test('Ingen kollisjon utenfor bygget',()=>!constructionCollidesAt(200,200,0,idx));
+test('Romlig indeks finnes',()=>idx.moduleCells.size>0);
+test('Rotert byggeplass',()=>distanceToBuildingSite({origin:[10,0,20],angle:90,length:3,width:4},8,22)<.001);
+const plan={site:{origin:[10,0,20],angle:0,length:3,width:3},materialTotals:[{material:'logs',missingUnits:5,resource:{unit:'stk'}},{material:'stone',missingUnits:30,resource:{unit:'L'}}]},piles=[{id:'a',x:9,z:22,material:'logs',qty:3},{id:'b',x:10,z:24,material:'logs',qty:4},{id:'c',x:100,z:100,material:'stone',qty:100},{id:'d',x:11,z:21,material:'stone',qty:20}],deliver=(p,i)=>({plan:p,moved:i}),moved=deliverBuildFromPiles(plan,piles,{x:10,z:22},deliver);
+test('Levert mengde er korrekt',()=>moved.moved.logs===5&&moved.moved.stone===20);
+test('Kun nærliggende lagre endres',()=>moved.piles.find(p=>p.id==='c').qty===100&&moved.piles.find(p=>p.id==='b').qty===2);
+test('Originale testdata muteres ikke',()=>piles[0].qty===3);
+test('Fjernlevering avvises',()=>!!deliverBuildFromPiles(plan,piles,{x:200,z:200},deliver).error);
+const deck=createConstructionCollision([{siteId:'s',modules:[module('floorDeck',[0,.5,0],0,3,3,.035)]}]);
+test('Gulv er gangbart',()=>walkableHeight(0,0,0,deck)>.5);
+const good=log.filter(x=>x.ok).length;document.getElementById('summary').textContent=good+' / '+log.length+' tester bestått';
+document.getElementById('summary').className=good===log.length?'good':'bad';
+document.getElementById('results').textContent=log.map(x=>(x.ok?'✓ ':'✗ ')+x.name+(x.error?' – '+x.error:'')).join('\n');
+</script></body></html>
