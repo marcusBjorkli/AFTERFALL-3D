@@ -215,7 +215,7 @@ const RESOURCE_CATALOG=Object.freeze({
 const TOOL_CATALOG=Object.freeze({
  shovel:{name:'Spade',icon:'🪏',verb:'Grave / fylle',description:'Grav jord, sand og leire. Bruk hakke til stein og fast fjell.'},
  pickaxe:{name:'Hakke',icon:'⛏️',verb:'Bryte berg',description:'Bryt stein og malm ved å sikte på en forekomst innen 5 meter.'},
- axe:{name:'Øks',icon:'🪓',verb:'Hogge',description:'Hogg trær og busker ved å sikte på dem innen 5 meter.'},
+ axe:{name:'Øks',icon:'🪓',verb:'Hogge',description:'Hogg voksne trær og busker innen 5 meter. Trær gir 3–6 tømmer og vokser tilbake. Overskudd legges i haug.'},
  saw:{name:'Sag',icon:'🪚',verb:'Sage',description:'Sag tømmer til planker, ved eller lekter med massebevaring.'},
  hammer:{name:'Hammer',icon:'🔨',verb:'Bygge',description:'Lever materialer ved byggeplassen og monter neste komplette modul.'}
 });
@@ -259,7 +259,7 @@ function earthLoad(){
  }catch(e){console.warn('Terrengdata',e)}
 }
 function earthSnapshot(){
- return {version:1,seed:SEED,edits:[...earthEdits].map(([key,cm])=>[...key.split(',').map(Number),cm]),layers:[...earthFillLayers].map(([key,stack])=>[key,stack.map(layer=>({...layer}))]),slideMass:[...earthSlideMass].map(([key,buffer])=>[key,{...buffer}]),inventory:{selectedTool:inventoryState.selectedTool,items:{...inventoryState.items}},harvested:[...harvestedIds]};
+ return {version:1,seed:SEED,edits:[...earthEdits].map(([key,cm])=>[...key.split(',').map(Number),cm]),layers:[...earthFillLayers].map(([key,stack])=>[key,stack.map(layer=>({...layer}))]),slideMass:[...earthSlideMass].map(([key,buffer])=>[key,{...buffer}]),inventory:{selectedTool:inventoryState.selectedTool,items:{...inventoryState.items}},harvested:[...harvestedIds],treeRegrowth:[...treeRegrowth]};
 }
 function earthCommit(){
  if(earthReady){worldSave();return true}
@@ -1105,6 +1105,7 @@ function applyWorldSnapshot(data){
   if(slideBufferTotal(clean)>DM_EPS)earthSlideMass.set(key,clean);
  }
  for(const id of data.harvested||[])if(typeof id==='string')harvestedIds.add(id);
+ restoreTreeRegrowth(data.treeRegrowth);
  for(const [key,v] of data.rock||[])if(typeof key==='string'&&Number.isFinite(v))rockDamage.set(key,v);
  for(const q of data.piles||[])if(q&&RESOURCE_CATALOG[naturalMaterialId(q.material)]&&Number.isFinite(q.qty)&&q.qty>0&&Number.isFinite(q.x)&&Number.isFinite(q.z))piles.set(q.id,{...q,material:naturalMaterialId(q.material)});
  for(const q of data.gradingProjects||[])if(q&&Number.isInteger(q.x0)&&Number.isInteger(q.z0)&&Number.isInteger(q.x1)&&Number.isInteger(q.z1)&&Number.isFinite(q.level)&&q.x1>q.x0&&q.z1>q.z0&&q.x1-q.x0<=20&&q.z1-q.z0<=20&&q.x0>=2&&q.z0>=2&&q.x1<WORLD-2&&q.z1<WORLD-2)gradingProjects.push({...q,status:['active','completed','archived'].includes(q.status)?q.status:'active',name:typeof q.name==='string'?q.name.slice(0,48):'Planering '+(gradingProjects.length+1)});
@@ -1163,6 +1164,7 @@ async function worldInitialize(){
  try{db=await openWorldDB();const stored=await readWorldDB(db)||JSON.parse(localStorage.getItem(CE_FALLBACK)||'null');if(stored)applyWorldSnapshot(stored)}catch(e){console.warn('IndexedDB utilgjengelig, fallback',e);db=null;
   try{const backup=JSON.parse(localStorage.getItem(CE_FALLBACK)||'null');if(backup)applyWorldSnapshot(backup)}catch(e){}
  }
+ if([...harvestedIds].some(isRenewableTree))restoreTreeRegrowth([...treeRegrowth]);
  earthReady=true;await worldSave();
 }
 function rebuildTouched(changes){
@@ -1210,6 +1212,59 @@ function rockBreak(){
 // v0.6.4.2: Stabil objektidentitet uavhengig av LOD og genereringsrekkefølge.
 const HARVEST_KEY='afterfall_ce113_preview_harvest',HARVEST_RANGE=5.2;
 const harvestedIds=new Set(),harvestNodes=new Map();
+// B.5.1: persistent renewable trees, deterministic locations and real-time growth.
+const REGROW_SAPLING_MS=300000,REGROW_MATURE_MS=900000;
+const treeRegrowth=new Map(),regrowthSeen=new Map();
+let regrowthLastCheck=0;
+function isRenewableTree(id){return /^\d+:\d+:(spruce|pine):\d+$/.test(id);}
+function treeGrowthStage(cut,now=Date.now()){
+ if(!Number.isFinite(cut))return 3;
+ const age=Math.max(0,now-cut);
+ return age<REGROW_SAPLING_MS?0:age<REGROW_MATURE_MS?1:3;
+}
+function restoreTreeRegrowth(records,now=Date.now()){
+ treeRegrowth.clear();regrowthSeen.clear();
+ for(const entry of Array.isArray(records)?records:[]){
+  if(!Array.isArray(entry)||entry.length!==2)continue;
+  const [id,cut]=entry;
+  if(isRenewableTree(id)&&Number.isFinite(cut)&&cut>=0&&cut<=now&&treeGrowthStage(cut,now)<3)treeRegrowth.set(id,cut);
+ }
+ for(const id of [...harvestedIds])if(isRenewableTree(id)){
+  if(!treeRegrowth.has(id))treeRegrowth.set(id,now-REGROW_SAPLING_MS);
+  harvestedIds.delete(id);
+ }
+ for(const [id,cut] of treeRegrowth)regrowthSeen.set(id,treeGrowthStage(cut,now));
+}
+function recordTreeCut(id,now=Date.now()){treeRegrowth.set(id,now);regrowthSeen.set(id,0);}
+function treeStageUpdates(now){
+ const changed=new Set();let matured=false;
+ for(const [id,cut] of treeRegrowth){
+  const stage=treeGrowthStage(cut,now);
+  if(stage!==regrowthSeen.get(id)){const [cx,cz]=id.split(':');changed.add(cx+','+cz);regrowthSeen.set(id,stage);}
+  if(stage===3){treeRegrowth.delete(id);regrowthSeen.delete(id);matured=true;}
+ }
+ return {changed,matured};
+}
+function treeRegrowthTick(){
+ if(performance.now()-regrowthLastCheck<5000)return;
+ regrowthLastCheck=performance.now();
+ const r=treeStageUpdates(Date.now());
+ for(const key of r.changed)refreshChunkPlants(key);
+ if(r.matured)worldSave();
+}
+function vegetationOnApprovedPlot(x,z){return gradingProjects.some(q=>q.status!=='active'&&containsPlayer(q,x,z));}
+function refreshChunkPlants(key){
+ const c=terrainChunks.get(key);if(!c)return;
+ const existing=harvestNodes.get(key)||[];
+ for(const m of c.vegetation||[]){scene.remove(m);m.dispose?.();}
+ const v=buildChunkVegetation(c.cx,c.cz,c.lod);
+ c.vegetation=v.meshes;harvestNodes.set(key,[...existing.filter(n=>n.type==='ore'||n.type==='buried'),...v.nodes]);
+}
+function refreshPlotPlants(q){
+ for(let cz=Math.floor(q.z0/64);cz<=Math.floor(q.z1/64);cz++)for(let cx=Math.floor(q.x0/64);cx<=Math.floor(q.x1/64);cx++)refreshChunkPlants(chunkKey(cx,cz));
+}
+function timberYield(scale){return Math.max(3,Math.min(6,Math.round(scale*4)));}
+
 let harvestAssets=null,harvestLastAction=0;
 const ORE_TYPES=['stone','iron_ore','copper_ore','silver_ore','gold_ore','titanium_ore','diamond'];
 function harvestId(cx,cz,type,k){return cx+':'+cz+':'+type+':'+k}
@@ -1303,11 +1358,31 @@ function harvestTarget(){
 }
 function harvestReward(n){
  if(n.type==='shrub')return [['sticks',2+Math.floor(vegetationRandom(n.cx,n.cz,n.k,822)*3)]];
- if(n.type==='spruce'||n.type==='pine')return [['logs',1],['sticks',2+Math.floor(vegetationRandom(n.cx,n.cz,n.k,823)*4)]];
+ if(n.type==='spruce'||n.type==='pine')return [['logs',timberYield(n.scale||1)],['sticks',2+Math.floor(vegetationRandom(n.cx,n.cz,n.k,823)*4)]];
  if(n.kind==='stone')return [['stone',3]];
  if(n.kind==='coal')return [['coal',4],['stone',1]];
  if(n.kind==='diamond')return [['diamond',1],['stone',1]];
  return [[n.kind,2+Math.floor(vegetationRandom(n.cx,n.cz,n.k,824)*3)],['stone',1]];
+}
+// Preserve the inventory cap and deposit surplus in actual nearby stockpiles.
+function treeHarvestTransfer(reward,items,deposit){
+ const carried={...items},overflow={};let mass=0,volume=0;
+ for(const [id,q] of Object.entries(carried)){const m=RESOURCE_CATALOG[id];if(m){mass+=q*m.mass;volume+=q*m.volume;}}
+ for(const [id,q] of reward){
+  const m=RESOURCE_CATALOG[id],cap=Math.max(0,Math.min((LOAD_MAX_KG-mass)/m.mass,(LOAD_MAX_M3-volume)/m.volume)),take=Math.min(q,Math.floor(cap+1e-9));
+  if(take>0){carried[id]=(carried[id]||0)+take;mass+=take*m.mass;volume+=take*m.volume;}
+  const rest=q-take;if(rest>0){if(!deposit(id,rest))return {error:'Ingen plass til materialhaug innen 5 m. Flytt deg og prøv igjen.'};overflow[id]=rest;}
+ }
+ return {items:carried,overflow};
+}
+function harvestRenewableTree(n,reward){
+ if(treeGrowthStage(treeRegrowth.get(n.id))!==3)return;
+ const stock=stockCopy(),result=treeHarvestTransfer(reward,inventoryState.items,(id,qty)=>stockDeposit(stock,n,id,qty));
+ if(result.error){toolMessage(result.error);return;}
+ inventoryState.items=Object.assign(Object.create(null),result.items);stockCommit(stock);
+ recordTreeCut(n.id);worldSave();pileMeshRefresh();loadHudUpdate();refreshChunkPlants(chunkKey(n.cx,n.cz));
+ const logs=reward.find(r=>r[0]==='logs')[1],onGround=result.overflow.logs||0;
+ toolMessage('Hogd tre: '+logs+' tømmer'+(onGround?' ('+onGround+' i haug)':'')+' · ny vekst om 5 min.');
 }
 function harvestUse(){
  if(performance.now()-harvestLastAction<320)return;
@@ -1319,6 +1394,7 @@ function harvestUse(){
  }
  if(tool!=='axe'&&tool!=='pickaxe')return;
  const reward=harvestReward(n);
+ if(isRenewableTree(n.id)){harvestRenewableTree(n,reward);return;}
  const totals=inventoryTotals();
  const mass=reward.reduce((sum,[id,q])=>sum+q*RESOURCE_CATALOG[id].mass,0);
  const volume=reward.reduce((sum,[id,q])=>sum+q*RESOURCE_CATALOG[id].volume,0);
@@ -1938,15 +2014,16 @@ function buildChunkVegetation(cx,cz,lod){
    const x=ox+1+62*vegetationRandom(cx,cz,k,type.length*11+3),
          z=oz+1+62*vegetationRandom(cx,cz,k,type.length*13+7);
    const y=ground(x,z),slope=vegetationSlope(x,z);
-   if(!vegetationAllowed(x,z,y,slope))continue;
+   if(!vegetationAllowed(x,z,y,slope)||vegetationOnApprovedPlot(x,z))continue;
    if(type==='grass'&&slope>.42)continue;
    const id=harvestId(cx,cz,type,k);if(type!=='grass'&&harvestedIds.has(id))continue;
    if(type==='spruce'||type==='pine'){
+    const stage=treeGrowthStage(treeRegrowth.get(id));if(stage===0)continue;
     const scale=.72+vegetationRandom(cx,cz,k,39)*.72;
-    const height=(type==='spruce'?5.6:5.0)*scale;
+    const height=(type==='spruce'?5.6:5.0)*scale*(stage===1?.28:1);
     instances[type].push({x,y:y+height*.62,z,scale:height/(type==='spruce'?3.8:2.8),rot:vegetationRandom(cx,cz,k,57)*Math.PI*2});
     instances.trunk.push({x,y:y+height*.25,z,scale:height*.5,rot:0});
-    nodes.push({...harvestNode(cx,cz,type,k,x,z,y+height*.48,1.1,type),k});
+    if(stage===3)nodes.push({...harvestNode(cx,cz,type,k,x,z,y+height*.48,1.1,type),k,scale});
    }else{
     const scale=(type==='shrub'?.45:.65)+vegetationRandom(cx,cz,k,61)*(type==='shrub'?.55:.55);
     instances[type].push({x,y:y+(type==='shrub'?.65:.24)*scale,z,scale,rot:vegetationRandom(cx,cz,k,67)*Math.PI*2});
@@ -2452,7 +2529,7 @@ function gradeChangeStatus(action){
   if(!confirm('Slette prosjektet «'+q.name+'»? Terrengendringene beholdes, men prosjektets kotevern og markering fjernes.'))return;
   gradingProjects.splice(gradingProjects.indexOf(q),1);if(activeGradeId===q.id)activeGradeId=null;gradeViewId=null;
  }
- worldSave();gradeRefresh();
+ refreshPlotPlants(q);worldSave();gradeRefresh();
 }
 // CE 1.1: authoritative game host and visible set-out; no construction or material consumption.
 function constructionHere(){return gradingProjects.find(q=>containsPlayer(q,p.x,p.z)&&gradeBuildSite(q)&&(constructionPlans.has(q.id)||gradeSummary(q).progress===100))||null;}
@@ -2705,7 +2782,7 @@ function gradeInit(){
  gradeRefresh();
 }
 async function init(){await worldInitialize();renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.insertBefore(renderer.domElement,document.body.firstChild);camera=new THREE.PerspectiveCamera(73,innerWidth/innerHeight,.08,260);camera.rotation.order='YXZ';clock=new THREE.Clock();buildWorld();gradeInit();constructionInit();earthAvailabilityUpdate();pileMeshRefresh();sawStationsRefresh();initWeather();initInventoryUI();loadHudUpdate();weatherState.elapsed=WEATHER_DAY_SECONDS*.5;load();updateWeather(0);updateCamera();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});$('status').textContent='4 × 4 km · dynamiske terrengchunks, elver, innsjøer og hav aktive · Utforsk, samle ressurser og bygg';animate()}
-function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05);if(!paused){let speed=3.5,turnSpeed=2.1,forward=-joy.y,turn=joy.x;p.yaw-=turn*turnSpeed*dt;let fx=-Math.sin(p.yaw),fz=-Math.cos(p.yaw);move(fx*forward*speed*dt,fz*forward*speed*dt);p.seconds+=dt;updateCamera();if((Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4)))updateChunks()}waterTime.value+=dt;updateWeather(paused?0:dt);renderer.render(scene,camera);if($('gradeOverlay').classList.contains('show')&&performance.now()-gradeLastHud>300){gradeLastHud=performance.now();gradeElevationRefresh()}if(performance.now()-gradeLiveLast>200){gradeLiveLast=performance.now();gradeLiveRefresh()}if(performance.now()-pileFocusLast>100){pileFocusLast=performance.now();pileFocusRefresh()}if(performance.now()-constructionLastRefresh>300){constructionLastRefresh=performance.now();constructionUpdateHud()}if(Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4))earthAvailabilityUpdate();if(toolToastUntil&&performance.now()>toolToastUntil){$('toolToast').style.display='none';toolToastUntil=0}$('status').textContent=`UTENDØRS · X ${p.x.toFixed(1)} · Z ${p.z.toFixed(1)} · ${terrainChunks.size} chunks · ${Math.round(1/Math.max(dt,.01))} FPS`}
+function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05);if(!paused){let speed=3.5,turnSpeed=2.1,forward=-joy.y,turn=joy.x;p.yaw-=turn*turnSpeed*dt;let fx=-Math.sin(p.yaw),fz=-Math.cos(p.yaw);move(fx*forward*speed*dt,fz*forward*speed*dt);p.seconds+=dt;updateCamera();if((Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4)))updateChunks()}waterTime.value+=dt;updateWeather(paused?0:dt);treeRegrowthTick();renderer.render(scene,camera);if($('gradeOverlay').classList.contains('show')&&performance.now()-gradeLastHud>300){gradeLastHud=performance.now();gradeElevationRefresh()}if(performance.now()-gradeLiveLast>200){gradeLiveLast=performance.now();gradeLiveRefresh()}if(performance.now()-pileFocusLast>100){pileFocusLast=performance.now();pileFocusRefresh()}if(performance.now()-constructionLastRefresh>300){constructionLastRefresh=performance.now();constructionUpdateHud()}if(Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4))earthAvailabilityUpdate();if(toolToastUntil&&performance.now()>toolToastUntil){$('toolToast').style.display='none';toolToastUntil=0}$('status').textContent=`UTENDØRS · X ${p.x.toFixed(1)} · Z ${p.z.toFixed(1)} · ${terrainChunks.size} chunks · ${Math.round(1/Math.max(dt,.01))} FPS`}
 const joyEl=$('joy'),knob=$('knob');function joyMove(e){let r=joyEl.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,len=Math.max(1,Math.hypot(dx,dy)),v=Math.min(1,len/48);joy.x=dx/len*v;joy.y=dy/len*v;knob.style.transform=`translate(${joy.x*44}px,${joy.y*44}px)`}
 joyEl.addEventListener('pointerdown',e=>{e.preventDefault();joyEl.setPointerCapture(e.pointerId);joyMove(e)});joyEl.addEventListener('pointermove',e=>{if(joyEl.hasPointerCapture(e.pointerId))joyMove(e)});function joyEnd(){joy.x=joy.y=0;knob.style.transform='translate(0,0)'}joyEl.addEventListener('pointerup',joyEnd);joyEl.addEventListener('pointercancel',joyEnd);
 document.addEventListener('pointerdown',e=>{
