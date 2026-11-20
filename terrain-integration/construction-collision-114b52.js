@@ -1,7 +1,7 @@
-// AFTERFALL CE 1.1.4B.5.2 – gameplay collision from mounted convex prisms.
+// AFTERFALL CE 1.1.4B.6 – gameplay collision from mounted convex prisms.
 // Horizontal player footprint is a circle, vertical body is a finite interval.
 // Sloped pieces are clipped to player height before checking horizontal contact.
-const EPS=1e-7;
+const EPS=1e-7,DOOR_SWING_RAD=1.45,CELL=8;
 export function createConstructionCollision(installedSites){
  const modules=[],decks=[];
  for(const site of installedSites){
@@ -23,7 +23,30 @@ export function createConstructionCollision(installedSites){
    if(solids.length)modules.push({...common,solids});
   }
  }
- return {modules,decks};
+ const moduleCells=new Map(),deckCells=new Map();
+ const insert=(map,m)=>{
+  const reach=m.radius+(m.type==='doorLeaf'?m.l:0)+.45;
+  for(let x=Math.floor((m.cx-reach)/CELL);x<=Math.floor((m.cx+reach)/CELL);x++)
+   for(let z=Math.floor((m.cz-reach)/CELL);z<=Math.floor((m.cz+reach)/CELL);z++){
+    const key=x+','+z,arr=map.get(key)||[];arr.push(m);map.set(key,arr);
+   }
+ };
+ for(const m of modules)insert(moduleCells,m);
+ for(const m of decks)insert(deckCells,m);
+ return {modules,decks,moduleCells,deckCells};
+}
+function cellsAt(index,x,z,kind){
+ const map=kind==='decks'?index.deckCells:index.moduleCells;
+ if(!map)return kind==='decks'?index.decks:index.modules;
+ const ix=Math.floor(x/CELL),iz=Math.floor(z/CELL),found=new Set();
+ for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++)
+  for(const m of map.get((ix+dx)+','+(iz+dz))||[])found.add(m);
+ return found;
+}
+function openedDoor(m){
+ const angle=Math.atan2(m.s,m.c)-DOOR_SWING_RAD;
+ const hx=m.cx-m.c*m.l/2,hz=m.cz-m.s*m.l/2;
+ return {...m,c:Math.cos(angle),s:Math.sin(angle),cx:hx+Math.cos(angle)*m.l/2,cz:hz+Math.sin(angle)*m.l/2};
 }
 function localXZ(m,x,z){
  const dx=x-m.cx,dz=z-m.cz;
@@ -31,7 +54,7 @@ function localXZ(m,x,z){
 }
 export function walkableHeight(x,z,terrainHeight,index,maxStep=.72){
  let h=terrainHeight;
- for(const m of index.decks){
+ for(const m of cellsAt(index,x,z,'decks')){
   const [lx,lz]=localXZ(m,x,z);
   if(Math.abs(lx)>m.l/2+EPS||Math.abs(lz)>m.w/2+EPS)continue;
   // Small raised decks are walkable without a separate step animation.
@@ -63,8 +86,9 @@ function bodySliceX(solid,low,high){
 }
 export function constructionCollidesAt(x,z,feet,index,openDoors=new Set(),radius=.34){
  const low=feet+.10,high=feet+1.68,r2=radius*radius;
- for(const m of index.modules){
-  if(m.type==='doorLeaf'&&openDoors.has(m.key))continue;
+ for(const base of cellsAt(index,x,z,'modules')){
+  // A door stays solid when open; use the same hinge rotation as the mesh.
+  const m=base.type==='doorLeaf'&&openDoors.has(base.key)?openedDoor(base):base;
   if(Math.hypot(x-m.cx,z-m.cz)>m.radius+radius)continue;
   const [lx,lz]=localXZ(m,x,z),lo=low-m.cy,hi=high-m.cy;
   for(const solid of m.solids){
