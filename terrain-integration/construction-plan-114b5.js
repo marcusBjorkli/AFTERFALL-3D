@@ -1647,7 +1647,10 @@ function installedConstructionGeometry(plan){
  const installed=new Set(plan.progress.installedModuleIds);
  return plan.project.modules.filter(m=>installed.has(m.id)).map(m=>({
   moduleId:m.id,type:m.type,color:catalog[m.type].color,
-  pieces:piecesOf(m).map(p=>({kind:p.kind,tint:p.tint,polygon:p.polygon,
+  // Transform metadata is used by the same gameplay collider as the visible mesh.
+  center:siteWorldPoint(plan.site,[m.x,m.y,m.z]),
+  angle:(m.angle+plan.site.angle)%360,length:m.l,width:m.w,height:m.h,
+  pieces:piecesOf(m).map(p=>({kind:p.kind,tint:p.tint,polygon:p.polygon,z0:p.z0,z1:p.z1,
    vertices:p.polygon.flatMap(([x,y])=>[p.z0,p.z1].map(z=>siteWorldPoint(plan.site,pointToWorld(m,[x,y,z]))))}))
  }));
 }
