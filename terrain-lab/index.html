@@ -1,19 +1,22 @@
-<!doctype html><html lang="nb"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>AFTERFALL Terrain Lab · CE 1.1.3B</title><style>
+<!doctype html><html lang="nb"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>AFTERFALL Terrain Lab · CE 1.1.3B.1</title><style>
 :root{color-scheme:dark;font:14px system-ui,sans-serif;--bg:#17241f;--panel:#21332b;--border:#40584c;--muted:#adc2b5;--text:#e6f0e9;--gold:#eccb80}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text)}header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}h1{font-size:18px;margin:0}header small{color:var(--muted)}main{display:grid;grid-template-columns:minmax(0,1fr) 325px;min-height:calc(100dvh - 65px)}#viewport{position:sticky;top:0;height:calc(100dvh - 65px);min-height:340px;overflow:hidden;touch-action:none;background:#25362e}canvas{display:block;touch-action:none}#help{position:absolute;left:10px;bottom:10px;pointer-events:none;background:#172a22dd;padding:7px 10px;border-radius:6px;font-size:11px;max-width:calc(100% - 20px)}#cam{position:absolute;right:10px;top:10px;display:flex;gap:6px}aside{background:var(--panel);padding:14px;border-left:1px solid var(--border);display:flex;gap:13px;flex-direction:column}section{border-bottom:1px solid var(--border);padding-bottom:12px}section:last-child{border:0}h2{font-size:13px;margin:0 0 8px;color:var(--muted);font-weight:600}button,select,input{font:inherit;color:var(--text);background:#30483b;border:1px solid #597163;border-radius:6px;padding:9px;min-height:37px}button{cursor:pointer;touch-action:manipulation}button:active{background:#58705a}button:disabled{opacity:.35;cursor:default}select,input{width:100%}label{display:flex;align-items:center;gap:7px}label input[type=checkbox]{width:17px;min-height:17px;accent-color:#b4d1aa}.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}.big{font-size:25px;font-weight:650;color:var(--gold);font-variant-numeric:tabular-nums;margin:2px 0}.muted,small{color:var(--muted);font-size:12px}.data{display:flex;justify-content:space-between;gap:8px;margin:4px 0;font-variant-numeric:tabular-nums}.neighbors{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.neighbor{padding:6px;min-height:32px;font-variant-numeric:tabular-nums}.neighbor.match{color:#bce7be;background:#385f45}.neighbor.chosen{outline:2px solid var(--gold);outline-offset:-2px}.work button{font-weight:bold;min-height:48px;touch-action:none}.work #dig{background:#654d32}.work #fill{background:#355a49}.work small{display:block;font-weight:400;margin-top:3px}#message{color:#ffce99;min-height:1em}#cellState{font-weight:600}#cellState[data-state=flat]{color:#9be2ad}#cellState[data-state=cross]{color:#ead28a}#profile{width:100%;height:auto;font-size:10px;fill:#b8ccc2}#profile[hidden]{display:none}.note{font-size:11px;color:var(--muted);line-height:1.45}#chosen{color:var(--muted)}@media(max-width:780px){header{padding:10px 12px}header small{display:none}main{display:flex;flex-direction:column}#viewport{position:relative;height:48dvh;min-height:270px;flex-shrink:0}aside{border-left:0;border-top:1px solid var(--border);padding:12px}.mobileWork{position:sticky;bottom:0;background:#21332bf5;z-index:4;padding:8px 0}#help{font-size:10px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
 .layer-row{display:grid;grid-template-columns:11px 1fr auto;gap:6px;align-items:center;margin:4px 0;padding:6px;border:1px solid #40584c;border-radius:5px;font-size:12px;font-variant-numeric:tabular-nums}.layer-row .swatch,.stock-row .swatch{width:10px;height:10px;border-radius:2px;display:inline-block;flex-shrink:0}.layer-row small{display:block;font-size:10px}.stock-row{display:flex;align-items:center;gap:6px;font-size:12px;margin:3px 0;font-variant-numeric:tabular-nums}.stock-row b{margin-left:auto}#layerStack{max-height:240px;overflow:auto}#materialBalance{overflow-wrap:anywhere}#surfaceMaterial{font-weight:600;line-height:1.4}
-</style><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script></head><body><header><h1>AFTERFALL · Terrain Lab</h1><small>CE 1.1.3B · 20 × 20 m · isolert prototype</small></header><main><div id="viewport"><div id="cam"><button id="top">Ovenfra</button><button id="orbit">Perspektiv</button></div><div id="help">Trykk i en rute for å velge den. Dra for å rotere · klyp/scroll for zoom. Tastatur: piler / G grav / F fyll.</div></div><aside>
-<section><h2>Forsøksområde · CE 1.1.3B</h2><div class="row"><select id="scenario" aria-label="Terrengscenario"><option value="flat">Flat 12,3 m</option><option value="slope">Skråning</option><option value="mound">Haug</option><option value="natural">Naturlig, uavrundet</option><option value="repose">Rasprøve (0,5 m)</option></select><button id="reset">Nullstill</button></div><p class="note">Isolert test av ras og materiallag. Testlager: 1 000 L per løsmasse. Inventarbegrensning og fysisk transport kommer i B.1.</p></section>
+#travel{position:absolute;top:10px;left:10px;z-index:2;display:flex;flex-wrap:wrap;gap:5px;align-items:center;max-width:58%;padding:5px;background:#172a22e8;border-radius:7px}#travel strong{font-size:11px;color:#8edfff}#travel button{min-height:32px;padding:5px 7px;font-size:12px}#dump{width:100%;margin-top:8px}progress{width:100%;height:8px;accent-color:#a6d5ac}#workDistance[data-reach=false]{color:#ffce99}.stock-row button{padding:3px 6px;font-size:11px;min-height:28px}@media(max-width:780px){#travel{max-width:53%}#travel strong{width:100%}#cam button{font-size:11px;padding:5px}#help{max-width:95%;bottom:5px}}
+</style><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script></head><body><header><h1>AFTERFALL · Terrain Lab</h1><small>CE 1.1.3B.1 · 20 × 20 m · isolert prototype</small></header><main><div id="viewport"><div id="travel"><strong id="playerBadge">Spiller</strong><button id="walkTo">Gå til valgt rute</button><button id="stopWalk" disabled>Stopp</button></div><div id="cam"><button id="top">Ovenfra</button><button id="orbit">Perspektiv</button></div><div id="help">Velg arbeidsrute. Blå markør = spiller. Gå til ruten med knappen eller WASD. Piler velger rute · G grav · F fyll.</div></div><aside>
+<section><h2>Forsøksområde · CE 1.1.3B.1</h2><div class="row"><select id="scenario" aria-label="Terrengscenario"><option value="flat">Flat 12,3 m</option><option value="slope">Skråning</option><option value="mound">Haug</option><option value="natural">Naturlig, uavrundet</option><option value="repose">Rasprøve (0,5 m)</option><option value="materials">Materialfelt (5 typer)</option></select><button id="reset">Nullstill</button></div><p class="note">Fysisk transport: start med tomt inventar. Grav, gå til en annen celle og fyll eller deponer. Ingen eksterne løsmasselagre.</p></section>
 <section><h2>Valgt 1 × 1 m arbeidsrute</h2><div id="chosen"></div><div class="pair"><div><small>Senterkote</small><div class="big" id="elev">—</div></div><div><small>Avvik fra mål</small><div class="big" id="dev">—</div></div></div><div id="cellState"></div><div class="neighbors" id="neighbors"></div><p class="note">3 × 3 kontroll: sentrum, kryss (5) eller fullt planert (9). Ytterste ruter mangler full nabokontroll. Oransje punkter: flyttet ved siste ras.</p><div id="count" class="muted"></div></section>
-<section class="mobileWork"><h2>Terrengarbeid</h2><label for="fillMaterial">Fyllmateriale</label><select id="fillMaterial"><option value="soil">Jord · 30°</option><option value="sand">Sand · 30°</option><option value="gravel">Grus · 35°</option><option value="clay">Leire · 40°</option><option value="stone">Sprengstein · 40°</option></select><div class="row work"><button id="dig">Grav 0,1 m<small id="nextDig"></small></button><button id="fill">Fyll 0,1 m<small id="nextFill"></small></button></div><p id="last" class="muted"></p><div id="message" role="status"></div><div class="row"><label for="target">Målkote</label><input id="target" type="number" step="0.1" min="8" max="17" value="12.4"></div><label><input type="checkbox" id="cap">Målkotevern (hele testområdet)</label><p class="note">Ras er alltid aktivt. Inngrep som ikke kan stabiliseres uten å bryte målkotevernet avvises.</p></section>
-<section><h2>Masseregnskap</h2><div class="data"><span>Testlager totalt</span><strong id="stock"></strong></div><div id="stockRows"></div><div class="data"><span>Gravd / fylt</span><span><span id="volCut"></span> / <span id="volFill"></span></span></div><div class="data"><span>Regnskapets rest</span><strong id="balance"></strong></div><div class="data"><span>Antall inngrep</span><span id="actions"></span></div><div class="data"><span>Ras, siste inngrep</span><strong id="slideLast"></strong></div><div class="data"><span>Ras totalt</span><span id="slideTotal"></span></div><div id="materialBalance" class="note"></div></section><section><h2>Materialprofil · valgt celle</h2><div id="surfaceMaterial" class="data"></div><div id="layerStack"></div><p class="note">Ovenfra og ned. Identiske nabosjikt slås sammen; forskjellige materialer beholder rekkefølgen.</p></section>
+<section class="mobileWork"><h2>Terrengarbeid</h2><div class="data"><span>Avstand til rute</span><strong id="workDistance"></strong></div><label for="fillMaterial">Fyllmateriale</label><select id="fillMaterial"><option value="soil">Jord · 30°</option><option value="sand">Sand · 30°</option><option value="gravel">Grus · 35°</option><option value="clay">Leire · 40°</option><option value="stone">Sprengstein · 40°</option></select><div class="row work"><button id="dig">Grav 0,1 m<small id="nextDig"></small></button><button id="fill">Fyll 0,1 m<small id="nextFill"></small></button></div><button id="dump" type="button">Deponer valgt materiale (alt)</button><p class="note">Grav/fyll: normalt 100 L. Deponer legger også ut mindre restmengder direkte i terrenget.</p><p id="last" class="muted"></p><div id="message" role="status"></div><div class="row"><label for="target">Målkote</label><input id="target" type="number" step="0.1" min="8" max="17" value="12.4"></div><label><input type="checkbox" id="cap">Målkotevern (hele testområdet)</label><p class="note">Ras er alltid aktivt. Inngrep som ikke kan stabiliseres uten å bryte målkotevernet avvises.</p></section>
+<section><h2>Inventar og masseregnskap</h2><div class="data"><span>Bæreevne</span><strong id="loadMass"></strong></div><progress id="massBar" max="300" value="0"></progress><div class="data"><span>Volum</span><strong id="loadVolume"></strong></div><progress id="volumeBar" max="150" value="0"></progress><div class="data"><span>Ganghastighet</span><strong id="walkSpeed"></strong></div><div class="data"><span>Inventar totalt</span><strong id="stock"></strong></div><div id="stockRows"></div><div class="data"><span>Gravd / fylt</span><span><span id="volCut"></span> / <span id="volFill"></span></span></div><div class="data"><span>Regnskapets rest</span><strong id="balance"></strong></div><div class="data"><span>Antall inngrep</span><span id="actions"></span></div><div class="data"><span>Ras, siste inngrep</span><strong id="slideLast"></strong></div><div class="data"><span>Ras totalt</span><span id="slideTotal"></span></div><div id="materialBalance" class="note"></div></section><section><h2>Materialprofil · valgt celle</h2><div id="surfaceMaterial" class="data"></div><div id="layerStack"></div><p class="note">Ovenfra og ned. Identiske nabosjikt slås sammen; forskjellige materialer beholder rekkefølgen.</p></section>
 <section><h2>Visning</h2><div class="pair"><label><input type="checkbox" id="grid" checked>Rutenett</label><label><input type="checkbox" id="points">Alle punkter</label><label><input type="checkbox" id="labels" checked>Koter (5 × 5)</label><label><input type="checkbox" id="contours" checked>Kotekurver</label></div><div class="row"><label for="interval">Ekvidistanse</label><select id="interval"><option value=".1">0,1 m</option><option value=".2" selected>0,2 m</option><option value=".5">0,5 m</option><option value="1">1,0 m</option></select></div><div class="row"><label for="shade">Terrengfarge</label><select id="shade"><option value="natural">Naturlig</option><option value="delta">Koteavvik</option><option value="material" selected>Overflatemateriale</option></select></div><label><input type="checkbox" id="profileToggle" checked>Vis snitt gjennom valgt rute</label><svg id="profile" viewBox="0 0 300 120" aria-label="Terrengprofil"></svg></section>
 </aside></main><script type="module">
 import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
-const N=20,EPS=1e-8,START_STOCK=5000,MIN_HEIGHT=8,MAX_HEIGHT=17,SLIDE_MAX=2400;
+const N=20,EPS=1e-8,START_STOCK=0,MIN_HEIGHT=8,MAX_HEIGHT=17,SLIDE_MAX=2400;
 const MATERIALS=Object.freeze({soil:{name:'Jord',angle:30,color:'#94724b'},sand:{name:'Sand',angle:30,color:'#c6b37a'},gravel:{name:'Grus',angle:35,color:'#91948c'},clay:{name:'Leire',angle:40,color:'#a07863'},stone:{name:'Sprengstein',angle:40,color:'#777d82'},bedrock:{name:'Fast fjell',angle:null,color:'#505861'}});
 const LOOSE=Object.keys(MATERIALS).filter(k=>k!=='bedrock');
+const DENSITY=Object.freeze({soil:1.45,sand:1.6,gravel:1.7,clay:1.65,stone:2.65}); // kg/L, same as the main game
+const MAX_KG=300,MAX_L=150,WORK_REACH=1.5,BASE_SPEED=3.5;
 const NEIGHBORS=[[1,0],[0,1],[1,1],[-1,1]];
 const ix=(x,z)=>z*N+x;
 const inside=(x,z)=>Number.isInteger(x)&&Number.isInteger(z)&&x>=0&&z>=0&&x<N&&z<N;
@@ -118,13 +121,38 @@ function materialTotals(s){
  return totals;
 }
 function newState(name='flat'){
- const h=scenario(name),s={name,h,base:h.slice(),layers:Array.from(h,initialStack),stock:Object.fromEntries(LOOSE.map(k=>[k,START_STOCK/LOOSE.length])),cut:0,fill:0,actions:0,last:null,slideMoves:0,slideLitres:0};
+ const h=scenario(name),layers=Array.from(h,initialStack);
+ if(name==='materials')for(let z=0;z<N;z++)for(let x=0;x<N;x++){const stack=layers[ix(x,z)],type=LOOSE[Math.floor(x/4)];cutLayers(stack,400);appendLayer(stack,type,400);}
+ const s={name,h,base:h.slice(),layers,stock:Object.fromEntries(LOOSE.map(k=>[k,0])),player:{x:name==='repose'?9:10,z:10},distanceWalked:0,cut:0,fill:0,actions:0,last:null,slideMoves:0,slideLitres:0};
  s.initialMaterials=materialTotals(s);return s;
 }
+function inventoryLoad(stock){
+ const litres=LOOSE.reduce((sum,k)=>sum+(stock[k]||0),0),kg=LOOSE.reduce((sum,k)=>sum+(stock[k]||0)*DENSITY[k],0);
+ return {litres,kg,ratio:Math.max(litres/MAX_L,kg/MAX_KG)};
+}
+function loadFits(stock){const l=inventoryLoad(stock);return LOOSE.every(k=>Number.isFinite(stock[k])&&stock[k]>=-EPS)&&l.litres<=MAX_L+EPS&&l.kg<=MAX_KG+EPS;}
+function speedFactor(stock){
+ const r=inventoryLoad(stock).ratio;
+ return r<=.5+EPS?1:r<=.75+EPS?.9:r<=.9+EPS?.8:.65;
+}
+function playerDistance(s,x,z){return Math.hypot(x-s.player.x,z-s.player.z);}
+function withinReach(s,x,z){return inside(x,z)&&playerDistance(s,x,z)<=WORK_REACH+EPS;}
+function playerStep(s,dx,dz){
+ if(!Number.isInteger(dx)||!Number.isInteger(dz)||Math.max(Math.abs(dx),Math.abs(dz))!==1)return false;
+ const x=s.player.x+dx,z=s.player.z+dz;
+ if(!inside(x,z))return false;
+ // Laboratory walking is a grid abstraction; terrain collision and slope
+ // limits of the main character will be integrated in CE 1.1.3E.
+ s.player={x,z};s.distanceWalked+=Math.hypot(dx,dz);return true;
+}
+function walkToward(s,x,z){if(!inside(x,z))return false;return playerStep(s,Math.sign(x-s.player.x),Math.sign(z-s.player.z));}
 function nextStep(h,dir,target=null){
  if(!Number.isFinite(h)||![-1,1].includes(dir))return null;
  if(target!==null&&(dir*(target-h)<=EPS))return null;
- let y=(Math.round(h*10)+dir)/10;
+ // Exact grid point: 100 L. Off-grid (natural terrain, partial dump,
+ // short slide): use the next decimal elevation in the work direction.
+ const scaled=h*10,rounded=Math.round(scaled);
+ let y=(Math.abs(scaled-rounded)<=EPS*10?rounded+dir:dir>0?Math.ceil(scaled):Math.floor(scaled))/10;
  if(target!==null)y=dir>0?Math.min(y,target):Math.max(y,target);
  return dir*(y-h)>EPS?y:null;
 }
@@ -169,27 +197,38 @@ function settle(s,baseline,target){
   if(!moved)return {error:'Raset kan ikke stabiliseres med målkotevern, høydegrenser eller fast fjell. Inngrepet er avvist.'};
  }
 }
-function work(state,x,z,dir,target=null,material='soil'){
- if(!inside(x,z)||![-1,1].includes(dir))return {error:'Velg en gyldig celle.'};
+function work(state,x,z,dir,target=null,material='soil',dump=false){
+ if(!inside(x,z)||![-1,1].includes(dir)||(dump&&dir!==1))return {error:'Velg en gyldig celle.'};
+ if(!withinReach(state,x,z))return {error:'Gå nærmere valgt arbeidsrute (maks 1,5 m).'};
  if(target!==null&&!Number.isFinite(target))return {error:'Ugyldig målkote.'};
  if(dir>0&&!LOOSE.includes(material))return {error:'Velg et gyldig fyllmateriale.'};
- const id=ix(x,z),before=state.h[id],after=nextStep(before,dir,target);
+ const id=ix(x,z),before=state.h[id];
+ let after=nextStep(before,dir,target);
+ if(dump){
+  const available=state.stock[material]||0;
+  if(available<=EPS)return {error:'Ingen '+MATERIALS[material].name.toLowerCase()+' i inventaret.'};
+  const room=availableRoom(state,id,1,target);
+  if(room<=EPS)return {error:'Ingen ledig høyde innen målkote eller høydegrense.'};
+  after=before+Math.min(available,room)/1000;
+ }
  if(after===null)return {error:'Målkoten er nådd, eller handlingen går feil vei.'};
  if(after<MIN_HEIGHT-EPS||after>MAX_HEIGHT+EPS)return {error:'Laboratoriets høydegrense er nådd (8–17 m).'};
  const litres=(after-before)*1000;
- if(dir>0&&litres>state.stock[material]+EPS)return {error:'For lite '+MATERIALS[material].name.toLowerCase()+' på testlageret.'};
+ if(dir>0&&litres>state.stock[material]+EPS)return {error:'For lite '+MATERIALS[material].name.toLowerCase()+' i inventaret.'};
  if(dir<0&&-litres>looseVolume(state.layers[id])+EPS)return {error:'Fast fjell. Spaden kan ikke gjennomføre hele trinnet.'};
  const s={h:state.h.slice(),layers:state.layers.map(ls=>ls.map(l=>({...l}))),stock:{...state.stock}};
  const baseline=EDGES.map(e=>slopeEdge(state,e));let movedLayers;
  if(dir<0){
   movedLayers=cutLayers(s.layers[id],-litres);if(!movedLayers)return {error:'Fast fjell.'};
   for(const l of movedLayers)s.stock[l.type]+=l.litres;
+  if(!loadFits(s.stock))return {error:'Ikke plass til hele gravetrinnet. Deponer eller fyll først.'};
  }else{
   appendLayer(s.layers[id],material,litres);s.stock[material]-=litres;if(Math.abs(s.stock[material])<EPS)s.stock[material]=0;
   movedLayers=[{type:material,litres}];
  }
  s.h[id]=after;
  const slide=settle(s,baseline,target);if(slide.error)return slide;
+ if(!loadFits(s.stock))return {error:'Inventargrensen er overskredet. Ingen endring lagret.'};
  for(let k=0;k<s.h.length;k++)if(Math.abs(stackVolume(s.layers[k])-(s.h[k]-MIN_HEIGHT)*1000)>1e-5||s.layers[k].some(l=>l.litres<=0||!MATERIALS[l.type]))return {error:'Ugyldig materialprofil. Ingen endring lagret.'};
  const mt=materialTotals(s);
  for(const k of Object.keys(mt))if(Math.abs(mt[k]-state.initialMaterials[k])>1e-4)return {error:'Feil i materialregnskapet. Ingen endring lagret.'};
@@ -235,7 +274,7 @@ function contourData(data,interval,target=null){
 
 const $=id=>document.getElementById(id);
 let state=newState(),selected={x:10,z:10},target=12.4,terrain,grid,selection,markers,contours,labels,profileLine,dirty=true;
-let data=meshData(state.h);
+let data=meshData(state.h),playerMarker=null,walkTarget=null,walkNext=0;
 const scene=new THREE.Scene();scene.background=new THREE.Color('#24332e');
 const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
 renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.75));
@@ -247,6 +286,8 @@ const controls=new OrbitControls(camera,renderer.domElement);
 controls.target.set(10,12.1,10);controls.enableDamping=true;controls.dampingFactor=.12;controls.minDistance=3;controls.maxDistance=60;controls.maxPolarAngle=Math.PI/2-.07;controls.update();
 scene.add(new THREE.HemisphereLight(0xe3f3fc,0x6e6049,2.1));
 const sun=new THREE.DirectionalLight(0xfff2d6,2.2);sun.position.set(-10,28,8);scene.add(sun);
+// Separate player marker, not a mass pile. It follows the edited terrain.
+playerMarker=new THREE.Group();const pin=new THREE.Mesh(new THREE.CylinderGeometry(.12,.23,.65,12),new THREE.MeshStandardMaterial({color:0x42c8ff,emissive:0x155270}));pin.position.y=.325;playerMarker.add(pin);const ring=new THREE.Mesh(new THREE.RingGeometry(.27,.34,24),new THREE.MeshBasicMaterial({color:0x8bdfff,side:THREE.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.y=.045;playerMarker.add(ring);scene.add(playerMarker);
 const terrainMat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,side:THREE.DoubleSide});
 const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();
 const fmt=(v,n=1)=>v.toFixed(n).replace('.',',');
@@ -310,9 +351,21 @@ function updateScene(){
   const arr=[],z=selected.z+.5;for(let k=0;k<N*2;k++)segment(arr,k/2,z,(k+1)/2,z,.055);
   profileLine=lineSegments(arr,0xffe4aa);scene.add(profileLine);
  }
- dirty=false;updatePanel();
+ updatePlayerMarker();dirty=false;updatePanel();
+}
+function updatePlayerMarker(){const {x,z}=state.player;playerMarker.position.set(x+.5,height(x,z)+.015,z+.5);}
+function updateTransportPanel(){
+ const d=playerDistance(state,selected.x,selected.z),reach=withinReach(state,selected.x,selected.z),load=inventoryLoad(state.stock);
+ $('playerBadge').textContent='Spiller '+(state.player.x+1)+' / '+(state.player.z+1);
+ $('workDistance').textContent=fmt(d,2)+' m'+(walkTarget?' · går':reach?' · innen rekkevidde':' · for langt');$('workDistance').dataset.reach=String(reach);
+ $('walkTo').disabled=!!walkTarget||d<EPS;$('stopWalk').disabled=!walkTarget;
+ $('dig').disabled=$('fill').disabled=$('dump').disabled=!reach||!!walkTarget;
+ $('loadMass').textContent=fmt(load.kg,1)+' / 300 kg';$('massBar').value=load.kg;
+ $('loadVolume').textContent=fmt(load.litres,1)+' / 150 L';$('volumeBar').value=load.litres;
+ $('walkSpeed').textContent=fmt(BASE_SPEED*speedFactor(state.stock),2)+' m/s · '+Math.round(speedFactor(state.stock)*100)+' %';
 }
 function updatePanel(){
+ updateTransportPanel();
  const x=selected.x,z=selected.z,h=height(x,z),st=cellStatus(state.h,x,z,target),b=inventoryBalance(state);
  $('chosen').textContent='Rute '+(x+1)+' / '+(z+1);
  $('elev').textContent=sign(h,3)+' m';$('dev').textContent=sign(h-target,3)+' m';
@@ -348,7 +401,7 @@ function updateLayers(x,z){
   row.className='layer-row';sw.className='swatch';sw.style.background=m.color;name.textContent=m.name;elev.textContent=fmt(lower,3)+'–'+fmt(upper,3)+' m';txt.append(name,elev);vol.textContent=fmt(l.litres,1)+' L';row.append(sw,txt,vol);list.append(row);upper=lower;
  }
 }
-function nextText(dir){const h=height(selected.x,selected.z),y=nextStep(h,dir,$('cap').checked?target:null);return y===null?'Stopp ved målkote':fmt(h)+' → '+fmt(y)+' m';}
+function nextText(dir){const h=height(selected.x,selected.z),y=nextStep(h,dir,$('cap').checked?target:null);return y===null?'Stopp ved målkote':fmt(Math.abs(y-h)*1000,1)+' L · '+fmt(h,3)+' → '+fmt(y,3);}
 function drawProfile(){
  const svg=$('profile');if(!$('profileToggle').checked){svg.hidden=true;return;}svg.hidden=false;
  const z=selected.z+.5,values=Array.from({length:N*4+1},(_,i)=>surfaceAt(state.h,i/4,z));
@@ -357,15 +410,29 @@ function drawProfile(){
  const poly=values.map((v,i)=>px(i/4)+','+py(v)).join(' ');
  svg.innerHTML='<path d="M26 10 V100 H288" fill="none" stroke="#91a49c"/><path d="M26 '+py(target)+' H288" stroke="#e2b95e" stroke-dasharray="4 3"/><polyline points="'+poly+'" stroke="#b0d2b6" fill="none" stroke-width="2"/><path d="M'+px(selected.x+.5)+' 10 V100" stroke="#ffdb79" stroke-dasharray="3 3"/><text x="2" y="14">'+fmt(hi)+'</text><text x="2" y="100">'+fmt(lo)+'</text><text x="26" y="115">0 m</text><text x="258" y="115">20 m</text>';
 }
-function select(x,z){if(!inside(x,z))return;selected={x,z};dirty=true;}
-function action(dir){
- const result=work(state,selected.x,selected.z,dir,$('cap').checked?target:null,$('fillMaterial').value);
+function select(x,z){if(!inside(x,z))return;stopWalking();selected={x,z};dirty=true;}
+function action(dir,dump=false){
+ if(walkTarget){$('message').textContent='Stopp før du graver eller fyller.';return false;}
+ const result=work(state,selected.x,selected.z,dir,$('cap').checked?target:null,$('fillMaterial').value,dump);
  if(result.error){$('message').textContent=result.error;return false;}
  $('message').textContent='';dirty=true;return true;
 }
+function stopWalking(){walkTarget=null;walkNext=0;updateTransportPanel();}
+function startWalking(){if(walkTarget||playerDistance(state,selected.x,selected.z)<EPS)return;walkTarget={...selected};walkNext=performance.now();updateTransportPanel();}
+function walkTick(now){
+ if(!walkTarget||now<walkNext)return;
+ const dx=Math.sign(walkTarget.x-state.player.x),dz=Math.sign(walkTarget.z-state.player.z);
+ if(!dx&&!dz){stopWalking();return;}
+ if(!playerStep(state,dx,dz)){stopWalking();return;}
+ updatePlayerMarker();
+ walkNext=now+1000*Math.hypot(dx,dz)/(BASE_SPEED*speedFactor(state.stock));
+ if(state.player.x===walkTarget.x&&state.player.z===walkTarget.z){walkTarget=null;walkNext=0;}
+ updateTransportPanel();
+}
+function manualWalk(dx,dz){stopWalking();if(playerStep(state,dx,dz)){updatePlayerMarker();updateTransportPanel();}}
 function loadScenario(){
- if(state.actions&&!confirm('Nullstille terreng og masselager i laboratoriet?')){$('scenario').value=state.name;return;}
- state=newState($('scenario').value);selected=state.name==='repose'?{x:9,z:10}:{x:10,z:10};$('message').textContent='';dirty=true;
+ if((state.actions||state.distanceWalked)&&!confirm('Nullstille terreng og inventar i laboratoriet?')){$('scenario').value=state.name;return;}
+ stopWalking();state=newState($('scenario').value);selected={...state.player};$('message').textContent='';dirty=true;
 }
 let press=null;
 renderer.domElement.addEventListener('pointerdown',e=>{if(!press)press={id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};else press.moved=true;});
@@ -385,14 +452,19 @@ function bindHold(id,dir){
  window.addEventListener('blur',stop);document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();});
 }
 bindHold('dig',-1);bindHold('fill',1);
+$('dump').onclick=()=>action(1,true);$('walkTo').onclick=startWalking;$('stopWalk').onclick=stopWalking;
 $('scenario').addEventListener('change',loadScenario);$('reset').onclick=loadScenario;
 for(const id of ['grid','points','contours','labels','profileToggle','interval','shade','cap','fillMaterial'])$(id).addEventListener('change',()=>dirty=true);
 $('target').addEventListener('change',()=>{const v=Number($('target').value.replace(',','.'));target=Number.isFinite(v)&&$('target').value.trim()?roundDM(clamp(v,8,17)):target;$('target').value=target.toFixed(1);dirty=true;});
 $('top').onclick=()=>{camera.position.set(10,40,10.001);controls.target.set(10,12.1,10);controls.update();};
 $('orbit').onclick=()=>{camera.position.set(29,29,32);controls.target.set(10,12.1,10);controls.update();};
-window.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA','BUTTON'].includes(document.activeElement?.tagName))return;const moves={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};if(moves[e.key]){e.preventDefault();select(selected.x+moves[e.key][0],selected.z+moves[e.key][1]);}else if(e.key.toLowerCase()==='g')action(-1);else if(e.key.toLowerCase()==='f')action(1);});
+let nextManualAt=0;
+window.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement?.tagName))return;
+ const walk={w:[0,-1],a:[-1,0],s:[0,1],d:[1,0]},k=e.key.toLowerCase();
+ if(walk[k]){e.preventDefault();const now=performance.now();if(now>=nextManualAt){manualWalk(...walk[k]);nextManualAt=now+1000/(BASE_SPEED*speedFactor(state.stock));}return;}
+ const moves={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};if(moves[e.key]){e.preventDefault();select(selected.x+moves[e.key][0],selected.z+moves[e.key][1]);}else if(e.key.toLowerCase()==='g')action(-1);else if(e.key.toLowerCase()==='f')action(1);});
 function resize(){const v=$('viewport');renderer.setSize(v.clientWidth,v.clientHeight);camera.aspect=v.clientWidth/Math.max(1,v.clientHeight);camera.updateProjectionMatrix();}
 new ResizeObserver(resize).observe($('viewport'));resize();
-function frame(){requestAnimationFrame(frame);if(dirty)updateScene();controls.update();renderer.render(scene,camera);}frame();
+function frame(now=performance.now()){requestAnimationFrame(frame);walkTick(now);if(dirty)updateScene();controls.update();renderer.render(scene,camera);}frame();
 
 </script></body></html>
