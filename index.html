@@ -1,4 +1,4 @@
-<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#14221b"><title>AFTERFALL 3D · CE 1.1.2b</title><style>
+<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#14221b"><title>AFTERFALL 3D · CE 1.1.2c</title><style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101b19;color:#eef4e9;font:14px system-ui,-apple-system,sans-serif;touch-action:none}canvas{display:block}#hud{position:absolute;top:env(safe-area-inset-top);left:0;right:0;display:flex;justify-content:space-between;align-items:start;padding:12px;pointer-events:none}#hud>div{background:#10231dd9;border:1px solid #ffffff24;border-radius:12px;padding:10px;pointer-events:auto}small{color:#b3c4b8}button{background:#263d35;border:1px solid #80948766;border-radius:9px;color:white;padding:10px 12px;font:inherit}#status{position:absolute;top:88px;left:12px;right:12px;pointer-events:none;text-shadow:0 1px 3px #000;font-size:13px}#cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:24px;color:#ffffffa0;pointer-events:none}#joy{position:absolute;left:22px;bottom:calc(24px + env(safe-area-inset-bottom));width:138px;height:138px;border:2px solid #ffffff5e;background:#10271c88;border-radius:50%;touch-action:none}#knob{position:absolute;left:45px;top:45px;width:44px;height:44px;border-radius:50%;background:#b8cfbcbb;pointer-events:none}#actions{position:absolute;right:18px;bottom:calc(36px + env(safe-area-inset-bottom));display:grid;gap:8px}#actions button{min-width:112px;background:#193b2fe6}#panel{position:absolute;inset:0;background:#09140edc;display:none;place-items:center;padding:22px;z-index:8}#panel.show{display:grid}#panel article{width:min(460px,100%);background:#1b2d25;padding:22px;border-radius:16px;max-height:90vh;overflow:auto}#panel button{margin:4px}#warning{color:#f8c28a}#hint{position:absolute;bottom:calc(176px + env(safe-area-inset-bottom));left:12px;right:12px;text-align:center;pointer-events:none;color:#d7e7d7;font-size:12px}#error{position:absolute;inset:0;display:none;place-items:center;padding:24px;background:#15251c;z-index:10}#error>div{max-width:440px}
 #weatherHud{position:absolute;left:12px;top:calc(env(safe-area-inset-top) + 122px);z-index:4;background:#10231dc9;border:1px solid #ffffff22;border-radius:9px;padding:6px 9px;font-size:11px;pointer-events:none}#diagPanel{position:absolute;z-index:7;top:118px;right:8px;width:min(330px,calc(100vw - 16px));max-height:calc(100dvh - 175px);overflow:auto;background:#0c211de8;border:1px solid #9cc4b666;border-radius:12px;padding:11px;display:none;font-size:12px;line-height:1.35;box-shadow:0 5px 18px #0006}
 #diagPanel.show{display:block}#diagPanel label{display:flex;align-items:center;gap:7px;margin:7px 0}#diagPanel input{accent-color:#9cdeca}#diagPanel button{padding:7px;margin:3px}#diagStats{white-space:pre-wrap;font:11px/1.45 ui-monospace,monospace;background:#0005;padding:8px;border-radius:6px;max-height:210px;overflow:auto}#diagLegend{font-size:11px;color:#cde4dc}#diagToggle{position:absolute;z-index:9;top:calc(env(safe-area-inset-top) + 82px);right:12px;padding:7px 10px;background:#1c3d35f5;font-size:12px;box-shadow:0 2px 9px #0008}
@@ -143,7 +143,24 @@ body.af-modal-active #earthTools,body.af-modal-active #useTool,body.af-modal-act
 #pileControls .pileButtons button{min-height:42px;margin:0;width:100%}
 #pileFeedback{font-size:12px;color:#ffdca0;margin-top:8px;min-height:16px}
 #inventoryRows button{font-size:11px;padding:5px}
-</style></head><body><button id="gradeToggle" type="button">📐 Planering</button><button id="constructionToggle" type="button" hidden>Bygg</button><div id="constructionHud" hidden></div><div id="constructionOverlay" hidden><div id="constructionBar"><strong id="constructionBarTitle">Byggeplass</strong><button id="constructionClose" type="button">Avbryt / tilbake</button></div><iframe id="constructionFrame" title="AFTERFALL konstruksjonseditor" allow="fullscreen"></iframe></div><div id="constructionInfo" hidden><article><h2 id="constructionInfoTitle">Byggeplass</h2><div id="constructionInfoBody"></div><button id="constructionInfoClose" type="button">Lukk</button></article></div><div id="gradeOverlay" role="presentation"><section id="gradePanel" role="dialog" aria-modal="true" aria-label="Terrengplanering"><h2>📐 Planering · CE 1.1.2b</h2><p>Sikt på bakken og velg to motsatte hjørner. Maks 20 × 20 m. Hvert spadetak endrer normalt én node med 0,1 m. Løsmasser raser til stabile skråninger, også utenfor planeringsområdet. Målkoten kan ikke overskrides.</p><p style="font-size:12px;color:#bdd7c5">⛰️ Rasvinkler (spillverdier): jord/sand 30°, grus 35°, leire/sprengstein 40°. Fast fjell raser ikke. Hold inne Grav/Fyll for gjentatte spadetak. Byggegrunn må ha eksakt kote og stabile rand­skråninger.</p><div id="gradeProjectList" aria-label="Lagrede planeringsprosjekter"></div><p><label for="gradeName">Prosjektnavn: </label><input id="gradeName" type="text" maxlength="48" value="Nytt planeringsområde" style="width:min(250px,90%)"></p><button id="gradeFirst">1. Sett hjørne A</button><button id="gradeSecond">2. Sett hjørne B</button><div id="gradeHeights" aria-live="polite">Måler terrengkoter …</div><div id="gradeStats" aria-live="polite">Marker hjørne A og B for å beregne områdets koteverdier.</div><button id="gradeSuggest" type="button" disabled>Bruk foreslått kote</button><p><label for="gradeLevel">Prosjektert kote (m): </label><input id="gradeLevel" type="number" step="0.1" inputmode="decimal"></p><button id="gradeCreate">Opprett nytt prosjekt</button><button id="gradeComplete">Godkjenn fullført</button><button id="gradeArchive">Arkiver prosjekt</button><button id="gradeReopen">Gjenåpne prosjekt</button><button id="gradeDelete">Slett valgt prosjekt</button><div id="gradeDelta" aria-live="polite"></div><div id="gradeInfo" aria-live="polite">Ingen prosjekt.</div><button id="gradeClose">Lukk ✕</button></section></div><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small>CE 1.1.2b · INTEGRASJONSTEST</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="gradeLive" role="status" aria-live="off" hidden></div><div id="gradeProgressHud" hidden><strong id="gradeProgressLabel">Planering</strong><div id="gradeProgressTrack"><div id="gradeProgressFill"></div></div><small id="gradeProgressDetail"></small></div><div id="weatherHud">☀ 12:00 · Klart</div><div id="joy"><div id="knob"></div></div><div id="actions" hidden aria-hidden="true"><button id="interact" tabindex="-1">🚪 Dør</button><button id="reset" tabindex="-1">↺ Start</button></div><div id="earthTools"><button id="earthDig" class="active">Grav</button><button id="earthFill">Fyll</button><select id="earthMat"><option value="soil">Jord</option><option value="sand">Sand</option><option value="gravel">Grus</option><option value="clay">Leire</option><option value="stone">Sprengstein</option></select><div id="earthAvailability" aria-live="polite" style="font-size:11px;line-height:1.3;color:#c9e3d6;margin-top:5px"></div></div><button id="pileToggle" type="button" aria-controls="pileControls" aria-expanded="false">📦 Åpne haug</button><div id="pileHint" hidden aria-live="off"></div><div id="pileOverlay" class="af-modal-overlay" role="presentation"><div id="pileControls" role="dialog" aria-modal="true" aria-labelledby="pileTitle"><div class="pileHead"><h2 id="pileTitle">Masselager</h2><button id="pileClose" type="button">Lukk ✕</button></div><p id="pileInfo"></p><p id="pileCarry"></p><label for="pileAmount">Overføringsmengde</label><input id="pileAmount" type="number" min="0" step="any" value="10" inputmode="decimal"><div class="pileButtons"><button id="pileTake" type="button">Ta</button><button id="pileTakeMax" type="button">Ta maks</button><button id="pileDrop" type="button">Legg fra</button><button id="pileMove" type="button">Flytt haug</button></div><div id="pileFeedback" role="status"></div></div></div><div id="loadHud">Last: 0 / 30 kg</div><div id="sawOverlay" role="dialog" aria-modal="true" aria-label="Trebearbeiding"><div id="sawCard"><button id="sawClose">Lukk ✕</button><h2>🪚 Trebearbeiding</h2><label for="sawRecipe">Produkt</label><select id="sawRecipe"><option value="planks">Tømmer → planker</option><option value="firewood">Tømmer → ved</option><option value="battens">Planke → lekter</option></select><label for="sawCount">Antall råenheter (1–10)</label><input id="sawCount" type="number" min="1" max="10" value="1" inputmode="numeric"><div id="sawInfo"></div><button id="sawCraft">🪚 Sag materialer</button><button id="sawStation">🪵 Plasser sagbukk (4 pinner)</button></div></div><div id="toolHud" aria-label="Verktøylinje"><button data-tool="shovel" title="Spade">🪏<span>Spade</span></button><button data-tool="pickaxe" title="Hakke">⛏️<span>Hakke</span></button><button data-tool="axe" title="Øks">🪓<span>Øks</span></button><button data-tool="saw" title="Sag">🪚<span>Sag</span></button><button data-tool="hammer" title="Hammer">🔨<span>Hammer</span></button></div><button id="inventoryToggle">🎒 Inventar</button><button id="useTool">Bruk verktøy</button><div id="earthWorkStatus" hidden aria-live="off"></div><div id="toolToast" role="status"></div><div id="inventoryPanel"><article><header><h2>🎒 Inventar</h2><button id="inventoryClose">Lukk ✕</button></header><p class="inventory-summary" id="inventorySummary"></p><p id="inventoryToolInfo"></p><table><thead><tr><th>Ressurs</th><th>Antall</th><th>Masse</th><th>Volum</th><th>Lager</th></tr></thead><tbody id="inventoryRows"></tbody></table><p><small>Masselagre, bærekapasitet, graving, oppfylling og bergbryting er aktivert. Saging og trebearbeiding er aktivert. Bygging kommer senere. Inventaret og verktøyvalget lagres lokalt.</small></p></article></div><div id="hint">Joystick ↑↓: frem/bak · ←→: roter · Separate elvemesher følger nedoverbakke · Dra høyre side: se rundt og opp/ned</div><div id="panel"><article><h2>AFTERFALL 3D · 0.6.4.2</h2><p>Trebearbeiding, sagbukk og materiallagre: dynamisk 4 × 4 km terreng, avstandsbasert LOD og separate elvemesher, og godkjent joystick/kollisjon/dør.</p><p>Verdensfrø 206414. 4096 × 4096 m logisk verden, 64 m chunks, dynamisk lasting. Globalt dreneringsnett, sammenkoblede lokale og globale elvesenterlinjer, variabel elvebredde, finere strandlinjer med terrengtilpasset klipping, hav ved kote 0 og lett shaderbasert vannanimasjon. Dette er en ny hydrologisk testmodell, ikke identisk med elvenettet i 0.4-serien.</p><button id="resume">Fortsett</button><button id="spawnOutside">Test utenfor</button><button id="spawnInside">Test inne</button><button id="save">Lagre</button><button id="load">Last inn</button><p><small>Ingen endringer i v0.4.7.2 eller originalhistorien.</small></p></article></div><button id="diagToggle" type="button" aria-label="Åpne eller lukk diagnosemeny">🔬 Diagnose</button><div id="diagIndicator" aria-live="polite"></div><div id="diagOverlay" class="af-modal-overlay" role="presentation"><aside id="diagPanel" role="dialog" aria-modal="true" aria-label="Vanngeometri-diagnostikk"><b>v0.6.4.2 · vannmesher</b><div id="diagLegend">🟠 Elv · 🔵 Innsjø · 🟣 Hav · 🟡 Terreng/vann-snitt · 🔴 Mulig manglende vanndekning · 🟪 Overlapp</div>
+/* CE 1.1.2c — site bill of materials. Left column avoids the tool controls. */
+#constructionHud{left:12px;right:auto;top:calc(218px + env(safe-area-inset-top));width:min(270px,46vw);max-width:270px;max-height:calc(100dvh - 395px);overflow:auto;box-sizing:border-box;background:#14281ff0;pointer-events:auto;touch-action:pan-y}
+#constructionHud[hidden]{display:none!important}
+#constructionHud strong{display:block;overflow-wrap:anywhere}
+#constructionHud .site-mat-row{display:flex;align-items:baseline;justify-content:space-between;gap:6px;font-variant-numeric:tabular-nums;margin:4px 0}
+#constructionHud .site-mat-row span:first-child{min-width:0;overflow-wrap:anywhere}
+#constructionHud .site-mat-row span:last-child{white-space:nowrap;color:#ffe2a0}
+#constructionHud .site-mat-heading{border-top:1px solid #adc79a44;margin-top:7px;padding-top:6px;font-weight:700}
+#constructionHud .site-note{color:#c6d2c1;line-height:1.35}
+#constructionHud .site-link{font-size:11px;margin-top:7px;width:100%;padding:5px}
+body.site-hud-active #gradeProgressHud{display:none!important}
+#constructionInfo .site-material-table{border-collapse:collapse;width:100%;font-size:12px;font-variant-numeric:tabular-nums}
+#constructionInfo .site-material-table th,#constructionInfo .site-material-table td{padding:7px 4px;border-bottom:1px solid #ffffff22;text-align:right}
+#constructionInfo .site-material-table th:first-child,#constructionInfo .site-material-table td:first-child{text-align:left}
+#constructionInfo h3{font-size:14px;margin:18px 0 6px}
+@media(max-width:480px){#constructionHud{left:8px;top:calc(236px + env(safe-area-inset-top));width:46vw;max-width:185px;font-size:11px;max-height:calc(100dvh - 445px)}#constructionHud .site-mat-row{flex-wrap:wrap;gap:2px 5px}}
+@media(max-height:650px){#constructionHud{max-height:calc(100dvh - 330px);min-height:90px}}
+</style></head><body><button id="gradeToggle" type="button">📐 Planering</button><button id="constructionToggle" type="button" hidden>Bygg</button><div id="constructionHud" hidden aria-label="Materialbehov ved byggeplass"></div><div id="constructionOverlay" hidden><div id="constructionBar"><strong id="constructionBarTitle">Byggeplass</strong><button id="constructionClose" type="button">Avbryt / tilbake</button></div><iframe id="constructionFrame" title="AFTERFALL konstruksjonseditor" allow="fullscreen"></iframe></div><div id="constructionInfo" hidden><article><h2 id="constructionInfoTitle">Byggeplass</h2><div id="constructionInfoBody"></div><button id="constructionInfoClose" type="button">Lukk</button></article></div><div id="gradeOverlay" role="presentation"><section id="gradePanel" role="dialog" aria-modal="true" aria-label="Terrengplanering"><h2>📐 Planering · CE 1.1.2c</h2><p>Sikt på bakken og velg to motsatte hjørner. Maks 20 × 20 m. Hvert spadetak endrer normalt én node med 0,1 m. Løsmasser raser til stabile skråninger, også utenfor planeringsområdet. Målkoten kan ikke overskrides.</p><p style="font-size:12px;color:#bdd7c5">⛰️ Rasvinkler (spillverdier): jord/sand 30°, grus 35°, leire/sprengstein 40°. Fast fjell raser ikke. Hold inne Grav/Fyll for gjentatte spadetak. Byggegrunn må ha eksakt kote og stabile rand­skråninger.</p><div id="gradeProjectList" aria-label="Lagrede planeringsprosjekter"></div><p><label for="gradeName">Prosjektnavn: </label><input id="gradeName" type="text" maxlength="48" value="Nytt planeringsområde" style="width:min(250px,90%)"></p><button id="gradeFirst">1. Sett hjørne A</button><button id="gradeSecond">2. Sett hjørne B</button><div id="gradeHeights" aria-live="polite">Måler terrengkoter …</div><div id="gradeStats" aria-live="polite">Marker hjørne A og B for å beregne områdets koteverdier.</div><button id="gradeSuggest" type="button" disabled>Bruk foreslått kote</button><p><label for="gradeLevel">Prosjektert kote (m): </label><input id="gradeLevel" type="number" step="0.1" inputmode="decimal"></p><button id="gradeCreate">Opprett nytt prosjekt</button><button id="gradeComplete">Godkjenn fullført</button><button id="gradeArchive">Arkiver prosjekt</button><button id="gradeReopen">Gjenåpne prosjekt</button><button id="gradeDelete">Slett valgt prosjekt</button><div id="gradeDelta" aria-live="polite"></div><div id="gradeInfo" aria-live="polite">Ingen prosjekt.</div><button id="gradeClose">Lukk ✕</button></section></div><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small id="releaseVersion" data-release="ce112c">CE 1.1.2c · INTEGRASJONSTEST</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="gradeLive" role="status" aria-live="off" hidden></div><div id="gradeProgressHud" hidden><strong id="gradeProgressLabel">Planering</strong><div id="gradeProgressTrack"><div id="gradeProgressFill"></div></div><small id="gradeProgressDetail"></small></div><div id="weatherHud">☀ 12:00 · Klart</div><div id="joy"><div id="knob"></div></div><div id="actions" hidden aria-hidden="true"><button id="interact" tabindex="-1">🚪 Dør</button><button id="reset" tabindex="-1">↺ Start</button></div><div id="earthTools"><button id="earthDig" class="active">Grav</button><button id="earthFill">Fyll</button><select id="earthMat"><option value="soil">Jord</option><option value="sand">Sand</option><option value="gravel">Grus</option><option value="clay">Leire</option><option value="stone">Sprengstein</option></select><div id="earthAvailability" aria-live="polite" style="font-size:11px;line-height:1.3;color:#c9e3d6;margin-top:5px"></div></div><button id="pileToggle" type="button" aria-controls="pileControls" aria-expanded="false">📦 Åpne haug</button><div id="pileHint" hidden aria-live="off"></div><div id="pileOverlay" class="af-modal-overlay" role="presentation"><div id="pileControls" role="dialog" aria-modal="true" aria-labelledby="pileTitle"><div class="pileHead"><h2 id="pileTitle">Masselager</h2><button id="pileClose" type="button">Lukk ✕</button></div><p id="pileInfo"></p><p id="pileCarry"></p><label for="pileAmount">Overføringsmengde</label><input id="pileAmount" type="number" min="0" step="any" value="10" inputmode="decimal"><div class="pileButtons"><button id="pileTake" type="button">Ta</button><button id="pileTakeMax" type="button">Ta maks</button><button id="pileDrop" type="button">Legg fra</button><button id="pileMove" type="button">Flytt haug</button></div><div id="pileFeedback" role="status"></div></div></div><div id="loadHud">Last: 0 / 30 kg</div><div id="sawOverlay" role="dialog" aria-modal="true" aria-label="Trebearbeiding"><div id="sawCard"><button id="sawClose">Lukk ✕</button><h2>🪚 Trebearbeiding</h2><label for="sawRecipe">Produkt</label><select id="sawRecipe"><option value="planks">Tømmer → planker</option><option value="firewood">Tømmer → ved</option><option value="battens">Planke → lekter</option></select><label for="sawCount">Antall råenheter (1–10)</label><input id="sawCount" type="number" min="1" max="10" value="1" inputmode="numeric"><div id="sawInfo"></div><button id="sawCraft">🪚 Sag materialer</button><button id="sawStation">🪵 Plasser sagbukk (4 pinner)</button></div></div><div id="toolHud" aria-label="Verktøylinje"><button data-tool="shovel" title="Spade">🪏<span>Spade</span></button><button data-tool="pickaxe" title="Hakke">⛏️<span>Hakke</span></button><button data-tool="axe" title="Øks">🪓<span>Øks</span></button><button data-tool="saw" title="Sag">🪚<span>Sag</span></button><button data-tool="hammer" title="Hammer">🔨<span>Hammer</span></button></div><button id="inventoryToggle">🎒 Inventar</button><button id="useTool">Bruk verktøy</button><div id="earthWorkStatus" hidden aria-live="off"></div><div id="toolToast" role="status"></div><div id="inventoryPanel"><article><header><h2>🎒 Inventar</h2><button id="inventoryClose">Lukk ✕</button></header><p class="inventory-summary" id="inventorySummary"></p><p id="inventoryToolInfo"></p><table><thead><tr><th>Ressurs</th><th>Antall</th><th>Masse</th><th>Volum</th><th>Lager</th></tr></thead><tbody id="inventoryRows"></tbody></table><p><small>Masselagre, bærekapasitet, graving, oppfylling og bergbryting er aktivert. Saging og trebearbeiding er aktivert. Bygging kommer senere. Inventaret og verktøyvalget lagres lokalt.</small></p></article></div><div id="panel"><article><h2>AFTERFALL 3D · 0.6.4.2</h2><p>Trebearbeiding, sagbukk og materiallagre: dynamisk 4 × 4 km terreng, avstandsbasert LOD og separate elvemesher, og godkjent joystick/kollisjon/dør.</p><p>Verdensfrø 206414. 4096 × 4096 m logisk verden, 64 m chunks, dynamisk lasting. Globalt dreneringsnett, sammenkoblede lokale og globale elvesenterlinjer, variabel elvebredde, finere strandlinjer med terrengtilpasset klipping, hav ved kote 0 og lett shaderbasert vannanimasjon. Dette er en ny hydrologisk testmodell, ikke identisk med elvenettet i 0.4-serien.</p><button id="resume">Fortsett</button><button id="spawnOutside">Test utenfor</button><button id="spawnInside">Test inne</button><button id="save">Lagre</button><button id="load">Last inn</button><p><small>Ingen endringer i v0.4.7.2 eller originalhistorien.</small></p></article></div><button id="diagToggle" type="button" aria-label="Åpne eller lukk diagnosemeny">🔬 Diagnose</button><div id="diagIndicator" aria-live="polite"></div><div id="diagOverlay" class="af-modal-overlay" role="presentation"><aside id="diagPanel" role="dialog" aria-modal="true" aria-label="Vanngeometri-diagnostikk"><b>v0.6.4.2 · vannmesher</b><div id="diagLegend">🟠 Elv · 🔵 Innsjø · 🟣 Hav · 🟡 Terreng/vann-snitt · 🔴 Mulig manglende vanndekning · 🟪 Overlapp</div>
 <label><input type="checkbox" id="diagColors">Fargekod vannmeshene</label>
 <label><input type="checkbox" id="diagEdges">Vis vannpolygonkanter</label>
 <label><input type="checkbox" id="diagChunks">Vis 64 m chunkgrenser</label>
@@ -751,7 +768,7 @@ function pileMeshRefresh(){
  pileOutline=new THREE.Mesh(pileAssets.geometry,new THREE.MeshBasicMaterial({color:0xffda73,wireframe:true,transparent:true,opacity:1,depthTest:true,depthWrite:false}));
  pileOutline.visible=false;pileOutline.renderOrder=5;scene.add(pileOutline);pileFocus=null;
 }
-// CE 1.1.2b: logical stock hit test, independent of Three.js InstancedMesh
+// CE 1.1.2c: logical stock hit test, independent of Three.js InstancedMesh
 // raycast, float32 bounds, and individual instance IDs. Geometry uses the
 // same seven-sided cone as pileMeshRefresh(). Range is horizontal distance
 // to the stock centre, not ray length from eye height.
@@ -836,6 +853,7 @@ function pileFocusRefresh(){
  cross.classList.toggle('stock-aim',!!pileFocus);
  button.classList.toggle('stock-aim',!!pileFocus);
  if(pileFocus){
+  $('gradeLive').hidden=true;
   const q=pileFocus,meta=RESOURCE_CATALOG[q.material],{radius,height}=stockDimensions(q);
   el.textContent=meta.name+' · '+stockFmt(q.qty)+' '+meta.unit+' · [E] / høyreklikk';
   button.textContent='📦 Åpne '+meta.name.toLowerCase();
@@ -2158,7 +2176,7 @@ function updateWeather(dt){
  $('weatherHud').textContent=`${altitude>0?'☀':'☾'} ${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')} · ${WEATHER_NAMES[['klart','overskyet','regn','tåke'].indexOf(kind)]} · Vind ${Math.round(wind*8)} m/s`;
 }
 
-function save(){worldSave();saveInventory();localStorage.setItem(KEY,JSON.stringify({version:557,seed:SEED,...p,weatherElapsed:weatherState.elapsed}));$('status').textContent='Lagring startet · CE 1.1.2b'}
+function save(){worldSave();saveInventory();localStorage.setItem(KEY,JSON.stringify({version:557,seed:SEED,...p,weatherElapsed:weatherState.elapsed}));$('status').textContent='Lagring startet · CE 1.1.2c'}
 function load(){try{let v=JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('afterfall_054'));if(v&&(v.version===557||v.version===553||v.version===551||v.version===55||v.version===541||v.version===54||v.version===53)&&v.seed===SEED&&[v.x,v.z,v.yaw].every(Number.isFinite)&&v.x>0&&v.x<WORLD&&v.z>0&&v.z<WORLD){setPlayer(v.x,v.z,v.yaw);if(Number.isFinite(v.pitch))p.pitch=THREE.MathUtils.clamp(v.pitch,-Math.PI*.46,Math.PI*.46);if(Number.isFinite(v.weatherElapsed)&&v.weatherElapsed>=0)weatherState.elapsed=v.weatherElapsed;return true}}catch(e){}return false}
 
 // v0.6.4.2: Prosjektert planering; geoteknisk schema reserveres til senere versjoner.
@@ -2182,13 +2200,14 @@ function gradeAreaStats(b){
 let gradeSuggestedLevel=null,gradeLastHud=0;
 let gradeLiveLast=0;
 const gradeAnchorPoint=new THREE.Vector3(),gradeAnchorScreen=new THREE.Vector3();
+function gradeLiveAllowed(q,plans){return !!q&&q.status==='active'&&!plans.has(q.id);}
 function gradeLiveRefresh(){
  const el=$('gradeLive');
- if(inventoryState.selectedTool!=='shovel'||$('gradeOverlay').classList.contains('show')||paused){el.hidden=true;return}
+ if(inventoryState.selectedTool!=='shovel'||$('gradeOverlay').classList.contains('show')||paused||pileFocus){el.hidden=true;return}
  // Use the existing terrain aim to identify the project, but select the nearest
  // visible preview grid marker to the crosshair. No change to shovel reach.
  const aim=earthAim(),q=aim?gradingAt(aim.x,aim.z):null;
- if(!q){el.hidden=true;return}
+ if(!gradeLiveAllowed(q,constructionPlans)){el.hidden=true;return}
  const stepX=Math.max(1,Math.ceil((q.x1-q.x0)/15));
  const stepZ=Math.max(1,Math.ceil((q.z1-q.z0)/15));
  let best=null,bestDistance=Infinity;
@@ -2267,7 +2286,7 @@ function gradeFinishedMesh(q){
 }
 function gradeProgressRefresh(q,r){
  const hud=$('gradeProgressHud');
- if(!q){hud.hidden=true;return}
+ if(!gradeLiveAllowed(q,constructionPlans)){hud.hidden=true;return}
  hud.hidden=false;
  $('gradeProgressLabel').textContent='📐 Planert: '+r.progress.toFixed(1).replace('.',',')+' %';
  $('gradeProgressFill').style.width=r.progress.toFixed(2)+'%';
@@ -2382,17 +2401,80 @@ function constructionReady(q){
  const site=gradeBuildSite(q);
  return site&&gradeSummary(q).progress===100&&gradeSlopeStatus(q).ok?site:null;
 }
+// Read-only bill of materials for already reserved sites. No materials are
+// consumed, delivered or credited until the CE 1.2 logistics system exists.
+const SITE_INFO_RADIUS=6;
+function siteDistance(q,x,z){
+ return Math.hypot(Math.max(q.x0-x,0,x-q.x1),Math.max(q.z0-z,0,z-q.z1));
+}
+function nearestReservedSite(projects,plans,x,z,radius=SITE_INFO_RADIUS){
+ let best=null,d=radius+1e-8;
+ for(const q of projects){
+  if(!plans.has(q.id))continue;
+  const dist=siteDistance(q,x,z);
+  if(dist<d){best=q;d=dist;}
+ }
+ return best;
+}
+function constructionContext(){
+ const inside=constructionHere();
+ if(inside&&constructionPlans.has(inside.id))return inside;
+ // Nearby reserved sites are inspectable from outside. Starting a NEW
+ // construction project still requires standing inside its approved plot.
+ return inside||nearestReservedSite(gradingProjects,constructionPlans,p.x,p.z);
+}
+function siteMaterialRows(plan){
+ return (plan.materialTotals||[]).filter(m=>Number.isFinite(m.rawM3)&&m.rawM3>0).map(m=>({
+  material:m.material,label:m.label,rawM3:m.rawM3,rawKg:m.rawKg,remainingM3:m.rawM3,
+  deliveredM3:0,partCount:m.partCount
+ }));
+}
+function nextConstructionTask(plan){
+ const installed=new Set(plan.progress?.installedModuleIds||[]);
+ const tasks=new Map((plan.tasks||[]).map(t=>[t.moduleId,t]));
+ for(const id of plan.order||[]){
+  const task=tasks.get(id);
+  if(task&&!installed.has(id)&&(task.requires||[]).every(r=>installed.has(r)))return task;
+ }
+ return null;
+}
+function siteAmount(v,d=3){
+ if(!Number.isFinite(v))return '—';
+ if(v>0&&v<10**(-d))return '<'+(10**(-d)).toLocaleString('nb-NO',{maximumFractionDigits:d});
+ return v.toLocaleString('nb-NO',{minimumFractionDigits:d,maximumFractionDigits:d});
+}
+function siteAmountShort(v){
+ return v<1?siteAmount(v*1000,1)+' L':siteAmount(v,3)+' m³';
+}
+let constructionHudSignature='';
 function constructionUpdateHud(){
- const q=constructionHere(),plan=q&&constructionPlans.get(q.id),button=$('constructionToggle'),hud=$('constructionHud');
+ const q=constructionContext(),plan=q&&constructionPlans.get(q.id),button=$('constructionToggle'),hud=$('constructionHud');
  const modal=constructionOpen||constructionInfoOpen||paused||pileMenuOpen||inventoryOpen||sawOpenFlag||$('gradeOverlay').classList.contains('show');
  button.hidden=!q||modal;button.textContent=plan?'Byggeplass':'Bygg';
- hud.hidden=!plan||modal;
- if(plan&&!modal){
-  const title=document.createElement('strong');title.textContent='Byggeplass · '+q.name;
-  const status=document.createElement('small');status.textContent='Planlagt · 0 / '+plan.tasks.length+' moduler · 0 %';
-  const dims=document.createElement('small');dims.textContent=plan.setout.length.toFixed(2)+' × '+plan.setout.width.toFixed(2)+' m · materialer ikke levert';
-  hud.replaceChildren(title,status,dims);
+ const show=!!plan&&!modal;
+ hud.hidden=!show;
+ document.body.classList.toggle('site-hud-active',show);
+ if(!show){constructionHudSignature='';return;}
+ // Cache static quantities; distance changes at 1 m resolution only.
+ const dist=siteDistance(q,p.x,p.z),distance=dist<1e-8?'På byggeplassen':Math.ceil(dist)+' m til område';
+ const signature=plan.planId+'|'+q.name+'|'+distance;
+ if(signature===constructionHudSignature)return;
+ constructionHudSignature=signature;
+ const el=(tag,cls,t)=>{const e=document.createElement(tag);if(cls)e.className=cls;e.textContent=t;return e;};
+ const first=nextConstructionTask(plan),rows=siteMaterialRows(plan);
+ const title=el('strong','','Byggeplass · '+q.name);
+ const status=el('small','',distance+' · 0 / '+plan.tasks.length+' moduler');
+ const heading=el('div','site-mat-heading','Materialer som mangler');
+ const contents=[title,status,heading];
+ for(const m of rows){
+  const row=el('div','site-mat-row','');
+  row.append(el('span','',m.label),el('span','',siteAmountShort(m.remainingM3)));
+  contents.push(row);
  }
+ if(first)contents.push(el('small','site-note','Første modul: '+first.label));
+ contents.push(el('small','site-note','Levering ikke aktivert ennå.'));
+ const detail=el('button','site-link','Se full materialliste');detail.type='button';detail.onclick=constructionBegin;
+ contents.push(detail);hud.replaceChildren(...contents);
 }
 function constructionRender(){
  if(!scene)return;
@@ -2421,22 +2503,44 @@ function constructionRender(){
  constructionGroup=group;scene.add(group);
 }
 function constructionShowInfo(q,plan){
- constructionInfoOpen=true;paused=true;stopShovelHold();joyEnd();
+ constructionInfoOpen=true;paused=true;stopShovelHold();joyEnd();lookPointer=null;
+ $('gradeLive').hidden=true;
  $('constructionInfoTitle').textContent=q.name+' – byggeplass';
  const host=$('constructionInfoBody');host.replaceChildren();
- const line=t=>{const el=document.createElement('p');el.textContent=t;host.append(el);};
+ const el=(tag,t)=>{const e=document.createElement(tag);e.textContent=t;return e;};
+ const line=t=>host.append(el('p',t));
  line('Planlagt · 0 % · '+plan.tasks.length+' moduler gjenstår.');
- line('Byggets omriss '+plan.setout.length.toFixed(2)+' × '+plan.setout.width.toFixed(2)+' m. Trestikker og snorer markerer plassering; fundamenter er ikke montert.');
- line('Materialbehov (råmengde, levert 0):');
- for(const m of plan.materialTotals)line(m.label+': '+m.rawM3.toFixed(3)+' m³ · '+m.rawKg.toFixed(1)+' kg');
- line('Transport, byggelager og montering kommer i senere versjoner.');
+ line('Byggets omriss: '+siteAmount(plan.setout.length,2)+' × '+siteAmount(plan.setout.width,2)+' m. Trestikker og snorer markerer byggets plassering.');
+ line('Planert område: X '+q.x0+'–'+q.x1+' m · Z '+q.z0+'–'+q.z1+' m. Kote '+siteAmount(q.level,1)+' m.');
+ host.append(el('h3','Fullstendig materialbehov'));
+ const table=document.createElement('table');table.className='site-material-table';
+ const head=document.createElement('thead'),header=document.createElement('tr');
+ for(const s of ['Materiale','Mangler (m³)','Masse (kg)'])header.append(el('th',s));
+ head.append(header);table.append(head);
+ const body=document.createElement('tbody');
+ for(const m of siteMaterialRows(plan)){
+  const row=document.createElement('tr');
+  row.append(el('td',m.label),el('td',siteAmount(m.remainingM3)),el('td',siteAmount(m.rawKg,1)));
+  body.append(row);
+ }
+ table.append(body);host.append(table);
+ line('Råmengder fra byggetegningen, inkludert modellens materialtillegg. Ingen materialer er registrert levert.');
+ const first=nextConstructionTask(plan);
+ if(first){
+  host.append(el('h3','Første monteringsoppgave'));
+  line((plan.stages?.[first.stage]||'Montering')+' · '+first.label+' (#'+first.moduleId+')');
+  const labels=new Map(siteMaterialRows(plan).map(m=>[m.material,m.label]));
+  for(const m of first.materials||[])line((labels.get(m.material)||m.material)+': '+siteAmountShort(m.rawM3)+' · '+siteAmount(m.rawKg,1)+' kg');
+ }
+ line('Transport, registrering av leveranser og montering blir tilgjengelig i CE 1.2/1.3. Dette er en materialoversikt, ikke et aktivt mottakslager.');
  $('constructionInfo').hidden=false;constructionUpdateHud();
 }
 function constructionBegin(){
  if(paused||constructionOpen||constructionInfoOpen||pileMenuOpen||inventoryOpen||sawOpenFlag||$('gradeOverlay').classList.contains('show'))return;
- const q=constructionHere();
- if(!q){toolMessage('Gå inn på et godkjent planeringsområde.');return;}
+ const q=constructionContext();
+ if(!q){toolMessage('Gå nær en byggeplass eller inn på et godkjent planeringsområde.');return;}
  const existing=constructionPlans.get(q.id);if(existing){constructionShowInfo(q,existing);return;}
+ if(!containsPlayer(q,p.x,p.z)){toolMessage('Gå inn på området for å prosjektere.');return;}
  const site=constructionReady(q);
  if(!site){toolMessage('Byggeplassen må være godkjent med eksakt målkote og stabile rand­skråninger.');return;}
  constructionSession={id:globalThis.crypto?.randomUUID?.()||('ce11-'+Date.now()+'-'+Math.random().toString(36).slice(2)),site,accepted:null};
@@ -2515,7 +2619,7 @@ function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta
 const joyEl=$('joy'),knob=$('knob');function joyMove(e){let r=joyEl.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,len=Math.max(1,Math.hypot(dx,dy)),v=Math.min(1,len/48);joy.x=dx/len*v;joy.y=dy/len*v;knob.style.transform=`translate(${joy.x*44}px,${joy.y*44}px)`}
 joyEl.addEventListener('pointerdown',e=>{e.preventDefault();joyEl.setPointerCapture(e.pointerId);joyMove(e)});joyEl.addEventListener('pointermove',e=>{if(joyEl.hasPointerCapture(e.pointerId))joyMove(e)});function joyEnd(){joy.x=joy.y=0;knob.style.transform='translate(0,0)'}joyEl.addEventListener('pointerup',joyEnd);joyEl.addEventListener('pointercancel',joyEnd);
 document.addEventListener('pointerdown',e=>{
- if(paused||e.button!==0||e.target.closest('button,select,input,#joy,#panel,#toolHud,#inventoryPanel,#pileControls'))return;
+ if(paused||e.button!==0||e.target.closest('button,select,input,#joy,#panel,#toolHud,#inventoryPanel,#pileControls,#constructionHud'))return;
  if(e.clientX<innerWidth*.35)return;
  lookPointer=e.pointerId;lookLastX=e.clientX;lookLastY=e.clientY;
  if(e.target.setPointerCapture)e.target.setPointerCapture(e.pointerId);
