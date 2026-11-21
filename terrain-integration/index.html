@@ -355,6 +355,11 @@ body.site-hud-active #gradeProgressHud{display:none!important}
 #constructionInfo .site-table-scroll{overflow-x:auto;max-width:100%}
 #constructionInfo .site-material-table{width:100%;min-width:455px;border-collapse:collapse}
 @media(max-width:540px){#constructionInfo{padding:7px}#constructionInfo article{max-height:calc(100dvh - 14px)!important}#constructionInfo .site-tabs{gap:2px}#constructionInfo .site-tab{font-size:10px;padding:7px 2px}}
+/* C.2.1.1d */
+#sitePickHud{position:fixed;z-index:30;bottom:calc(104px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(440px,calc(100vw - 20px));border-radius:12px;border:1px solid #a4cfae;background:#162e23f5;padding:12px;box-shadow:0 8px 30px #0009}
+#sitePickHud[hidden]{display:none!important}#sitePickHud strong{display:block}#sitePickHud p{font-size:12px}#sitePickHud p[data-valid="false"]{color:#ffb1a1}
+#sitePickHud>div{display:flex;gap:8px}#sitePickHud button{flex:1;min-height:44px;padding:8px;font-size:12px}
+#sitePickHud small{display:block;margin-top:8px;font-size:11px}
 </style></head><body><button id="gradeToggle" type="button">📐 Planering</button><button id="constructionToggle" type="button" hidden>Bygg</button><button id="constructionDoorToggle" type="button" hidden>🚪 Åpne dør</button><button id="buildingStoreToggle" type="button" hidden>📦 Åpne lager</button>
 <button id="survivalToggle" type="button" hidden>🛠 Småbygg</button><button id="survivalInteract" type="button" hidden>Bruk konstruksjon</button>
 <div id="needsHud" aria-label="Overlevelsesstatus">🍽️ Mat 100 % · 🔥 Varme 100 %</div>
@@ -381,7 +386,7 @@ body.site-hud-active #gradeProgressHud{display:none!important}
 </div>
 <div id="buildingStoreRows"></div><p id="buildingStoreFeedback" role="status" aria-live="polite"></p>
 <p class="building-store-help">Alle materialer oppbevares separat for denne bygningen. Ferdige lagerskur beholder innholdet når spillet lagres.</p>
-</article></div><div id="constructionHud" hidden aria-label="Materialbehov ved byggeplass"></div><div id="constructionOverlay" hidden><div id="constructionBar"><strong id="constructionBarTitle">Byggeplass</strong><button id="constructionClose" type="button">Avbryt / tilbake</button></div><iframe id="constructionFrame" title="AFTERFALL konstruksjonseditor" allow="fullscreen"></iframe></div><div id="constructionInfo" hidden><article><h2 id="constructionInfoTitle">Byggeplass</h2><div id="constructionInfoBody"></div><button id="constructionInfoClose" type="button">Lukk</button></article></div><div id="gradeOverlay" role="presentation"><section id="gradePanel" role="dialog" aria-modal="true" aria-label="Terrengplanering"><h2>📐 Planering · CE 1.1.4C.2.1.1</h2><p>Manuelle planeringsprosjekter er valgfrie. Bruk spadens «Høyderutenett» for kotevisning, målkotelås og fri graving. Terrenget gjenkjennes automatisk som plant når kotehøydene samsvarer. Ønsker du et eget prosjekt, kan du fremdeles velge to hjørner (maks 20 × 20 m). Fysiske masser, stabilitet og eksisterende bygg beskyttes.</p><p style="font-size:12px;color:#bdd7c5">⛰️ Rasvinkler (spillverdier): jord/sand 30°, leire/stein 40°. Fast fjell raser ikke. Hold inne Grav/Fyll for gjentatte spadetak. Større bygninger kan også plasseres på automatisk registrerte, plane flater med stabile rand­skråninger.</p><div id="gradeProjectList" aria-label="Lagrede planeringsprosjekter"></div><p><label for="gradeName">Prosjektnavn: </label><input id="gradeName" type="text" maxlength="48" value="Nytt planeringsområde" style="width:min(250px,90%)"></p><button id="gradeFirst">1. Sett hjørne A</button><button id="gradeSecond">2. Sett hjørne B</button><button id="gradeClearCorners" type="button" disabled>Nullstill hjørner</button><div id="gradeDraftStatus" aria-live="polite"></div><div id="gradeHeights" aria-live="polite">Måler terrengkoter …</div><div id="gradeStats" aria-live="polite">Marker hjørne A og B for å beregne områdets koteverdier.</div><button id="gradeSuggest" type="button" disabled>Bruk foreslått kote</button><p><label for="gradeLevel">Prosjektert kote (m): </label><input id="gradeLevel" type="number" step="0.1" inputmode="decimal"></p><button id="gradeCreate">Opprett nytt prosjekt</button><button id="gradeExtend" type="button">↗ Utvid valgt område</button><button id="gradeComplete">Godkjenn fullført</button><button id="gradeArchive">Arkiver prosjekt</button><button id="gradeReopen">Gjenåpne prosjekt</button><button id="gradeDelete">Slett valgt prosjekt</button><div id="gradeDelta" aria-live="polite"></div><div id="gradeInfo" aria-live="polite">Ingen prosjekt.</div><button id="gradeClose">Lukk ✕</button></section></div><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small id="releaseVersion" data-release="ce114c211h">CE 1.1.4C.2.1.1h · OVERLEVELSESKONSTRUKSJONER</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="gradeDraftHud" hidden><strong>UTSTIKKING · NYTT OMRÅDE</strong><span id="gradeDraftDetail"></span></div><div id="gradeLive" role="status" aria-live="off" hidden></div><div id="gradeProgressHud" hidden><strong id="gradeProgressLabel">Planering</strong><div id="gradeProgressTrack"><div id="gradeProgressFill"></div></div><small id="gradeProgressDetail"></small></div><div id="terrainGridHud" hidden><strong>⛰️ Terrenghøyder</strong><span id="terrainGridDetail"></span></div><div id="weatherHud">☀ 12:00 · Klart</div><div id="joy"><div id="knob"></div></div><div id="terrainSettingsBackdrop" hidden aria-hidden="true"></div><div id="earthTools"><div class="earthButtons"><button id="earthDig" type="button">Grav</button><button id="earthFill" type="button">Fyll</button></div><div id="earthAvailability" aria-live="polite" style="font-size:11px;line-height:1.3;color:#c9e3d6;margin-top:5px"></div><div id="earthWorkStatus" hidden aria-live="polite"></div>
+</article></div><div id="constructionHud" hidden aria-label="Materialbehov ved byggeplass"></div><div id="constructionOverlay" hidden><div id="constructionBar"><strong id="constructionBarTitle">Byggeplass</strong><button id="constructionClose" type="button">Avbryt / tilbake</button></div><iframe id="constructionFrame" title="AFTERFALL konstruksjonseditor" allow="fullscreen"></iframe></div><div id="sitePickHud" hidden><strong>🏗️ Velg byggeplass</strong><p id="sitePickStatus" role="status">Sikt mot ønsket byggegrunn.</p><div><button id="sitePickConfirm" type="button">Bekreft plassering</button><button id="sitePickCancel" type="button">Avbryt</button></div><small>Forhåndsvisning: 3 × 3 m. Rotasjon og ferdigtegninger følger i C.2.1.1e–f.</small></div><div id="constructionInfo" hidden><article><h2 id="constructionInfoTitle">Byggeplass</h2><div id="constructionInfoBody"></div><button id="constructionInfoClose" type="button">Lukk</button></article></div><div id="gradeOverlay" role="presentation"><section id="gradePanel" role="dialog" aria-modal="true" aria-label="Terrengplanering"><h2>📐 Planering · CE 1.1.4C.2.1.1</h2><p>Manuelle planeringsprosjekter er valgfrie. Bruk spadens «Høyderutenett» for kotevisning, målkotelås og fri graving. Terrenget gjenkjennes automatisk som plant når kotehøydene samsvarer. Ønsker du et eget prosjekt, kan du fremdeles velge to hjørner (maks 20 × 20 m). Fysiske masser, stabilitet og eksisterende bygg beskyttes.</p><p style="font-size:12px;color:#bdd7c5">⛰️ Rasvinkler (spillverdier): jord/sand 30°, leire/stein 40°. Fast fjell raser ikke. Hold inne Grav/Fyll for gjentatte spadetak. Større bygninger kan også plasseres på automatisk registrerte, plane flater med stabile rand­skråninger.</p><div id="gradeProjectList" aria-label="Lagrede planeringsprosjekter"></div><p><label for="gradeName">Prosjektnavn: </label><input id="gradeName" type="text" maxlength="48" value="Nytt planeringsområde" style="width:min(250px,90%)"></p><button id="gradeFirst">1. Sett hjørne A</button><button id="gradeSecond">2. Sett hjørne B</button><button id="gradeClearCorners" type="button" disabled>Nullstill hjørner</button><div id="gradeDraftStatus" aria-live="polite"></div><div id="gradeHeights" aria-live="polite">Måler terrengkoter …</div><div id="gradeStats" aria-live="polite">Marker hjørne A og B for å beregne områdets koteverdier.</div><button id="gradeSuggest" type="button" disabled>Bruk foreslått kote</button><p><label for="gradeLevel">Prosjektert kote (m): </label><input id="gradeLevel" type="number" step="0.1" inputmode="decimal"></p><button id="gradeCreate">Opprett nytt prosjekt</button><button id="gradeExtend" type="button">↗ Utvid valgt område</button><button id="gradeComplete">Godkjenn fullført</button><button id="gradeArchive">Arkiver prosjekt</button><button id="gradeReopen">Gjenåpne prosjekt</button><button id="gradeDelete">Slett valgt prosjekt</button><div id="gradeDelta" aria-live="polite"></div><div id="gradeInfo" aria-live="polite">Ingen prosjekt.</div><button id="gradeClose">Lukk ✕</button></section></div><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small id="releaseVersion" data-release="ce114c211d">CE 1.1.4C.2.1.1d · OVERLEVELSESKONSTRUKSJONER</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="gradeDraftHud" hidden><strong>UTSTIKKING · NYTT OMRÅDE</strong><span id="gradeDraftDetail"></span></div><div id="gradeLive" role="status" aria-live="off" hidden></div><div id="gradeProgressHud" hidden><strong id="gradeProgressLabel">Planering</strong><div id="gradeProgressTrack"><div id="gradeProgressFill"></div></div><small id="gradeProgressDetail"></small></div><div id="terrainGridHud" hidden><strong>⛰️ Terrenghøyder</strong><span id="terrainGridDetail"></span></div><div id="weatherHud">☀ 12:00 · Klart</div><div id="joy"><div id="knob"></div></div><div id="terrainSettingsBackdrop" hidden aria-hidden="true"></div><div id="earthTools"><div class="earthButtons"><button id="earthDig" type="button">Grav</button><button id="earthFill" type="button">Fyll</button></div><div id="earthAvailability" aria-live="polite" style="font-size:11px;line-height:1.3;color:#c9e3d6;margin-top:5px"></div><div id="earthWorkStatus" hidden aria-live="polite"></div>
 <button id="terrainSettingsToggle" type="button" aria-controls="terrainModeControls" aria-expanded="false">⛰️ Koteinnstillinger</button>
 <div id="terrainModeControls">
  <div class="terrain-settings-heading"><strong>⛰️ Terrengkontroll</strong><button id="terrainSettingsClose" type="button" aria-label="Lukk koteinnstillinger">Lukk ✕</button></div>
@@ -3149,7 +3154,7 @@ function siteAmountShort(v){
 let constructionHudSignature='';
 function constructionUpdateHud(){
  const q=constructionContext(),plan=q&&constructionPlans.get(q.id),button=$('constructionToggle'),hud=$('constructionHud');
- const modal=constructionOpen||constructionInfoOpen||paused||!!smallPlacement||pileMenuOpen||inventoryOpen||sawOpenFlag||$('gradeOverlay').classList.contains('show');
+ const modal=constructionOpen||constructionInfoOpen||paused||!!smallPlacement||!!constructionSitePick||pileMenuOpen||inventoryOpen||sawOpenFlag||$('gradeOverlay').classList.contains('show');
  button.hidden=modal;button.textContent=plan?'Byggeplass':'🏗️ Bygg';
  constructionDoorRefresh();buildingStoreRefreshButton();refreshSurvivalButtons();
  const show=!!plan&&!modal&&plan.status!=='complete';
@@ -3579,7 +3584,7 @@ function renderSurvivalMenu(message=''){
   host.append(survivalElement('p','Velg bygning. Ferdige modeller og manuell plassering videreutvikles i C.2.1.1d–f.'));
   for(const name of ['Lagerskur','Enkel hytte','Åpent verksted']){
    const card=survivalElement('section');card.className='s-card';card.append(survivalElement('h3',name));
-   if(name==='Lagerskur'){card.append(survivalElement('p','Velg en godkjent byggeplass for eksisterende konstruksjonseditor.'));survivalButton(card,'Velg byggeplass',()=>{survivalCloseMenu();constructionBegin();});}
+   if(name==='Lagerskur'){card.append(survivalElement('p','Velg en godkjent byggeplass for eksisterende konstruksjonseditor.'));survivalButton(card,'Plasser byggegrunn',()=>{survivalCloseMenu();constructionSitePickStart();});}
    else card.append(survivalElement('p','Byggetegningen blir tilgjengelig i kommende delversjon.'));
    host.append(card);
   }
@@ -3587,7 +3592,7 @@ function renderSurvivalMenu(message=''){
  }
  if(survivalMode==='build'&&activeBuildTab==='free'){
   host.append(survivalElement('p','Modulbasert fri prosjektering på godkjent planert byggegrunn i 3D-editoren.'));
-  survivalButton(host,'Åpne konstruksjonseditor',()=>{survivalCloseMenu();constructionBegin();});return;
+  survivalButton(host,'Velg byggegrunn',()=>{survivalCloseMenu();constructionSitePickStart();});return;
  }
  if(survivalMode==='build'){
   const note=survivalElement('p','Småbygg krever godkjent planert terreng. Velg konstruksjon, sikt på ønsket plass og roter modellen før du bekrefter. Materialene trekkes først ved plassering.');
@@ -3964,15 +3969,67 @@ async function constructionAction(q,action){
  const message=(action==='deliver'||fromPiles?(fromPiles?'Levert fra hauger: ':'Levert fra inventaret: ')+Object.entries(result.moved).map(([k,v])=>siteAmount(v,RESOURCE_CATALOG[k].unit==='L'?1:0)+' '+RESOURCE_CATALOG[k].unit+' '+RESOURCE_CATALOG[k].name.toLowerCase()).join(' · '):'Montert: '+buildSiteState(plan).task.label);
  constructionShowInfo(q,result.plan,message);
 }
-function constructionBegin(){
+
+let constructionSitePick=null,constructionPickGhost=null,constructionPickLast=0;
+function constructionSitePickCancel(){
+ if(!constructionSitePick)return;
+ constructionSitePick=null;$('sitePickHud').hidden=true;
+ if(constructionPickGhost){scene.remove(constructionPickGhost);constructionPickGhost.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});constructionPickGhost=null;}
+ constructionUpdateHud();
+}
+function constructionSitePickStart(){
+ if(paused||constructionSitePick||constructionOpen||constructionInfoOpen||!camera||!scene)return;
+ constructionSitePick={grade:null,error:'Sikt på flatt terreng.'};$('sitePickHud').hidden=false;
+ const g=new THREE.Group();
+ const line=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints([[-1.5,0,-1.5],[1.5,0,-1.5],[1.5,0,1.5],[-1.5,0,1.5]].map(a=>new THREE.Vector3(...a))),new THREE.LineBasicMaterial({color:0x7bf0a3,depthTest:false}));
+ const plane=new THREE.Mesh(new THREE.PlaneGeometry(3,3),new THREE.MeshBasicMaterial({color:0x7bf0a3,transparent:true,opacity:.2,side:THREE.DoubleSide,depthWrite:false}));plane.rotation.x=-Math.PI/2;
+ g.add(line,plane);scene.add(g);constructionPickGhost=g;constructionPickLast=0;constructionSitePickUpdate(true);constructionUpdateHud();
+}
+function constructionPickCandidate(hit){
+ if(!hit)return {error:'Sikt mot bakken innen 25 meter.'};
+ const x=Math.round(hit.x),z=Math.round(hit.z),existing=gradingAt(x,z);
+ if(existing){
+  if(constructionPlans.has(existing.id))return {error:'Området har allerede en byggeplan.'};
+  if(!['completed','archived'].includes(existing.status)||!constructionReady(existing))return {error:'Planeringsområdet er ikke ferdig eller godkjent.'};
+  return {grade:existing};
+ }
+ const q={id:'autograde-'+Date.now()+'-'+Math.floor(Math.random()*100000),name:'Manuelt plassert byggegrunn',
+ status:'completed',x0:x-1,x1:x+2,z0:z-1,z1:z+2,level:ground(x,z),schemaVersion:GRADE_SCHEMA.version,autoFlat:true,initialHeights:{}};
+ if(!autoFlatStillValid(q))return {error:'Flaten må være jevn, fri for hindringer og innenfor byggegrensen.'};
+ if(!gradeSlopeStatus(q).ok)return {error:'Ustabil rand­skråning. Velg et annet sted.'};
+ if(!constructionReady(q))return {error:'Byggegrunnen kan ikke godkjennes.'};
+ return {grade:q};
+}
+function constructionSitePickUpdate(force=false){
+ if(!constructionSitePick)return;
+ const now=performance.now();if(!force&&now-constructionPickLast<140)return;constructionPickLast=now;
+ const aim=earthAim(25),result=constructionPickCandidate(aim);constructionSitePick.grade=result.grade||null;constructionSitePick.error=result.error||null;
+ const label=$('sitePickStatus');label.dataset.valid=String(!result.error);
+ label.textContent=result.error||('✓ '+result.grade.name+' · '+(result.grade.x1-result.grade.x0)+' × '+(result.grade.z1-result.grade.z0)+' m · kote '+result.grade.level.toFixed(2)+' m');
+ $('sitePickConfirm').disabled=!!result.error;
+ if(constructionPickGhost){
+  constructionPickGhost.visible=!!aim;
+  if(aim){const q=result.grade,x=q?(q.x0+q.x1)/2:Math.round(aim.x)+.5,z=q?(q.z0+q.z1)/2:Math.round(aim.z)+.5;
+   constructionPickGhost.position.set(x-PAD_X,ground(x,z)+.06,z-PAD_Z);
+   constructionPickGhost.scale.set(q?(q.x1-q.x0)/3:1,1,q?(q.z1-q.z0)/3:1);
+   constructionPickGhost.children.forEach(o=>o.material.color.setHex(result.error?0xff776b:0x7bf0a3));
+  }
+ }
+}
+function constructionSitePickConfirm(){
+ if(!constructionSitePick)return;constructionSitePickUpdate(true);
+ const q=constructionSitePick.grade;if(!q||constructionSitePick.error)return;
+ constructionSitePickCancel();constructionBegin(q,true);
+}
+function constructionBegin(selectedGrade=null,remotePlacement=false){
  if(paused||constructionOpen||constructionInfoOpen||pileMenuOpen||inventoryOpen||sawOpenFlag||$('gradeOverlay').classList.contains('show'))return;
- const q=constructionContext();
+ const q=selectedGrade||constructionContext();
  if(!q){toolMessage('Finn en flat byggeflate på minst 3 × 3 m, eller bruk et godkjent planeringsområde.');return;}
  const existing=constructionPlans.get(q.id);if(existing){if(existing.status==='complete'){toolMessage('Bygningen er allerede ferdig.');return;}constructionShowInfo(q,existing);return;}
- if(!containsPlayer(q,p.x,p.z)){toolMessage('Gå inn på området for å prosjektere.');return;}
+ if(!remotePlacement&&!containsPlayer(q,p.x,p.z)){toolMessage('Gå inn på området for å prosjektere.');return;}
  const site=constructionReady(q);
  if(!site){toolMessage('Byggeflaten må være plan og ha stabile skråninger.');return;}
- constructionSession={id:globalThis.crypto?.randomUUID?.()||('ce11-'+Date.now()+'-'+Math.random().toString(36).slice(2)),site,accepted:null,autoGrade:q.autoFlat?q:null};
+ constructionSession={id:globalThis.crypto?.randomUUID?.()||('ce11-'+Date.now()+'-'+Math.random().toString(36).slice(2)),site,accepted:null,autoGrade:q.autoFlat?q:null,remotePlacement};
  stopShovelHold();joyEnd();lookPointer=null;constructionOpen=true;paused=true;
  $('constructionBarTitle').textContent=q.name+' · '+site.length+' × '+site.width+' m';
  $('constructionClose').disabled=false;$('constructionOverlay').hidden=false;
@@ -3999,7 +4056,7 @@ async function constructionReceive(e){
  const respond=(accepted,reason)=>constructionSend('plan-result',{session:session.id,planId:id,accepted,reason});
  if(session.accepted){respond(session.accepted===id,session.accepted===id?undefined:'Byggeplassen er allerede reservert.');return;}
  const q=gradingProjects.find(q=>q.id===session.site.id)||(session.autoGrade?.id===session.site.id?session.autoGrade:null),site=constructionReady(q);
- if(!site||!sameSite(site,session.site)||!containsPlayer(q,p.x,p.z)){respond(false,'Byggeplassen er ikke lenger godkjent, eller spilleren står utenfor.');return;}
+ if(!site||!sameSite(site,session.site)||(!session.remotePlacement&&!containsPlayer(q,p.x,p.z))){respond(false,'Byggeplassen er ikke lenger godkjent, eller spilleren står utenfor.');return;}
  if(constructionPlans.has(site.id)){respond(false,'Det finnes allerede en byggeplan på dette området.');return;}
  if([...constructionPlans.values()].some(p=>p.planId===id)){respond(false,'Byggeplan-ID er allerede brukt på en annen byggeplass.');return;}
  let result;
@@ -4028,6 +4085,8 @@ async function constructionReceive(e){
  setTimeout(()=>{if(constructionSession===session){constructionClose();toolMessage('Byggeplass etablert. 0 % bygget – ingen materialer brukt.');}},150);
 }
 function constructionInit(){
+ $('sitePickConfirm').onclick=constructionSitePickConfirm;
+ $('sitePickCancel').onclick=constructionSitePickCancel;
  $('constructionToggle').onclick=()=>{const q=constructionContext();if(q&&constructionPlans.has(q.id))constructionBegin();else survivalOpenMenu('build','drawings');};
  $('constructionDoorToggle').onclick=constructionDoorInteract;
  $('constructionClose').onclick=()=>{if(!constructionSession?.accepted&&!confirm('Avbryte prosjekteringen? Ulagrede modeller forkastes.'))return;constructionClose();};
@@ -4050,7 +4109,7 @@ function gradeInit(){
  gradeRefresh();
 }
 async function init(){await worldInitialize();renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.insertBefore(renderer.domElement,document.body.firstChild);camera=new THREE.PerspectiveCamera(73,innerWidth/innerHeight,.08,260);camera.rotation.order='YXZ';clock=new THREE.Clock();buildWorld();gradeInit();constructionInit();buildingStoreInit();survivalInit();earthAvailabilityUpdate();pileMeshRefresh();sawStationsRefresh();initWeather();initInventoryUI();loadHudUpdate();weatherState.elapsed=WEATHER_DAY_SECONDS*.5;load();terrainModeInit();relocatePlayerFromStructure();updateWeather(0);updateCamera();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});$('status').textContent='4 × 4 km · dynamiske terrengchunks, elver, innsjøer og hav aktive · Utforsk, samle ressurser og bygg';animate()}
-function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05);if(!paused){let speed=3.5*(survivalNeeds.hunger<15?.86:1)*(survivalNeeds.warmth<15?.86:1),turnSpeed=2.1,forward=-joy.y,turn=joy.x;p.yaw-=turn*turnSpeed*dt;let fx=-Math.sin(p.yaw),fz=-Math.cos(p.yaw);move(fx*forward*speed*dt,fz*forward*speed*dt);p.seconds+=dt;updateCamera();if((Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4)))updateChunks()}waterTime.value+=dt;updateWeather(paused?0:dt);survivalTick(paused?0:dt);treeRegrowthTick();terrainGridDraw();survivalPlacePreview();renderer.render(scene,camera);if($('gradeOverlay').classList.contains('show')&&performance.now()-gradeLastHud>300){gradeLastHud=performance.now();gradeElevationRefresh()}if(performance.now()-gradeLiveLast>200){gradeLiveLast=performance.now();gradeLiveRefresh()}if(performance.now()-pileFocusLast>100){pileFocusLast=performance.now();pileFocusRefresh()}if(performance.now()-constructionLastRefresh>300){constructionLastRefresh=performance.now();constructionUpdateHud()}if(Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4))earthAvailabilityUpdate();if(toolToastUntil&&performance.now()>toolToastUntil){$('toolToast').style.display='none';toolToastUntil=0}$('status').textContent=`UTENDØRS · X ${p.x.toFixed(1)} · Z ${p.z.toFixed(1)} · ${terrainChunks.size} chunks · ${Math.round(1/Math.max(dt,.01))} FPS`}
+function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05);if(!paused){let speed=3.5*(survivalNeeds.hunger<15?.86:1)*(survivalNeeds.warmth<15?.86:1),turnSpeed=2.1,forward=-joy.y,turn=joy.x;p.yaw-=turn*turnSpeed*dt;let fx=-Math.sin(p.yaw),fz=-Math.cos(p.yaw);move(fx*forward*speed*dt,fz*forward*speed*dt);p.seconds+=dt;updateCamera();if((Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4)))updateChunks()}waterTime.value+=dt;updateWeather(paused?0:dt);survivalTick(paused?0:dt);treeRegrowthTick();terrainGridDraw();survivalPlacePreview();constructionSitePickUpdate();renderer.render(scene,camera);if($('gradeOverlay').classList.contains('show')&&performance.now()-gradeLastHud>300){gradeLastHud=performance.now();gradeElevationRefresh()}if(performance.now()-gradeLiveLast>200){gradeLiveLast=performance.now();gradeLiveRefresh()}if(performance.now()-pileFocusLast>100){pileFocusLast=performance.now();pileFocusRefresh()}if(performance.now()-constructionLastRefresh>300){constructionLastRefresh=performance.now();constructionUpdateHud()}if(Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4))earthAvailabilityUpdate();if(toolToastUntil&&performance.now()>toolToastUntil){$('toolToast').style.display='none';toolToastUntil=0}$('status').textContent=`UTENDØRS · X ${p.x.toFixed(1)} · Z ${p.z.toFixed(1)} · ${terrainChunks.size} chunks · ${Math.round(1/Math.max(dt,.01))} FPS`}
 const joyEl=$('joy'),knob=$('knob');function joyMove(e){let r=joyEl.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,len=Math.max(1,Math.hypot(dx,dy)),v=Math.min(1,len/48);joy.x=dx/len*v;joy.y=dy/len*v;knob.style.transform=`translate(${joy.x*44}px,${joy.y*44}px)`}
 joyEl.addEventListener('pointerdown',e=>{e.preventDefault();joyEl.setPointerCapture(e.pointerId);joyMove(e)});joyEl.addEventListener('pointermove',e=>{if(joyEl.hasPointerCapture(e.pointerId))joyMove(e)});function joyEnd(){joy.x=joy.y=0;knob.style.transform='translate(0,0)'}joyEl.addEventListener('pointerup',joyEnd);joyEl.addEventListener('pointercancel',joyEnd);
 document.addEventListener('pointerdown',e=>{
@@ -4080,9 +4139,10 @@ const gameSlotMenu=installGameSlots({
  getWorldSnapshot:worldSnapshot,getPlayer:()=>p,getWeatherElapsed:()=>weatherState.elapsed,
  reload:()=>location.reload()
 });
-const panel=$('panel');function showPanel(on){if(on){gameSlotMenu.refresh();if(smallPlacement)survivalPlaceCancel();if(activeGrade())$('gradeLevel').value=activeGrade().level.toFixed(1);if(pileMenuOpen)setPileMenu(false);if($('diagOverlay').classList.contains('show'))diagOpen(false)}paused=on||inventoryOpen;panel.classList.toggle('show',on);joyEnd()}$('menuBuild').onclick=()=>{showPanel(false);survivalOpenMenu('build','drawings');};$('menuDiag').onclick=()=>{showPanel(false);diagOpen(true);};$('menuInventory').onclick=()=>{showPanel(false);showInventory(true);};$('menu').onclick=()=>showPanel(true);$('resume').onclick=()=>showPanel(false);$('save').onclick=save;$('load').onclick=()=>{load();showPanel(false)};
+const panel=$('panel');function showPanel(on){if(on){gameSlotMenu.refresh();if(constructionSitePick)constructionSitePickCancel();if(smallPlacement)survivalPlaceCancel();if(activeGrade())$('gradeLevel').value=activeGrade().level.toFixed(1);if(pileMenuOpen)setPileMenu(false);if($('diagOverlay').classList.contains('show'))diagOpen(false)}paused=on||inventoryOpen;panel.classList.toggle('show',on);joyEnd()}$('menuBuild').onclick=()=>{showPanel(false);survivalOpenMenu('build','drawings');};$('menuDiag').onclick=()=>{showPanel(false);diagOpen(true);};$('menuInventory').onclick=()=>{showPanel(false);showInventory(true);};$('menu').onclick=()=>showPanel(true);$('resume').onclick=()=>showPanel(false);$('save').onclick=save;$('load').onclick=()=>{load();showPanel(false)};
 addEventListener('keydown',e=>{
  if(!$('newGameDialog').hidden){if(e.key==='Escape'){e.preventDefault();gameSlotMenu.close()}return;}
+ if(constructionSitePick){if(e.key==='Escape'){e.preventDefault();constructionSitePickCancel();}else if(e.key==='Enter'){e.preventDefault();constructionSitePickConfirm();}return;}
  if(smallPlacement){
   const key=e.key.toLowerCase();
   if(key==='escape'){e.preventDefault();survivalPlaceCancel();return;}
