@@ -2023,6 +2023,8 @@ function riverWidthAt(point){
 function riverSample(x,z){let best=null,bestD=Infinity,arr=riverBuckets.get(Math.floor(x/RIVER_BUCKET)+','+Math.floor(z/RIVER_BUCKET));if(!arr)return null;for(let s of arr){let a=s.a,b=s.b,vx=b.x-a.x,vz=b.z-a.z,l2=vx*vx+vz*vz||1,t=clamp(((x-a.x)*vx+(z-a.z)*vz)/l2,0,1),d=Math.hypot(x-a.x-vx*t,z-a.z-vz*t),w=riverWidthAt(a)+(riverWidthAt(b)-riverWidthAt(a))*t;if(d<bestD){bestD=d;best={distance:d,width:w,water:a.water+(b.water-a.water)*t}}}return best}
 
 function drySurfaceAt(x,z,height,river=null){
+ // Most inland terrain is already positive: avoid hydrology lookup for every mesh vertex.
+ if(height>=DRY_LAND_FLOOR)return height;
  // Submerged seabeds, lakes and riverbeds retain true underwater elevations.
  const submerged=!!waterBodyAt(x,z)||
   !!(river&&river.distance<river.width*.78&&height<river.water-PAD_H+.04);
