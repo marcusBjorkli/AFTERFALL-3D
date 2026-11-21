@@ -1,8 +1,11 @@
 # AFTERFALL – godkjent konstruksjonsplan CE 1.1.4C
 Dato: 20. november 2026 · Status: **Godkjent som neste utviklingsserie, ikke implementert**
 
+## CE 1.1.4C.0 – Grunnleggende bygningsinteraksjon og lagring
+**Implementert 21. november 2026.** Eksisterende ferdige lagerskur har nå et interaktivt lager som kan fylles fra inventaret og tømmes tilbake til inventaret. Innholdet lagres per byggeplan og eksisterende B.6-spilltilstand leses videre uten migrering av verdens-/inventarformat. Dette er en funksjonalitetsfase før nye C.1-konstruksjoner.
+
 ## Utviklingsrekkefølge
-CE 1.1.4B.6: Samlet integrasjon og spilltesting av allerede eksisterende konstruksjonssystem.
+CE 1.1.4B.6: Samlet integrasjon og spilltesting av allerede eksisterende konstruksjonssystem (**implementert**).\nCE 1.1.4C.0: Grunnleggende bygningsinteraksjon og lager for ferdige lagerskur (**implementert**).
 Deretter CE 1.1.4C.1–C.4 med de **12 tidligere avtalte** førindustrielle konstruksjonene. Ikke erstatt listen uten en ny eksplisitt beslutning.
 
 | Fase | Konstruksjon | Opprinnelig materialgrunnlag | Spillfunksjon / utviklingsmål | Eksisterende funksjoner |

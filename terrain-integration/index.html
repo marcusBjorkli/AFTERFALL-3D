@@ -163,7 +163,7 @@ body.af-modal-active #earthTools,body.af-modal-active #useTool,body.af-modal-act
 #buildingStoreOverlay .building-store-actions button:disabled{opacity:.42}
 #buildingStoreOverlay input{display:block;width:100%;max-width:180px;font:16px system-ui;background:#293e33;color:white;border:1px solid #a7baa5;border-radius:8px;padding:8px;margin:6px 0}
 #buildingStoreOverlay .building-store-help{font-size:12px;color:#b5c8b7}
-@media(max-height:680px){#buildingStoreToggle{bottom:calc(405px + env(safe-area-inset-bottom))}}
+@media(max-height:680px){#buildingStoreToggle{top:calc(env(safe-area-inset-top) + 184px);bottom:auto}}
 @media(max-height:680px){#constructionDoorToggle{bottom:calc(330px + env(safe-area-inset-bottom))}}
 #constructionHud strong{display:block;overflow-wrap:anywhere}
 #constructionHud .site-mat-row{display:flex;align-items:baseline;justify-content:space-between;gap:6px;font-variant-numeric:tabular-nums;margin:4px 0}
@@ -2925,7 +2925,7 @@ function constructionBegin(){
  stopShovelHold();joyEnd();lookPointer=null;constructionOpen=true;paused=true;
  $('constructionBarTitle').textContent=q.name+' · '+site.length+' × '+site.width+' m';
  $('constructionClose').disabled=false;$('constructionOverlay').hidden=false;
- $('constructionFrame').src='./editor-114b6/?mode=game&v=114b6';
+ $('constructionFrame').src='./editor-114c0/?mode=game&v=114c0';
  constructionUpdateHud();
 }
 function constructionClose(){

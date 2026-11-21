@@ -1,0 +1,24 @@
+<!doctype html><html lang="no"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>AFTERFALL CE 1.1.4C.0 – lagertest</title><style>body{background:#10231d;color:#e4f2e6;font:16px system-ui;max-width:780px;margin:0 auto;padding:20px}section{background:#223b2f;padding:18px;border:1px solid #6b9479;border-radius:12px}.good{color:#a5e6bd}.bad{color:#f4a7a7}pre{white-space:pre-wrap}</style></head><body><h1>AFTERFALL – CE 1.1.4C.0</h1><p>Tester lagermodellen uten å lese eller endre din spillagring.</p><section><strong id="summary">Tester …</strong><pre id="details"></pre></section><script type="module">
+import {distanceToStorehouse,isCompletedStorehouse,storeCapacity,transferToStore,restoreBuildingStores} from './construction-storage-114c0.js';
+const tests=[],eq=(name,fn)=>{try{if(!fn())throw Error('Mislukkes');tests.push({name,ok:true})}catch(e){tests.push({name,ok:false,error:String(e)})}};
+const catalog={planks:{name:'Planker',unit:'stk',mass:6.625,volume:.012},logs:{name:'Tømmer',unit:'stk',mass:35,volume:.065},stone:{name:'Stein',unit:'L',mass:2.65,volume:.001}};
+const plan={planId:'test-skur',status:'complete',project:{name:'Lagerskur',modules:[{type:'floorDeck'},{type:'doorWall'},{type:'doorLeaf'},{type:'flatRoof'},...Array.from({length:7},()=>({type:'solidWall'}))]},setout:{area:9,world:[[10,0,10],[13,0,10],[13,0,13],[10,0,13]]}};
+const inputs={inventory:{logs:3,planks:6},stored:{},resource:'logs',amount:2,direction:'deposit',plan,catalog,inventoryLimit:{mass:300,volume:.15}};
+const saved=transferToStore(inputs);
+eq('Ferdig lagerskur kan brukes',()=>isCompletedStorehouse(plan));
+eq('Uferdig lagerskur er låst',()=>!isCompletedStorehouse({...plan,status:'building'}));
+eq('Nærhet til ferdig bygning',()=>distanceToStorehouse(plan,11,11)===0&&distanceToStorehouse(plan,14,11)===1);
+eq('Kapasitet for standard lagerskur',()=>storeCapacity(plan).volume===12.6&&storeCapacity(plan).mass===14400);
+eq('Innlevering trekker riktig i inventaret',()=>saved.inventory.logs===1&&saved.stored.logs===2);
+eq('Ingen mutering av inngangsdata',()=>inputs.inventory.logs===3&&Object.keys(inputs.stored).length===0);
+const taken=transferToStore({...inputs,inventory:saved.inventory,stored:saved.stored,direction:'withdraw',resource:'logs',amount:1});
+eq('Uttak gir ressurs tilbake',()=>taken.inventory.logs===2&&taken.stored.logs===1);
+eq('Uttak fra tomt lager avvises',()=>!!transferToStore({...inputs,direction:'withdraw',resource:'logs',amount:1}).error);
+eq('For mange enheter i inventaret avvises',()=>!!transferToStore({...inputs,inventory:{},stored:{logs:10},direction:'withdraw',amount:8}).error);
+eq('Overfylt lager avvises',()=>!!transferToStore({...inputs,inventory:{logs:1000},amount:1000}).error);
+eq('Halve tømmerstokker avvises',()=>!!transferToStore({...inputs,amount:1.5}).error);
+const migrated=restoreBuildingStores([{planId:plan.planId,items:saved.stored}],new Map([['s',plan]]),catalog);
+eq('Lagerinnhold kan gjenopprettes',()=>migrated.stores.get(plan.planId).logs===2);
+eq('Eldre lagringsfil uten felt fungerer',()=>restoreBuildingStores(undefined,new Map([['s',plan]]),catalog).stores.size===0);
+const n=tests.filter(t=>t.ok).length;document.getElementById('summary').textContent=n+' / '+tests.length+' tester bestått';document.getElementById('summary').className=n===tests.length?'good':'bad';document.getElementById('details').textContent=tests.map(t=>(t.ok?'✓ ':'✗ ')+t.name+(t.error?' – '+t.error:'')).join('\n');
+</script></body></html>
