@@ -1,6 +1,6 @@
 // AFTERFALL CE 1.1.4C.2.1 – storehouse user-experience logic.
 // Extends C.0 storage without changing saves, build recipes or inventory rules.
-import {storeCapacity,resourceTotals,validateStoreItems} from './construction-storage-114c0.js';
+import {storeCapacity,resourceTotals,validateStoreItems,isCompletedStorehouse} from './construction-storage-114c0.js';
 const EPS=1e-7;
 const asPercent=(used,capacity)=>Math.max(0,Math.min(100,capacity>0?Math.round(used/capacity*1000)/10:0));
 const positive=n=>Number.isFinite(n)&&n>=0;
@@ -45,7 +45,7 @@ export function maxStoreTransfer({inventory,stored,resource,direction,plan,catal
 export function storehouseList(plans,x,z,distanceToStorehouse,limit=2.8){
  if(!Number.isFinite(x)||!Number.isFinite(z))return [];
  return [...plans.values()]
- .filter(p=>p?.status==='complete')
+ .filter(p=>isCompletedStorehouse(p))
  .map(plan=>({plan,distance:distanceToStorehouse(plan,x,z)}))
  .filter(p=>Number.isFinite(p.distance)&&p.distance<=limit+EPS)
  .sort((a,b)=>a.distance-b.distance||String(a.plan.planId).localeCompare(String(b.plan.planId)));
