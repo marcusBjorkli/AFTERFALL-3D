@@ -1,0 +1,21 @@
+<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AFTERFALL CE 1.1.4C.1.4.2 – lagringstest</title><style>body{background:#0f231b;color:#e6f4ea;max-width:740px;margin:auto;padding:22px;font:16px system-ui}section{background:#1d392a;border:1px solid #7ea68d;border-radius:13px;padding:15px}pre{white-space:pre-wrap;font:13px/1.5 ui-monospace,monospace}.good{color:#a5e4b5}.bad{color:#ffadaa}</style></head><body><h1>Nytt spill – CE 1.1.4C.1.4.2</h1><p>Dette er separate modelltester. De leser ikke og endrer ikke de faktiske spillagringene dine.</p><section><strong id="summary">Tester …</strong><pre id="results"></pre></section><script type="module">
+import {freshWorldSnapshot,freshPlayerCheckpoint,playerCheckpoint,makeSlot,validSlot} from './game-slots-114c142.js';
+const results=[],test=(label,fn)=>{try{if(!fn())throw Error('Feil resultat');results.push({label,ok:true})}catch(e){results.push({label,ok:false,error:String(e)})}};
+const seed=206414,world=freshWorldSnapshot(seed),spawn=freshPlayerCheckpoint(seed);
+const original={...freshWorldSnapshot(seed),edits:[[101,102,-20]],constructionPlans:[{planId:'lager'}],buildingStores:[{planId:'lager',items:{planks:12}}],inventory:{selectedTool:'hammer',items:{logs:3}}};
+const oldP=playerCheckpoint(seed,{x:355,z:411,yaw:1.2,seconds:180});
+const backup=makeSlot(original,oldP);
+test('Ny verden er tom',()=>world.edits.length===0&&world.constructionPlans.length===0&&world.buildingStores.length===0);
+test('Inventar og konstruksjoner tilbakestilles',()=>!Object.keys(world.inventory.items).length&&world.smallStructures.length===0);
+test('Overlevelsesbehov tilbakestilles',()=>world.survivalNeeds.hunger===100&&world.survivalNeeds.warmth===100);
+test('Samme verdensfrø og lagringsformat',()=>world.seed===seed&&world.version===2);
+test('Marcus starter på startstedet',()=>spawn.x===288&&spawn.z===301&&spawn.seconds===0);
+test('Sikkerhetskopi inneholder gamle bygg',()=>backup.world.constructionPlans[0].planId==='lager');
+test('Gammelt lagerinnhold er bevart',()=>backup.world.buildingStores[0].items.planks===12);
+test('Inventar i gammel verden er bevart',()=>backup.world.inventory.items.logs===3);
+test('Tidligere spillposisjon er bevart',()=>backup.player.x===355&&backup.player.z===411);
+test('Sikkerhetskopi kan gjenåpnes',()=>validSlot(backup,seed));
+test('Sikkerhetskopi fra feil verdensfrø avvises',()=>!validSlot(backup,5));
+test('Gammelt og nytt snapshot er uavhengige',()=>world.edits.length===0&&original.edits.length===1);
+const p=results.filter(t=>t.ok).length;document.getElementById('summary').textContent=p+' / '+results.length+' tester bestått';document.getElementById('summary').className=p===results.length?'good':'bad';document.getElementById('results').textContent=results.map(t=>(t.ok?'✓ ':'✗ ')+t.label+(t.error?' – '+t.error:'')).join('\n');
+</script></body></html>

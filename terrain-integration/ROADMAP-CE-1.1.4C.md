@@ -1,6 +1,9 @@
 # AFTERFALL – godkjent konstruksjonsplan CE 1.1.4C
 Dato: 20. november 2026 · Status: **C.0–C.1.4 implementert; C.2–C.4 planlagt**
 
+## CE 1.1.4C.1.4.2 – Nytt spill og to lagringsplasser
+**Implementert 21. november 2026.** Hovedmenyen tilbyr «🌱 Nytt spill» med egen bekreftelsesdialog og en reversibel «↔ Bytt til forrige spill»-funksjon. Nåværende spillverden blir sikkerhetskopiert med terrengarbeid, konstruksjoner, fysiske materialhauger, inventar, lagerinnhold, overlevelsesstatus og Marcus sin posisjon før den nye verdenen starter. Original verden og ny verden kan byttes mellom uten sletting. En tredje verden blir ikke opprettet før en eventuell senere utvidelse av lagringssystemet. Alt oppbevares lokalt i samme nettleser; sletting av nettstedsdata kan fjerne begge lagringsplassene.
+
 ## CE 1.1.4C.0 – Grunnleggende bygningsinteraksjon og lagring
 **Implementert 21. november 2026.** Eksisterende ferdige lagerskur har nå et interaktivt lager som kan fylles fra inventaret og tømmes tilbake til inventaret. Innholdet lagres per byggeplan og eksisterende B.6-spilltilstand leses videre uten migrering av verdens-/inventarformat. Dette er en funksjonalitetsfase før nye C.1-konstruksjoner.
 
