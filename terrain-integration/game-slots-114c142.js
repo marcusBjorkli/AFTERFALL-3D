@@ -4,7 +4,7 @@ export const SLOT_FORMAT='afterfall.world-slot.v1';
 export function freshWorldSnapshot(seed){
  if(!Number.isInteger(seed))throw Error('Ugyldig verdensfrø.');
  return {
-  version:2,seed,revision:0,edits:[],layers:[],slideMass:[],inventory:{selectedTool:'shovel',items:{}},
+  version:2,seed,heightDatum:'sea-level-zero-v1',revision:0,edits:[],layers:[],slideMass:[],inventory:{selectedTool:'shovel',items:{}},
   harvested:[],treeRegrowth:[],rock:[],piles:[],pileSequence:0,constructionPlans:[],
   openConstructionDoors:[],buildingStores:[],smallStructures:[],terrainMode:{enabled:false,locked:false,target:null},
   survivalNeeds:{hunger:100,warmth:100,torchUntil:0},gradingProjects:[],activeGradeId:null,sawStations:[]
