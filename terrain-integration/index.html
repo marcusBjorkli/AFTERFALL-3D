@@ -1334,8 +1334,8 @@ function applyWorldSnapshot(data){
  for(const key of Array.isArray(data.openConstructionDoors)?data.openConstructionDoors:[])if(typeof key==='string'&&key.length<=240)constructionOpenDoors.add(key);
  for(const q of gradingProjects){
   if(constructionPlans.has(q.id))continue;
-  const legacy=q.schemaVersion!==GRADE_SCHEMA.version||Math.abs(q.level-dmRound(q.level))>DM_EPS;
-  q.level=dmRound(q.level);q.schemaVersion=GRADE_SCHEMA.version;
+  const legacy=q.schemaVersion!==GRADE_SCHEMA.version||(!q.autoFlat&&Math.abs(q.level-dmRound(q.level))>DM_EPS);
+  q.level=q.autoFlat?quantizeTarget(q.level):dmRound(q.level);q.schemaVersion=GRADE_SCHEMA.version;
   if(legacy&&q.status!=='active')q.status='active';
  }
  activeGradeId=gradingProjects.some(q=>q.id===data.activeGradeId&&q.status==='active')?data.activeGradeId:(gradingProjects.find(q=>q.status==='active')?.id||null);
@@ -2825,10 +2825,40 @@ function gradeChangeStatus(action){
  refreshPlotPlants(q);worldSave();gradeRefresh();
 }
 // CE 1.1: authoritative game host and visible set-out; no construction or material consumption.
+let autoFlatCache={when:0,x:NaN,z:NaN,revision:-1,grade:null};
+function autoFlatAvailable(x,z){
+ if(x<3||z<3||x>WORLD-3||z>WORLD-3||earthRestricted(x,z,true)||gradingAt(x,z))return false;
+ if(collides(x-PAD_X,z-PAD_Z))return false;
+ if([...survivalStructures.values()].some(q=>Math.hypot(q.x-x,q.z-z)<(SURVIVAL_DEFS[q.type]?.r||.8)+.55))return false;
+ if([...sawStations.values()].some(q=>Math.hypot(q.x-x,q.z-z)<1.2))return false;
+ if([...piles.values()].some(q=>Math.hypot(q.x-x,q.z-z)<stockDimensions(q).radius+.35))return false;
+ return true;
+}
+function autoFlatStillValid(q){
+ if(!q?.autoFlat||!['completed','archived'].includes(q.status)||!Number.isFinite(q.level))return false;
+ for(let z=q.z0;z<=q.z1;z++)for(let x=q.x0;x<=q.x1;x++)
+  if(Math.abs(ground(x,z)-q.level)>GRADE_TOLERANCE||!autoFlatAvailable(x,z))return false;
+ for(let z=q.z0;z<q.z1;z++)for(let x=q.x0;x<q.x1;x++)
+  if(Math.abs(ground(x+.5,z+.5)-q.level)>GRADE_TOLERANCE)return false;
+ return true;
+}
+function automaticFlatCandidate(){
+ const x=Math.round(p.x),z=Math.round(p.z),now=performance.now();
+ if(autoFlatCache.revision===terrainMode.revision&&autoFlatCache.x===x&&autoFlatCache.z===z&&now-autoFlatCache.when<1800)return autoFlatCache.grade;
+ const flat=plotFlatAt(ground,x,z,{minSize:3,maxSize:20,valid:autoFlatAvailable});
+ let grade=null;
+ if(flat){
+  grade={id:'autograde-'+Date.now()+'-'+Math.floor(Math.random()*100000),name:'Automatisk byggegrunn',
+   status:'completed',x0:flat.x0,x1:flat.x1,z0:flat.z0,z1:flat.z1,level:flat.level,
+   schemaVersion:GRADE_SCHEMA.version,autoFlat:true,initialHeights:{}};
+  if(!autoFlatStillValid(grade)||!gradeSlopeStatus(grade).ok)grade=null;
+ }
+ autoFlatCache={when:now,x,z,revision:terrainMode.revision,grade};return grade;
+}
 function constructionHere(){return gradingProjects.find(q=>containsPlayer(q,p.x,p.z)&&gradeBuildSite(q)&&(constructionPlans.has(q.id)||gradeSummary(q).progress===100))||null;}
 function constructionReady(q){
  const site=gradeBuildSite(q);
- return site&&gradeSummary(q).progress===100&&gradeSlopeStatus(q).ok?site:null;
+ return site&&(q.autoFlat?autoFlatStillValid(q):gradeSummary(q).progress===100)&&gradeSlopeStatus(q).ok?site:null;
 }
 // B.5: active site stock and staged module assembly.
 const SITE_INFO_RADIUS=6;
@@ -2849,7 +2879,7 @@ function constructionContext(){
  if(inside&&constructionPlans.has(inside.id))return inside;
  // Nearby reserved sites are inspectable from outside. Starting a NEW
  // construction project still requires standing inside its approved plot.
- return inside||nearestReservedSite(gradingProjects,constructionPlans,p.x,p.z);
+ return inside||nearestReservedSite(gradingProjects,constructionPlans,p.x,p.z)||automaticFlatCandidate();
 }
 function siteMaterialRows(plan){return plan.materialTotals;}
 function nextConstructionTask(plan){return buildSiteState(plan).task;}
@@ -3556,11 +3586,11 @@ async function constructionAction(q,action){
 function constructionBegin(){
  if(paused||constructionOpen||constructionInfoOpen||pileMenuOpen||inventoryOpen||sawOpenFlag||$('gradeOverlay').classList.contains('show'))return;
  const q=constructionContext();
- if(!q){toolMessage('Gå nær en byggeplass eller inn på et godkjent planeringsområde.');return;}
+ if(!q){toolMessage('Finn en flat byggeflate på minst 3 × 3 m, eller bruk et godkjent planeringsområde.');return;}
  const existing=constructionPlans.get(q.id);if(existing){if(existing.status==='complete'){toolMessage('Bygningen er allerede ferdig.');return;}constructionShowInfo(q,existing);return;}
  if(!containsPlayer(q,p.x,p.z)){toolMessage('Gå inn på området for å prosjektere.');return;}
  const site=constructionReady(q);
- if(!site){toolMessage('Byggeplassen må være godkjent med eksakt målkote og stabile rand­skråninger.');return;}
+ if(!site){toolMessage('Byggeflaten må være plan og ha stabile skråninger.');return;}
  constructionSession={id:globalThis.crypto?.randomUUID?.()||('ce11-'+Date.now()+'-'+Math.random().toString(36).slice(2)),site,accepted:null};
  stopShovelHold();joyEnd();lookPointer=null;constructionOpen=true;paused=true;
  $('constructionBarTitle').textContent=q.name+' · '+site.length+' × '+site.width+' m';
