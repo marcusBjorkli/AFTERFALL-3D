@@ -2266,7 +2266,9 @@ try{
      acceptedPlan=submittedPlan;savedProjectSignature=projectSignature(projectSnapshot());
      renderBuildHome();buildNotice('Byggeplan mottatt av spillet. Videre bygging skjer på byggeplassen.');
     }else{
-     buildNotice(typeof msg.reason==='string'?msg.reason.slice(0,300):'Spillet avviste byggeplanen. Kontroller byggeplassen.',true);
+     const error=typeof msg.reason==='string'?msg.reason.slice(0,300):'Spillet avviste byggeplanen. Kontroller byggeplassen.';
+     buildNotice(error,true);
+     if(automaticPrefab)sendBridge('prefab-error',{session:bridgeSession,reason:error});
      submittedPlan=null;renderBuildHome();
     }
    }
