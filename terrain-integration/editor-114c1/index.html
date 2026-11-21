@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#101c20">
-<title>AFTERFALL | Construction Editor CE 1.1.4C.1</title>
+<title>AFTERFALL | Construction Editor CE 1.1.4C.1 – automated blueprint bridge</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:#101c20;color:#e9f0ed;font:14px system-ui,sans-serif}
 body{display:flex;flex-direction:column;height:100dvh;overflow:hidden}
@@ -2119,6 +2119,7 @@ try{
  let anchorGroup=null;
  let materialDensities=defaultDensities();
  const gameMode=new URLSearchParams(location.search).get('mode')==='game';
+ const automaticPrefab=gameMode?new URLSearchParams(location.search).get('prefab'):null;
  const bridgeHost=window.parent!==window?window.parent:(window.opener||null);
  let buildSite=null,bridgeSession=null,buildDraft=null,submittedPlan=null,acceptedPlan=null,acceptedSignature='',transferPending=false;
  const demoSite=()=>({id:'demo-site',length:L,width:W,origin:[0,0,0],angle:0,leveled:true,approved:true});
@@ -2214,6 +2215,28 @@ try{
  // 4. plan-result {session,planId,accepted,reason?}. Only accepted:true allows editor exit.
  //    Repeated identical planId must return same outcome, not create another building.
  // The real host and world-side persistence are not implemented in this branch.
+ // Internal build-plan compiler for the in-world ready-made blueprint menu.
+ // It does not create a finished building or consume resources.
+ function createAutomaticPrefab(type){
+  const fail=reason=>{try{sendBridge('prefab-error',{session:bridgeSession,reason});}catch(e){console.error(e);} };
+  if(!gameMode||!buildSite||transferPending||acceptedPlan)return fail('Ingen godkjent byggegrunn.');
+  if(type!=='storage')return fail('Denne ferdigtegningen er ennå ikke tilgjengelig.');
+  if(modules.length)return fail('Byggeprosjektet må være tomt.');
+  const spec=blueprintCatalog[type];
+  if(buildSite.length<spec.l||buildSite.width<spec.w)return fail('Byggegrunnen er mindre enn byggetegningen.');
+  try{
+   $('blueprintType').value=type;bpLoadPreset();
+   bpPreview();
+   if(!bpCandidate)return fail($('blueprintReport').textContent||'Kunne ikke forhåndskontrollere bygningen.');
+   bpApply();
+   if(!modules.length)return fail($('blueprintReport').textContent||'Kunne ikke opprette bygningsmodulene.');
+   $('projectName').value=spec.name;
+   reviewBuild();
+   if(!buildDraft)return fail($('buildReport').textContent||'Byggeplanen bestod ikke konstruksjonskontrollen.');
+   finishBuild();
+   if(!transferPending)return fail($('buildReport').textContent||'Kunne ikke sende byggeplanen.');
+  }catch(e){console.error('Automatisk ferdigtegning',e);fail(e?.message||String(e));}
+ }
  function initBuildBridge(){
   document.body.classList.toggle('game-mode',gameMode);
   $('buildIntro').textContent=gameMode?'Velg ferdigtegning eller fri prosjektering på den planerte byggeplassen. Bygget oppføres senere i spillverdenen.':'Selvstendig test: byggeflaten simulerer et planert område. Ingen forbindelse til hovedspillet.';
@@ -2231,6 +2254,7 @@ try{
     savedProjectSignature=projectSignature(projectSnapshot());renderBuildHome();
     buildNotice('Godkjent byggeplass mottatt. Velg byggemetode.');
     sendBridge('site-ready',{session:bridgeSession,siteId:buildSite.id});
+    if(automaticPrefab)queueMicrotask(()=>createAutomaticPrefab(automaticPrefab));
    }else if(msg.type==='plan-result'&&transferPending&&msg.session===bridgeSession&&msg.planId===submittedPlan?.planId){
     transferPending=false;$('buildRetry').hidden=true;
     if(msg.accepted===true){
