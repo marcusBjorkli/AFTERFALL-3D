@@ -2120,6 +2120,7 @@ try{
  let materialDensities=defaultDensities();
  const gameMode=new URLSearchParams(location.search).get('mode')==='game';
  const automaticPrefab=gameMode?new URLSearchParams(location.search).get('prefab'):null;
+ const automaticPrefabAngle=gameMode?Number(new URLSearchParams(location.search).get('prefabAngle')||0):0;
  const bridgeHost=window.parent!==window?window.parent:(window.opener||null);
  let buildSite=null,bridgeSession=null,buildDraft=null,submittedPlan=null,acceptedPlan=null,acceptedSignature='',transferPending=false;
  const demoSite=()=>({id:'demo-site',length:L,width:W,origin:[0,0,0],angle:0,leveled:true,approved:true});
@@ -2223,9 +2224,13 @@ try{
   if(type!=='storage')return fail('Denne ferdigtegningen er ennå ikke tilgjengelig.');
   if(modules.length)return fail('Byggeprosjektet må være tomt.');
   const spec=blueprintCatalog[type];
-  if(buildSite.length<spec.l||buildSite.width<spec.w)return fail('Byggegrunnen er mindre enn byggetegningen.');
+  if(![0,90,180,270].includes(automaticPrefabAngle))return fail('Ugyldig rotasjon for ferdig byggetegning.');
+  const turn=automaticPrefabAngle%180!==0,roofLength=spec.l+2*spec.overhang,roofWidth=spec.w+2*spec.overhang;
+  if(buildSite.length<(turn?roofWidth:roofLength)-1e-8||buildSite.width<(turn?roofLength:roofWidth)-1e-8)
+   return fail('Byggegrunnen er for liten til bygning og takutstikk ved valgt rotasjon.');
   try{
    $('blueprintType').value=type;bpLoadPreset();
+   $('bpAngle').value=String(automaticPrefabAngle);
    bpPreview();
    if(!bpCandidate)return fail($('blueprintReport').textContent||'Kunne ikke forhåndskontrollere bygningen.');
    bpApply();
