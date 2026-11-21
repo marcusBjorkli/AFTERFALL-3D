@@ -340,6 +340,21 @@ body.site-hud-active #gradeProgressHud{display:none!important}
  #needsHud{top:calc(env(safe-area-inset-top) + 170px)!important}
  #constructionHud{top:calc(env(safe-area-inset-top) + 209px)!important;max-height:calc(100dvh - 350px)!important}
 }
+
+/* CE 1.1.4C.2.1.1h – four-tab building site dialog */
+#constructionInfo article{width:min(680px,100%)!important;max-height:min(86dvh,860px)!important;overflow-y:auto;box-sizing:border-box;padding:clamp(10px,2vw,20px)!important}
+#constructionInfo h2{margin-top:0}
+#constructionInfo .site-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:12px 0 14px;position:sticky;top:-1px;background:#1b2d25;padding:6px 0;z-index:2}
+#constructionInfo .site-tab{font-size:clamp(10px,1.7vw,13px);min-height:44px;padding:8px 4px;white-space:normal;overflow-wrap:anywhere}
+#constructionInfo .site-tab[aria-selected="true"]{background:#557650;border-color:#d2e6ac}
+#constructionInfo .site-tab-panel[hidden]{display:none!important}
+#constructionInfo .site-tab-panel{min-height:150px}
+#constructionInfo .site-action{display:block;width:100%;min-height:44px;margin:8px 0;white-space:normal}
+#constructionInfo .site-progress{display:block;width:100%;margin:12px 0}
+#constructionInfo .site-notice{border:1px solid #b9a46a;background:#493d24;color:#ffe6ad;border-radius:7px;padding:10px}
+#constructionInfo .site-table-scroll{overflow-x:auto;max-width:100%}
+#constructionInfo .site-material-table{width:100%;min-width:455px;border-collapse:collapse}
+@media(max-width:540px){#constructionInfo{padding:7px}#constructionInfo article{max-height:calc(100dvh - 14px)!important}#constructionInfo .site-tabs{gap:2px}#constructionInfo .site-tab{font-size:10px;padding:7px 2px}}
 </style></head><body><button id="gradeToggle" type="button">📐 Planering</button><button id="constructionToggle" type="button" hidden>Bygg</button><button id="constructionDoorToggle" type="button" hidden>🚪 Åpne dør</button><button id="buildingStoreToggle" type="button" hidden>📦 Åpne lager</button>
 <button id="survivalToggle" type="button" hidden>🛠 Småbygg</button><button id="survivalInteract" type="button" hidden>Bruk konstruksjon</button>
 <div id="needsHud" aria-label="Overlevelsesstatus">🍽️ Mat 100 % · 🔥 Varme 100 %</div>
@@ -366,7 +381,7 @@ body.site-hud-active #gradeProgressHud{display:none!important}
 </div>
 <div id="buildingStoreRows"></div><p id="buildingStoreFeedback" role="status" aria-live="polite"></p>
 <p class="building-store-help">Alle materialer oppbevares separat for denne bygningen. Ferdige lagerskur beholder innholdet når spillet lagres.</p>
-</article></div><div id="constructionHud" hidden aria-label="Materialbehov ved byggeplass"></div><div id="constructionOverlay" hidden><div id="constructionBar"><strong id="constructionBarTitle">Byggeplass</strong><button id="constructionClose" type="button">Avbryt / tilbake</button></div><iframe id="constructionFrame" title="AFTERFALL konstruksjonseditor" allow="fullscreen"></iframe></div><div id="constructionInfo" hidden><article><h2 id="constructionInfoTitle">Byggeplass</h2><div id="constructionInfoBody"></div><button id="constructionInfoClose" type="button">Lukk</button></article></div><div id="gradeOverlay" role="presentation"><section id="gradePanel" role="dialog" aria-modal="true" aria-label="Terrengplanering"><h2>📐 Planering · CE 1.1.4C.2.1.1</h2><p>Manuelle planeringsprosjekter er valgfrie. Bruk spadens «Høyderutenett» for kotevisning, målkotelås og fri graving. Terrenget gjenkjennes automatisk som plant når kotehøydene samsvarer. Ønsker du et eget prosjekt, kan du fremdeles velge to hjørner (maks 20 × 20 m). Fysiske masser, stabilitet og eksisterende bygg beskyttes.</p><p style="font-size:12px;color:#bdd7c5">⛰️ Rasvinkler (spillverdier): jord/sand 30°, leire/stein 40°. Fast fjell raser ikke. Hold inne Grav/Fyll for gjentatte spadetak. Større bygninger kan også plasseres på automatisk registrerte, plane flater med stabile rand­skråninger.</p><div id="gradeProjectList" aria-label="Lagrede planeringsprosjekter"></div><p><label for="gradeName">Prosjektnavn: </label><input id="gradeName" type="text" maxlength="48" value="Nytt planeringsområde" style="width:min(250px,90%)"></p><button id="gradeFirst">1. Sett hjørne A</button><button id="gradeSecond">2. Sett hjørne B</button><button id="gradeClearCorners" type="button" disabled>Nullstill hjørner</button><div id="gradeDraftStatus" aria-live="polite"></div><div id="gradeHeights" aria-live="polite">Måler terrengkoter …</div><div id="gradeStats" aria-live="polite">Marker hjørne A og B for å beregne områdets koteverdier.</div><button id="gradeSuggest" type="button" disabled>Bruk foreslått kote</button><p><label for="gradeLevel">Prosjektert kote (m): </label><input id="gradeLevel" type="number" step="0.1" inputmode="decimal"></p><button id="gradeCreate">Opprett nytt prosjekt</button><button id="gradeExtend" type="button">↗ Utvid valgt område</button><button id="gradeComplete">Godkjenn fullført</button><button id="gradeArchive">Arkiver prosjekt</button><button id="gradeReopen">Gjenåpne prosjekt</button><button id="gradeDelete">Slett valgt prosjekt</button><div id="gradeDelta" aria-live="polite"></div><div id="gradeInfo" aria-live="polite">Ingen prosjekt.</div><button id="gradeClose">Lukk ✕</button></section></div><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small id="releaseVersion" data-release="ce114c211g">CE 1.1.4C.2.1.1g · OVERLEVELSESKONSTRUKSJONER</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="gradeDraftHud" hidden><strong>UTSTIKKING · NYTT OMRÅDE</strong><span id="gradeDraftDetail"></span></div><div id="gradeLive" role="status" aria-live="off" hidden></div><div id="gradeProgressHud" hidden><strong id="gradeProgressLabel">Planering</strong><div id="gradeProgressTrack"><div id="gradeProgressFill"></div></div><small id="gradeProgressDetail"></small></div><div id="terrainGridHud" hidden><strong>⛰️ Terrenghøyder</strong><span id="terrainGridDetail"></span></div><div id="weatherHud">☀ 12:00 · Klart</div><div id="joy"><div id="knob"></div></div><div id="terrainSettingsBackdrop" hidden aria-hidden="true"></div><div id="earthTools"><div class="earthButtons"><button id="earthDig" type="button">Grav</button><button id="earthFill" type="button">Fyll</button></div><div id="earthAvailability" aria-live="polite" style="font-size:11px;line-height:1.3;color:#c9e3d6;margin-top:5px"></div><div id="earthWorkStatus" hidden aria-live="polite"></div>
+</article></div><div id="constructionHud" hidden aria-label="Materialbehov ved byggeplass"></div><div id="constructionOverlay" hidden><div id="constructionBar"><strong id="constructionBarTitle">Byggeplass</strong><button id="constructionClose" type="button">Avbryt / tilbake</button></div><iframe id="constructionFrame" title="AFTERFALL konstruksjonseditor" allow="fullscreen"></iframe></div><div id="constructionInfo" hidden><article><h2 id="constructionInfoTitle">Byggeplass</h2><div id="constructionInfoBody"></div><button id="constructionInfoClose" type="button">Lukk</button></article></div><div id="gradeOverlay" role="presentation"><section id="gradePanel" role="dialog" aria-modal="true" aria-label="Terrengplanering"><h2>📐 Planering · CE 1.1.4C.2.1.1</h2><p>Manuelle planeringsprosjekter er valgfrie. Bruk spadens «Høyderutenett» for kotevisning, målkotelås og fri graving. Terrenget gjenkjennes automatisk som plant når kotehøydene samsvarer. Ønsker du et eget prosjekt, kan du fremdeles velge to hjørner (maks 20 × 20 m). Fysiske masser, stabilitet og eksisterende bygg beskyttes.</p><p style="font-size:12px;color:#bdd7c5">⛰️ Rasvinkler (spillverdier): jord/sand 30°, leire/stein 40°. Fast fjell raser ikke. Hold inne Grav/Fyll for gjentatte spadetak. Større bygninger kan også plasseres på automatisk registrerte, plane flater med stabile rand­skråninger.</p><div id="gradeProjectList" aria-label="Lagrede planeringsprosjekter"></div><p><label for="gradeName">Prosjektnavn: </label><input id="gradeName" type="text" maxlength="48" value="Nytt planeringsområde" style="width:min(250px,90%)"></p><button id="gradeFirst">1. Sett hjørne A</button><button id="gradeSecond">2. Sett hjørne B</button><button id="gradeClearCorners" type="button" disabled>Nullstill hjørner</button><div id="gradeDraftStatus" aria-live="polite"></div><div id="gradeHeights" aria-live="polite">Måler terrengkoter …</div><div id="gradeStats" aria-live="polite">Marker hjørne A og B for å beregne områdets koteverdier.</div><button id="gradeSuggest" type="button" disabled>Bruk foreslått kote</button><p><label for="gradeLevel">Prosjektert kote (m): </label><input id="gradeLevel" type="number" step="0.1" inputmode="decimal"></p><button id="gradeCreate">Opprett nytt prosjekt</button><button id="gradeExtend" type="button">↗ Utvid valgt område</button><button id="gradeComplete">Godkjenn fullført</button><button id="gradeArchive">Arkiver prosjekt</button><button id="gradeReopen">Gjenåpne prosjekt</button><button id="gradeDelete">Slett valgt prosjekt</button><div id="gradeDelta" aria-live="polite"></div><div id="gradeInfo" aria-live="polite">Ingen prosjekt.</div><button id="gradeClose">Lukk ✕</button></section></div><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small id="releaseVersion" data-release="ce114c211h">CE 1.1.4C.2.1.1h · OVERLEVELSESKONSTRUKSJONER</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="gradeDraftHud" hidden><strong>UTSTIKKING · NYTT OMRÅDE</strong><span id="gradeDraftDetail"></span></div><div id="gradeLive" role="status" aria-live="off" hidden></div><div id="gradeProgressHud" hidden><strong id="gradeProgressLabel">Planering</strong><div id="gradeProgressTrack"><div id="gradeProgressFill"></div></div><small id="gradeProgressDetail"></small></div><div id="terrainGridHud" hidden><strong>⛰️ Terrenghøyder</strong><span id="terrainGridDetail"></span></div><div id="weatherHud">☀ 12:00 · Klart</div><div id="joy"><div id="knob"></div></div><div id="terrainSettingsBackdrop" hidden aria-hidden="true"></div><div id="earthTools"><div class="earthButtons"><button id="earthDig" type="button">Grav</button><button id="earthFill" type="button">Fyll</button></div><div id="earthAvailability" aria-live="polite" style="font-size:11px;line-height:1.3;color:#c9e3d6;margin-top:5px"></div><div id="earthWorkStatus" hidden aria-live="polite"></div>
 <button id="terrainSettingsToggle" type="button" aria-controls="terrainModeControls" aria-expanded="false">⛰️ Koteinnstillinger</button>
 <div id="terrainModeControls">
  <div class="terrain-settings-heading"><strong>⛰️ Terrengkontroll</strong><button id="terrainSettingsClose" type="button" aria-label="Lukk koteinnstillinger">Lukk ✕</button></div>
@@ -3796,48 +3811,103 @@ function constructionDoorInteract(){
  door.mesh.rotation.y=constructionOpenDoors.has(door.key)?1.45:0;
  worldSave();constructionDoorRefresh();toolMessage(open?'Døren er lukket.':'Døren er åpen.');
 }
+// CE 1.1.4C.2.1.1h – accessible, compact tabbed building-site interface.
+let constructionInfoTab='overview';
 function constructionShowInfo(q,plan,message=''){
+ const reopening=constructionInfoOpen;
+ if(!reopening)constructionInfoTab='overview';
  constructionInfoOpen=true;paused=true;stopShovelHold();joyEnd();lookPointer=null;
  $('gradeLive').hidden=true;$('constructionInfoTitle').textContent=q.name+' – byggeplass';
  const host=$('constructionInfoBody');host.replaceChildren();
  const el=(tag,t)=>{const e=document.createElement(tag);e.textContent=t;return e;};
- const line=t=>host.append(el('p',t)),state=buildSiteState(plan);
- const button=(t,action,disabled=false)=>{const b=el('button',t);b.type='button';b.disabled=disabled;b.style.width='100%';b.onclick=action;host.append(b);return b;};
- line((plan.status==='complete'?'Ferdig':plan.status==='building'?'Under bygging':'Planlagt')+' · '+state.percent+' % · '+state.count+' / '+state.total+' moduler');
- const progress=document.createElement('progress');progress.max=state.total;progress.value=state.count;progress.style.width='100%';host.append(progress);
- line('Byggets omriss: '+siteAmount(plan.setout.length,2)+' × '+siteAmount(plan.setout.width,2)+' m.');
- if(message){const note=el('p',message);note.setAttribute('role','status');note.style.color='#ffdf9f';host.append(note);}
- host.append(el('h3','Materialer'));
- const table=document.createElement('table');table.className='site-material-table';
- const head=document.createElement('thead'),header=document.createElement('tr');
- for(const s of ['Materiale','Levert / behov','Mangler','Bærer'])header.append(el('th',s));head.append(header);table.append(head);
- const body=document.createElement('tbody');let canDeliver=false;
- for(const m of siteMaterialRows(plan)){
-  const row=document.createElement('tr'),unit=m.resource.unit,d=unit==='L'?1:0,held=inventoryState.items[m.material]||0;
-  if(m.missingUnits>1e-9&&(unit==='stk'?held>=1:held>1e-9))canDeliver=true;
-  row.append(el('td',m.label),el('td',siteAmount(m.deliveredUnits,d)+' / '+siteAmount(m.requiredUnits,d)+' '+unit),el('td',siteAmount(m.missingUnits,d)),el('td',siteAmount(held,d)));body.append(row);
+ const state=buildSiteState(plan),inReach=siteDistance(q,p.x,p.z)<=SITE_INFO_RADIUS;
+ const line=(root,t)=>root.append(el('p',t));
+ const button=(root,t,action,disabled=false)=>{
+  const b=el('button',t);b.type='button';b.disabled=disabled||constructionBusy;b.className='site-action';b.onclick=action;root.append(b);return b;
+ };
+ const tabs=[['overview','Oversikt'],['materials','Materialer'],['assembly','Montering'],['admin','Administrasjon']];
+ if(!tabs.some(([id])=>id===constructionInfoTab))constructionInfoTab='overview';
+ const tabbar=el('div');tabbar.className='site-tabs';tabbar.setAttribute('role','tablist');tabbar.setAttribute('aria-label','Byggeplass');
+ const content=el('div');content.className='site-tab-content';
+ const sections=new Map();
+ for(const [id,label] of tabs){
+  const tab=button(tabbar,label,()=>select(id));tab.id='site-tab-'+id;
+  tab.className='site-tab';tab.setAttribute('role','tab');tab.setAttribute('aria-controls','site-panel-'+id);
+  const pane=el('section');pane.id='site-panel-'+id;pane.className='site-tab-panel';pane.setAttribute('role','tabpanel');pane.setAttribute('aria-labelledby',tab.id);
+  pane.tabIndex=0;sections.set(id,pane);content.append(pane);
  }
- table.append(body);host.append(table);
- const inReach=siteDistance(q,p.x,p.z)<=SITE_INFO_RADIUS;
- button('Lever nødvendige materialer fra inventaret',()=>constructionAction(q,'deliver'),!canDeliver||!inReach||constructionBusy);
+ function select(id,focus=false){
+  constructionInfoTab=id;
+  for(const [key] of tabs){
+   const tab=tabbar.querySelector('#site-tab-'+key),pane=sections.get(key),active=key===id;
+   tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;pane.hidden=!active;
+   if(active&&focus)tab.focus();
+  }
+ }
+ tabbar.addEventListener('keydown',e=>{
+  if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+  e.preventDefault();const idx=tabs.findIndex(([key])=>key===constructionInfoTab);
+  const next=e.key==='Home'?0:e.key==='End'?tabs.length-1:(idx+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;
+  select(tabs[next][0],true);
+ });
+ host.append(tabbar,content);
+ const overview=sections.get('overview'),materials=sections.get('materials'),assembly=sections.get('assembly'),admin=sections.get('admin');
+ const status=(plan.status==='complete'?'Ferdig':plan.status==='building'?'Under bygging':'Planlagt');
+ overview.append(el('h3','Prosjektstatus'));
+ line(overview,status+' · '+state.percent+' % · '+state.count+' / '+state.total+' moduler');
+ const progress=el('progress');progress.max=Math.max(1,state.total);progress.value=state.count;progress.className='site-progress';overview.append(progress);
+ line(overview,'Byggets omriss: '+siteAmount(plan.setout.length,2)+' × '+siteAmount(plan.setout.width,2)+' m.');
+ if(state.task){
+  overview.append(el('h3','Neste arbeidsoppgave'));
+  line(overview,(plan.stages[state.task.stage]||'Montering')+' · '+state.task.label);
+ }else line(overview,'Alle planlagte moduler er montert.');
+ button(overview,'Vis materialer og levering',()=>select('materials'));
+ button(overview,'Vis montering',()=>select('assembly'));
+ if(message){
+  const note=el('p',message);note.setAttribute('role','status');note.className='site-notice';
+  host.insertBefore(note,content);
+ }
+ materials.append(el('h3','Materialbehov og leveranser'));
+ const table=el('table');table.className='site-material-table';
+ const head=el('thead'),header=el('tr');
+ for(const title of ['Materiale','Levert / behov','Mangler','Bærer'])header.append(el('th',title));
+ head.append(header);table.append(head);
+ const body=el('tbody');let canDeliver=false;
+ for(const m of siteMaterialRows(plan)){
+  const row=el('tr'),unit=m.resource.unit,d=unit==='L'?1:0,held=inventoryState.items[m.material]||0;
+  if(m.missingUnits>1e-9&&(unit==='stk'?held>=1:held>1e-9))canDeliver=true;
+  for(const val of [m.label,siteAmount(m.deliveredUnits,d)+' / '+siteAmount(m.requiredUnits,d)+' '+unit,siteAmount(m.missingUnits,d),siteAmount(held,d)])row.append(el('td',val));
+  body.append(row);
+ }
+ table.append(body);
+ const tableScroll=el('div');tableScroll.className='site-table-scroll';tableScroll.append(table);materials.append(tableScroll);
+ button(materials,'Lever nødvendige materialer fra inventaret',()=>constructionAction(q,'deliver'),!canDeliver||!inReach);
  const nearby=nearbyBuildingMaterials(plan,[...piles.values()],{x:p.x,z:p.z});
  const hasNearby=[...nearby.resources.values()].some(qty=>qty>0);
- button('📦 Lever fra nærliggende materialhauger',()=>constructionAction(q,'deliver-pile'),!hasNearby||!inReach||constructionBusy);
- line('Materialhauger må være innen 5 m fra både Marcus og byggeplassen. Levering belaster inventaret eller de valgte haugene; tre avrundes én gang per byggeplan.');
+ button(materials,'📦 Lever fra nærliggende materialhauger',()=>constructionAction(q,'deliver-pile'),!hasNearby||!inReach);
+ line(materials,'Materialhauger må være innen 5 m fra både spilleren og byggeplassen. Levering belaster inventaret eller materialhaugene.');
+ assembly.append(el('h3','Monteringsrekkefølge'));
  if(state.task){
-  host.append(el('h3','Neste monteringsoppgave'));line((plan.stages[state.task.stage]||'Montering')+' · '+state.task.label);
+  line(assembly,(plan.stages[state.task.stage]||'Montering')+' · '+state.task.label);
   const missing=state.requirements.filter(r=>r.missingUnits>0);
-  if(missing.length)for(const r of missing)line('Mangler '+siteAmount(r.missingUnits,r.unit==='L'?1:0)+' '+r.unit+' '+r.label.toLowerCase());
-  else line('Alle nødvendige materialer er levert.');
+  if(missing.length){
+   assembly.append(el('h4','Materialer som mangler'));
+   for(const r of missing)line(assembly,siteAmount(r.missingUnits,r.unit==='L'?1:0)+' '+r.unit+' '+r.label.toLowerCase());
+  }else line(assembly,'Alle nødvendige materialer er levert.');
   const hammer=inventoryState.selectedTool==='hammer';
-  if(!hammer)line('Velg hammeren for å montere.');
-  button('🔨 Monter neste modul',()=>constructionAction(q,'mount'),!inReach||!hammer||missing.length>0||constructionBusy);
- }else line('Alle planlagte moduler er montert.');
+  if(!hammer)line(assembly,'Velg hammeren for å montere.');
+  button(assembly,'🔨 Monter neste modul',()=>constructionAction(q,'mount'),!inReach||!hammer||missing.length>0);
+ }else line(assembly,'Alle planlagte moduler er montert.');
+ admin.append(el('h3','Prosjektinformasjon'));
+ line(admin,'Byggeplass: '+q.name);
+ line(admin,'Grunnflate: '+siteAmount(plan.setout.length,2)+' × '+siteAmount(plan.setout.width,2)+' m.');
+ line(admin,'Status: '+status+' ('+state.percent+' %).');
  if(plan.status!=='complete'){
-  host.append(el('h3','Administrer byggeprosjekt'));
-  line('Riving sletter denne byggeplanen og fjerner alle oppførte moduler. Leveranser og brukte materialer blir ikke refundert. Terreng og planeringsprosjekt beholdes.');
-  button('🗑️ Riv / fjern påbegynt bygg',()=>constructionDemolish(q,plan),constructionBusy);
- }
+  admin.append(el('h3','Riv byggeprosjekt'));
+  line(admin,'Riving sletter byggeplanen og fjerner monterte moduler. Leveranser og brukte materialer refunderes ikke. Terreng og planeringsprosjekt beholdes.');
+  button(admin,'🗑️ Riv / fjern påbegynt bygg',()=>constructionDemolish(q,plan),!inReach);
+ }else line(admin,'Bygningen er ferdigstilt. Riving av ferdige bygg er foreløpig ikke tilgjengelig.');
+ select(constructionInfoTab);
  $('constructionInfo').hidden=false;constructionUpdateHud();
 }
 // CE 1.1.4C.2.1.1g – safe removal of unfinished build plans; terrain remains intact.
