@@ -1797,6 +1797,7 @@ function harvestCandidateAllowed(x,z){
  * Each range has a separate noise stack for its centreline, flanks and ridges.
  * All levels (rendering, collisions, mining, surveying) use originalGround().
  */
+// Noise is evaluated while creating fixed mountain feature locations.\nconst hash=(x,z)=>{let n=Math.sin(x*127.1+z*311.7+SEED*.017)*43758.5453;return n-Math.floor(n)};
 const MOUNTAIN_CHAINS=Object.freeze([
  {z:620,trend:.115,phase:.4,width:135,peak:87},
  {z:1480,trend:-.09,phase:1.6,width:170,peak:105},
@@ -2189,7 +2190,7 @@ function initInventoryUI(){
 }
 
 let vegetationAssets=null,atmosphereSun=null,atmosphereHemi=null,weatherRain=null,weatherMoon=null,weatherSun=null,weatherState={elapsed:0,day:0,kind:'klart',wind:0},weatherWaterBase=null;let scene,camera,renderer,clock,riverMeshes=[],riverPaths=[],riverSegments=[],riverBuckets=new Map(),terrainChunks=new Map(),terrainMaterial=null,waterMaterial=null,seaMaterial=null,lakeMaterial=null,waterTime={value:0},p={x:288,z:301,yaw:Math.PI,pitch:0,seconds:0},joy={x:0,y:0},paused=false,lookPointer=null,lookLastX=0,lookLastY=0;
-const hash=(x,z)=>{let n=Math.sin(x*127.1+z*311.7+SEED*.017)*43758.5453;return n-Math.floor(n)};
+
 function noise(x,z){let a=Math.floor(x),b=Math.floor(z),u=x-a,v=z-b;u=u*u*(3-2*u);v=v*v*(3-2*v);return (hash(a,b)*(1-u)+hash(a+1,b)*u)*(1-v)+(hash(a,b+1)*(1-u)+hash(a+1,b+1)*u)*v}
 function fbm(x,z){let sum=0,amp=.55,freq=1,total=0;for(let i=0;i<4;i++){sum+=noise(x*freq,z*freq)*amp;total+=amp;freq*=2.03;amp*=.48}return sum/total}
 function terrainCore(x,z){let wx=(noise(x/690+19,z/690-8)-.5)*185,wz=(noise(x/690-31,z/690+12)-.5)*185,u=x+wx,v=z+wz,r=fbm(u/1100+6,v/1100-4),h=fbm(u/240,v/240),ridge=1-Math.abs(2*fbm(u/410+33,v/410-21)-1),m=clamp((r-.43)*3.3,0,1),val=clamp((.45-r)*2.1,0,.8),detail=fbm(u/58+13,v/58-7)-.5;return 8+r*35+h*18+m*(25+48*ridge)+detail*(6+m*12)-val*13}
