@@ -393,7 +393,7 @@ body.prefab-building #constructionOverlay{visibility:hidden!important;pointer-ev
 </div>
 <div id="buildingStoreRows"></div><p id="buildingStoreFeedback" role="status" aria-live="polite"></p>
 <p class="building-store-help">Alle materialer oppbevares separat for denne bygningen. Ferdige lagerskur beholder innholdet når spillet lagres.</p>
-</article></div><div id="constructionHud" hidden aria-label="Materialbehov ved byggeplass"></div><div id="constructionOverlay" hidden><div id="constructionBar"><strong id="constructionBarTitle">Byggeplass</strong><button id="constructionClose" type="button">Avbryt / tilbake</button></div><iframe id="constructionFrame" title="AFTERFALL konstruksjonseditor" allow="fullscreen"></iframe></div><div id="sitePickHud" hidden><strong>🏗️ Velg byggeplass</strong><p id="sitePickStatus" role="status">Sikt mot ønsket byggegrunn.</p><div><button id="sitePickConfirm" type="button">Bekreft plassering</button><button id="sitePickCancel" type="button">Avbryt</button></div><small>Forhåndsvisning: 3 × 3 m. Rotasjon og ferdigtegninger følger i C.2.1.1e–f.</small></div><div id="prefabStatus" hidden role="dialog" aria-modal="true" aria-labelledby="prefabStatusTitle"><h2 id="prefabStatusTitle">🏗️ Byggeprosjekt</h2><p id="prefabStatusText" role="status">Oppretter byggeplan …</p><button id="prefabStatusCancel" type="button">Avbryt</button></div><div id="constructionInfo" hidden><article><h2 id="constructionInfoTitle">Byggeplass</h2><div id="constructionInfoBody"></div><button id="constructionInfoClose" type="button">Lukk</button></article></div><div id="gradeOverlay" role="presentation"><section id="gradePanel" role="dialog" aria-modal="true" aria-label="Terrengplanering"><h2>📐 Planering · CE 1.1.4C.2.1.1</h2><p>Manuelle planeringsprosjekter er valgfrie. Bruk spadens «Høyderutenett» for kotevisning, målkotelås og fri graving. Terrenget gjenkjennes automatisk som plant når kotehøydene samsvarer. Ønsker du et eget prosjekt, kan du fremdeles velge to hjørner (maks 20 × 20 m). Fysiske masser, stabilitet og eksisterende bygg beskyttes.</p><p style="font-size:12px;color:#bdd7c5">⛰️ Rasvinkler (spillverdier): jord/sand 30°, leire/stein 40°. Fast fjell raser ikke. Hold inne Grav/Fyll for gjentatte spadetak. Større bygninger kan også plasseres på automatisk registrerte, plane flater med stabile rand­skråninger.</p><div id="gradeProjectList" aria-label="Lagrede planeringsprosjekter"></div><p><label for="gradeName">Prosjektnavn: </label><input id="gradeName" type="text" maxlength="48" value="Nytt planeringsområde" style="width:min(250px,90%)"></p><button id="gradeFirst">1. Sett hjørne A</button><button id="gradeSecond">2. Sett hjørne B</button><button id="gradeClearCorners" type="button" disabled>Nullstill hjørner</button><div id="gradeDraftStatus" aria-live="polite"></div><div id="gradeHeights" aria-live="polite">Måler terrengkoter …</div><div id="gradeStats" aria-live="polite">Marker hjørne A og B for å beregne områdets koteverdier.</div><button id="gradeSuggest" type="button" disabled>Bruk foreslått kote</button><p><label for="gradeLevel">Prosjektert kote (m): </label><input id="gradeLevel" type="number" step="0.1" inputmode="decimal"></p><button id="gradeCreate">Opprett nytt prosjekt</button><button id="gradeExtend" type="button">↗ Utvid valgt område</button><button id="gradeComplete">Godkjenn fullført</button><button id="gradeArchive">Arkiver prosjekt</button><button id="gradeReopen">Gjenåpne prosjekt</button><button id="gradeDelete">Slett valgt prosjekt</button><div id="gradeDelta" aria-live="polite"></div><div id="gradeInfo" aria-live="polite">Ingen prosjekt.</div><button id="gradeClose">Lukk ✕</button></section></div><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small id="releaseVersion" data-release="ce114c211d1">CE 1.1.4C.2.1.1d.1 · OVERLEVELSESKONSTRUKSJONER</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="gradeDraftHud" hidden><strong>UTSTIKKING · NYTT OMRÅDE</strong><span id="gradeDraftDetail"></span></div><div id="gradeLive" role="status" aria-live="off" hidden></div><div id="gradeProgressHud" hidden><strong id="gradeProgressLabel">Planering</strong><div id="gradeProgressTrack"><div id="gradeProgressFill"></div></div><small id="gradeProgressDetail"></small></div><div id="terrainGridHud" hidden><strong>⛰️ Terrenghøyder</strong><span id="terrainGridDetail"></span></div><div id="weatherHud">☀ 12:00 · Klart</div><div id="joy"><div id="knob"></div></div><div id="terrainSettingsBackdrop" hidden aria-hidden="true"></div><div id="earthTools"><div class="earthButtons"><button id="earthDig" type="button">Grav</button><button id="earthFill" type="button">Fyll</button></div><div id="earthAvailability" aria-live="polite" style="font-size:11px;line-height:1.3;color:#c9e3d6;margin-top:5px"></div><div id="earthWorkStatus" hidden aria-live="polite"></div>
+</article></div><div id="constructionHud" hidden aria-label="Materialbehov ved byggeplass"></div><div id="constructionOverlay" hidden><div id="constructionBar"><strong id="constructionBarTitle">Byggeplass</strong><button id="constructionClose" type="button">Avbryt / tilbake</button></div><iframe id="constructionFrame" title="AFTERFALL konstruksjonseditor" allow="fullscreen"></iframe></div><div id="sitePickHud" hidden><strong>🏗️ Velg byggeplass</strong><p id="sitePickStatus" role="status">Sikt mot ønsket byggegrunn.</p><div><button id="sitePickConfirm" type="button">Bekreft plassering</button><button id="sitePickCancel" type="button">Avbryt</button></div><small>Forhåndsvisning: 3 × 3 m. Rotasjon og ferdigtegninger følger i C.2.1.1e–f.</small></div><div id="prefabStatus" hidden role="dialog" aria-modal="true" aria-labelledby="prefabStatusTitle"><h2 id="prefabStatusTitle">🏗️ Byggeprosjekt</h2><p id="prefabStatusText" role="status">Oppretter byggeplan …</p><button id="prefabStatusCancel" type="button">Avbryt</button></div><div id="constructionInfo" hidden><article><h2 id="constructionInfoTitle">Byggeplass</h2><div id="constructionInfoBody"></div><button id="constructionInfoClose" type="button">Lukk</button></article></div><div id="gradeOverlay" role="presentation"><section id="gradePanel" role="dialog" aria-modal="true" aria-label="Terrengplanering"><h2>📐 Planering · CE 1.1.4C.2.1.1</h2><p>Manuelle planeringsprosjekter er valgfrie. Bruk spadens «Høyderutenett» for kotevisning, målkotelås og fri graving. Terrenget gjenkjennes automatisk som plant når kotehøydene samsvarer. Ønsker du et eget prosjekt, kan du fremdeles velge to hjørner (maks 20 × 20 m). Fysiske masser, stabilitet og eksisterende bygg beskyttes.</p><p style="font-size:12px;color:#bdd7c5">⛰️ Rasvinkler (spillverdier): jord/sand 30°, leire/stein 40°. Fast fjell raser ikke. Hold inne Grav/Fyll for gjentatte spadetak. Større bygninger kan også plasseres på automatisk registrerte, plane flater med stabile rand­skråninger.</p><div id="gradeProjectList" aria-label="Lagrede planeringsprosjekter"></div><p><label for="gradeName">Prosjektnavn: </label><input id="gradeName" type="text" maxlength="48" value="Nytt planeringsområde" style="width:min(250px,90%)"></p><button id="gradeFirst">1. Sett hjørne A</button><button id="gradeSecond">2. Sett hjørne B</button><button id="gradeClearCorners" type="button" disabled>Nullstill hjørner</button><div id="gradeDraftStatus" aria-live="polite"></div><div id="gradeHeights" aria-live="polite">Måler terrengkoter …</div><div id="gradeStats" aria-live="polite">Marker hjørne A og B for å beregne områdets koteverdier.</div><button id="gradeSuggest" type="button" disabled>Bruk foreslått kote</button><p><label for="gradeLevel">Prosjektert kote (m): </label><input id="gradeLevel" type="number" step="0.1" inputmode="decimal"></p><button id="gradeCreate">Opprett nytt prosjekt</button><button id="gradeExtend" type="button">↗ Utvid valgt område</button><button id="gradeComplete">Godkjenn fullført</button><button id="gradeArchive">Arkiver prosjekt</button><button id="gradeReopen">Gjenåpne prosjekt</button><button id="gradeDelete">Slett valgt prosjekt</button><div id="gradeDelta" aria-live="polite"></div><div id="gradeInfo" aria-live="polite">Ingen prosjekt.</div><button id="gradeClose">Lukk ✕</button></section></div><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small id="releaseVersion" data-release="ce114c211d2">CE 1.1.4C.2.1.1d.2 · OVERLEVELSESKONSTRUKSJONER</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="gradeDraftHud" hidden><strong>UTSTIKKING · NYTT OMRÅDE</strong><span id="gradeDraftDetail"></span></div><div id="gradeLive" role="status" aria-live="off" hidden></div><div id="gradeProgressHud" hidden><strong id="gradeProgressLabel">Planering</strong><div id="gradeProgressTrack"><div id="gradeProgressFill"></div></div><small id="gradeProgressDetail"></small></div><div id="terrainGridHud" hidden><strong>⛰️ Terrenghøyder</strong><span id="terrainGridDetail"></span></div><div id="weatherHud">☀ 12:00 · Klart</div><div id="joy"><div id="knob"></div></div><div id="terrainSettingsBackdrop" hidden aria-hidden="true"></div><div id="earthTools"><div class="earthButtons"><button id="earthDig" type="button">Grav</button><button id="earthFill" type="button">Fyll</button></div><div id="earthAvailability" aria-live="polite" style="font-size:11px;line-height:1.3;color:#c9e3d6;margin-top:5px"></div><div id="earthWorkStatus" hidden aria-live="polite"></div>
 <button id="terrainSettingsToggle" type="button" aria-controls="terrainModeControls" aria-expanded="false">⛰️ Koteinnstillinger</button>
 <div id="terrainModeControls">
  <div class="terrain-settings-heading"><strong>⛰️ Terrengkontroll</strong><button id="terrainSettingsClose" type="button" aria-label="Lukk koteinnstillinger">Lukk ✕</button></div>
@@ -3977,6 +3977,15 @@ async function constructionAction(q,action){
  constructionShowInfo(q,result.plan,message);
 }
 
+// Roof overhang counts toward the editor's strict build-plate bounds.
+// Round up to 1 m grid cells; 3.00 m walls + 0.20 m each side = 4 × 4 m plot.
+const READY_BUILD_PLOTS=Object.freeze({
+ storage:Object.freeze({name:'Lagerskur',length:3,width:3,overhang:.2})
+});
+function constructionPickSize(type){
+ const design=READY_BUILD_PLOTS[type];
+ return design?{length:Math.ceil(design.length+2*design.overhang),width:Math.ceil(design.width+2*design.overhang),design}: {length:3,width:3,design:null};
+}
 let constructionSitePick=null,constructionPickGhost=null,constructionPickLast=0;
 function constructionSitePickCancel(){
  if(!constructionSitePick)return;
@@ -3987,24 +3996,31 @@ function constructionSitePickCancel(){
 function constructionSitePickStart(prefabType=null){
  if(paused||constructionSitePick||constructionOpen||constructionInfoOpen||!camera||!scene)return;
  constructionSitePick={grade:null,error:'Sikt på flatt terreng.',prefabType};$('sitePickHud').hidden=false;
+ const dims=constructionPickSize(prefabType);
+ $('sitePickHud').querySelector('small').textContent=dims.design?
+  'Lagerskur '+dims.design.length+' × '+dims.design.width+' m, takutstikk '+dims.design.overhang.toFixed(2)+' m på hver side. Krever '+dims.length+' × '+dims.width+' m planert byggegrunn.':
+  'Fri prosjektering: 3 × 3 m foreløpig standardflate. Velg en større godkjent byggegrunn ved behov.';
  $('sitePickHud').querySelector('strong').textContent=prefabType==='storage'?'🏗️ Plasser lagerskur':'🏗️ Velg byggeplass';
  $('sitePickConfirm').textContent=prefabType?'Bekreft bygningens plassering':'Bekreft byggegrunn';
- const g=new THREE.Group();
- const line=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints([[-1.5,0,-1.5],[1.5,0,-1.5],[1.5,0,1.5],[-1.5,0,1.5]].map(a=>new THREE.Vector3(...a))),new THREE.LineBasicMaterial({color:0x7bf0a3,depthTest:false}));
- const plane=new THREE.Mesh(new THREE.PlaneGeometry(3,3),new THREE.MeshBasicMaterial({color:0x7bf0a3,transparent:true,opacity:.2,side:THREE.DoubleSide,depthWrite:false}));plane.rotation.x=-Math.PI/2;
+ const g=new THREE.Group(),halfX=dims.length/2,halfZ=dims.width/2;
+ const line=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints([[-halfX,0,-halfZ],[halfX,0,-halfZ],[halfX,0,halfZ],[-halfX,0,halfZ]].map(a=>new THREE.Vector3(...a))),new THREE.LineBasicMaterial({color:0x7bf0a3,depthTest:false}));
+ const plane=new THREE.Mesh(new THREE.PlaneGeometry(dims.length,dims.width),new THREE.MeshBasicMaterial({color:0x7bf0a3,transparent:true,opacity:.2,side:THREE.DoubleSide,depthWrite:false}));plane.rotation.x=-Math.PI/2;
  g.add(line,plane);scene.add(g);constructionPickGhost=g;constructionPickLast=0;constructionSitePickUpdate(true);constructionUpdateHud();
 }
 function constructionPickCandidate(hit){
  if(!hit)return {error:'Sikt mot bakken innen 25 meter.'};
  const x=Math.round(hit.x),z=Math.round(hit.z),existing=gradingAt(x,z);
+ const {length,width,design}=constructionPickSize(constructionSitePick?.prefabType);
  if(existing){
   if(constructionPlans.has(existing.id))return {error:'Området har allerede en byggeplan.'};
+  if(existing.x1-existing.x0<length||existing.z1-existing.z0<width)
+   return {error:'Valgt lagerskur krever minst '+length+' × '+width+' m godkjent byggegrunn inklusive takutstikk.'};
   if(!['completed','archived'].includes(existing.status)||!constructionReady(existing))return {error:'Planeringsområdet er ikke ferdig eller godkjent.'};
   return {grade:existing};
  }
  const q={id:'autograde-'+Date.now()+'-'+Math.floor(Math.random()*100000),name:'Manuelt plassert byggegrunn',
- status:'completed',x0:x-1,x1:x+2,z0:z-1,z1:z+2,level:ground(x,z),schemaVersion:GRADE_SCHEMA.version,autoFlat:true,initialHeights:{}};
- if(!autoFlatStillValid(q))return {error:'Flaten må være jevn, fri for hindringer og innenfor byggegrensen.'};
+ status:'completed',x0:x-Math.floor(length/2),x1:x+Math.ceil(length/2),z0:z-Math.floor(width/2),z1:z+Math.ceil(width/2),level:ground(x,z),schemaVersion:GRADE_SCHEMA.version,autoFlat:true,initialHeights:{}};
+ if(!autoFlatStillValid(q))return {error:'Trenger '+length+' × '+width+' m planert og hindringsfri byggegrunn'+(design?' (inkludert takutstikk)':'')+'.'};
  if(!gradeSlopeStatus(q).ok)return {error:'Ustabil rand­skråning. Velg et annet sted.'};
  if(!constructionReady(q))return {error:'Byggegrunnen kan ikke godkjennes.'};
  return {grade:q};
@@ -4018,9 +4034,12 @@ function constructionSitePickUpdate(force=false){
  $('sitePickConfirm').disabled=!!result.error;
  if(constructionPickGhost){
   constructionPickGhost.visible=!!aim;
-  if(aim){const q=result.grade,x=q?(q.x0+q.x1)/2:Math.round(aim.x)+.5,z=q?(q.z0+q.z1)/2:Math.round(aim.z)+.5;
+  if(aim){
+   const dims=constructionPickSize(constructionSitePick.prefabType),q=result.grade;
+   const x=q?(q.x0+q.x1)/2:Math.round(aim.x)+(dims.length%2?.5:0);
+   const z=q?(q.z0+q.z1)/2:Math.round(aim.z)+(dims.width%2?.5:0);
    constructionPickGhost.position.set(x-PAD_X,ground(x,z)+.06,z-PAD_Z);
-   constructionPickGhost.scale.set(q?(q.x1-q.x0)/3:1,1,q?(q.z1-q.z0)/3:1);
+   constructionPickGhost.scale.set(q?(q.x1-q.x0)/dims.length:1,1,q?(q.z1-q.z0)/dims.width:1);
    constructionPickGhost.children.forEach(o=>o.material.color.setHex(result.error?0xff776b:0x7bf0a3));
   }
  }
