@@ -1,0 +1,48 @@
+<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AFTERFALL C.2.1.1 – Mobil-HUD test</title>
+<style>body{font:15px/1.45 system-ui;background:#10241c;color:#e4f2e7;margin:20px auto;max-width:800px;padding:0 14px}h1{font-size:22px}section{padding:14px;background:#1a382a;border:1px solid #78a589;border-radius:12px}pre{font:13px/1.6 ui-monospace,monospace;white-space:pre-wrap}.pass{color:#abedbf}.fail{color:#ffb4a2}a{color:#b4ecbb}</style></head><body><h1>CE 1.1.4C.2.1.1 – Mobil-HUD</h1>
+<p>Tester plasseringen av graveknappene ved vanlige mobilstørrelser med stilene fra den faktiske spillfilen. Ingen spillagringer eller kontroller endres.</p><section><strong id="summary">Leser spillstil …</strong><pre id="details"></pre></section><p><a href="./?v=114c211">Tilbake til AFTERFALL</a></p>
+<script type="module">
+const results=[],check=(name,ok)=>results.push({name,ok:!!ok});
+function overlaps(a,b){const r=a.getBoundingClientRect(),s=b.getBoundingClientRect();return r.width>0&&s.width>0&&r.left<s.right-1&&r.right>s.left+1&&r.top<s.bottom-1&&r.bottom>s.top+1}
+function sample(css){
+const html=`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}</style></head><body>
+<div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small>CE 1.1.4C.2.1.1 · OVERLEVELSESKONSTRUKSJONER</small></div><div><button id="menu">☰ Meny</button></div></div>
+<button id="gradeToggle">📐 Planering</button><button id="constructionToggle">Bygg</button><button id="diagToggle">🔬 Diagnose</button>
+<button id="inventoryToggle">🎒 Inventar</button><button id="survivalToggle">🛠 Småbygg</button>
+<div id="weatherHud">☀ 10:22 · Overskyet</div><div id="loadHud">Last 12 / 300 kg</div>
+<div id="joy"><div id="knob"></div></div><div id="needsHud">🍽️ Mat 98 % · 🔥 Varme 99 %</div>
+<div id="terrainGridHud"><strong>Terrenghøyder</strong><span id="terrainGridDetail">Marcus 49,47 m · Mål 46,98 m · Sammenhengende flate</span></div>
+<div id="gradeLive">Målkote – grav</div><div id="gradeProgressHud">Planert 4 %</div>
+<div id="toolHud"><button>🪏<span>Spade</span></button><button>⛏️<span>Hakke</span></button><button>🪓<span>Øks</span></button><button>🪚<span>Sag</span></button><button>🔨<span>Hammer</span></button></div>
+<button id="pileToggle">📦 Åpne haug</button>
+<div id="earthTools" style="display:block"><div class="earthButtons"><button id="earthDig">Grav</button><button id="earthFill">Fyll</button></div>
+<div id="earthAvailability">Fyllmasse: 7,642 L – tilgjengelig</div><div id="earthWorkStatus" hidden>Arbeid fullført</div><button id="terrainSettingsToggle">⛰️ Koteinnstillinger</button>
+<div id="terrainModeControls" hidden><div class="terrain-settings-heading"><strong>Terrengkontroll</strong><button id="terrainSettingsClose">Lukk</button></div><button id="terrainGridToggle">Rutenett</button></div></div>
+</body></html>`;
+return html;
+}
+async function test(){
+try{
+ const response=await fetch('./index.html?ui-test=114c211',{cache:'no-store'});
+ if(!response.ok)throw Error('Kunne ikke lese spillets CSS: HTTP '+response.status);
+ const raw=await response.text(),css=raw.match(/<style>([\s\S]*?)<\/style>/)?.[1];
+ if(!css)throw Error('Mangler innebygget CSS i spillfilen.');
+ for(const [w,h] of [[320,568],[375,667],[390,844]]){
+  const iframe=document.createElement('iframe');iframe.style.cssText='position:absolute;left:-3000px;top:0;border:0;width:'+w+'px;height:'+h+'px';
+  document.body.append(iframe);
+  await new Promise(resolve=>{iframe.onload=resolve;iframe.srcdoc=sample(css)});
+  const d=iframe.contentDocument,el=id=>d.getElementById(id),tools=el('earthTools'),dig=el('earthDig'),fill=el('earthFill');
+  const t=tools.getBoundingClientRect();
+  check(w+'×'+h+': Grav og Fyll minst 44 px høye',dig.getBoundingClientRect().height>=44&&fill.getBoundingClientRect().height>=44);
+  check(w+'×'+h+': kontrollene innenfor skjermen',t.left>=0&&t.right<=w&&t.top>=0&&t.bottom<=h);
+  check(w+'×'+h+': ingen overlapp med andre handlingskontroller',!['pileToggle','joy','toolHud','inventoryToggle','survivalToggle','gradeToggle','diagToggle','constructionToggle','needsHud'].some(id=>overlaps(tools,el(id))));
+  check(w+'×'+h+': koteinnstillinger kan foldes bort',getComputedStyle(el('terrainModeControls')).display==='none'&&getComputedStyle(el('terrainSettingsToggle')).display!=='none');
+  iframe.remove();
+ }
+}catch(e){results.push({name:'Kunne ikke fullføre testen: '+e.message,ok:false});}
+const n=results.filter(x=>x.ok).length,summary=document.getElementById('summary');
+summary.textContent=n+' / '+results.length+' kontroller bestått';summary.className=n===results.length?'pass':'fail';
+document.getElementById('details').textContent=results.map(x=>(x.ok?'✓ ':'✗ ')+x.name).join('\n');
+}
+test();
+</script></body></html>

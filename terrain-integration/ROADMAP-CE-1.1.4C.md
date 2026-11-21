@@ -32,6 +32,11 @@ Sammenhengende plane terrengnoder registreres løpende uten å opprette et prosj
 
 Gammel terrengmodell, høydenett, masser, trær, konstruksjoner, lagringsformater og planeringsprosjekter er beholdt.
 
+## CE 1.1.4C.2.1.1 – Mobilkontroller og tilgjengelig graving
+**Implementert 21. november 2026.** Mobilregresjon etter C.2.1: spadekontrollene overlappet med overlevelsesknapper, planeringsstatus og høyderutenett. På små skjermer ligger Grav og Fyll nå i en kompakt fast dock nederst til høyre, uten høydeinnstillinger som skyver knappene oppover. Målkote, høyderutenett, kote fra siktekors og gravedybdestopp åpnes i egen mobil-dialog med tydelig lukkeknapp. Statusfelt er komprimert, og dialogen blokkerer graving inntil den lukkes. Desktop-layout (bredde over 700 CSS-piksler og uten lav, berøringsbasert visning) er uendret. Dette endrer ikke massebalanse, byggesystem, lagringsformat eller tidligere spillprogresjon.
+
+**Tester:** 19 tilstandstester av mobilinnstillinger, 121 tidligere regresjonstester og uendret støtte for de 12 bygge- og rotasjonsscenariene. Praktisk iPhone-testing av faktiske treffområder og synlige overlapp gjenstår. Se `QA-CE-1.1.4C.2.1.1.md` og `verify-c211.html`.
+
 ## Godkjent detaljplan CE 1.1.4C.2 – Boliger og produksjonsbygninger
 **Godkjent 21. november 2026.** C.2 omfatter kun de tre opprinnelig avtalte bygningstypene: **lagerskur**, **enkel hytte** og **åpent verksted**. C.3/C.4 og de øvrige avtalte konstruksjonene beholdes uendret. Spillprinsippet er enkel førindustriell overlevelse, ikke BIM.
 
