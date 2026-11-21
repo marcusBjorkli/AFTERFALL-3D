@@ -743,7 +743,7 @@ function terrainGridDraw(){
  const target=terrainMode.target??quantizeTarget(ground(p.x,p.z));
  const cells=readGridCells(ground,aim.x,aim.z,target,{radius:3});
  const key=Math.round(aim.x)+','+Math.round(aim.z)+'|'+target+'|'+terrainMode.revision;
- if(key!==terrainGridSignature){
+ if(key!==terrainGridSignature||!terrainGridGroup){
   terrainGridSignature=key;terrainGridClear();
   const group=new THREE.Group();group.name='CE 1.1.4C.1.4 – kartlagt høyderutenett';
   const vertices=[],colors=[];
