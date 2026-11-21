@@ -1,12 +1,19 @@
 # AFTERFALL – godkjent konstruksjonsplan CE 1.1.4C
-Dato: 20. november 2026 · Status: **Godkjent som neste utviklingsserie, ikke implementert**
+Dato: 20. november 2026 · Status: **C.0 og C.1 implementert; C.2–C.4 planlagt**
 
 ## CE 1.1.4C.0 – Grunnleggende bygningsinteraksjon og lagring
 **Implementert 21. november 2026.** Eksisterende ferdige lagerskur har nå et interaktivt lager som kan fylles fra inventaret og tømmes tilbake til inventaret. Innholdet lagres per byggeplan og eksisterende B.6-spilltilstand leses videre uten migrering av verdens-/inventarformat. Dette er en funksjonalitetsfase før nye C.1-konstruksjoner.
 
+## CE 1.1.4C.1 – Grunnleggende overlevelseskonstruksjoner
+**Implementert 21. november 2026.** Fem småkonstruksjoner kan plasseres direkte i terrenget med reelt materialforbruk: bålplass, lagringskasse, arbeidsbenk, sagbukk og vedskjul.
+
+Spillfunksjoner: bålvarme, vedforbruk og tørking av bær; to fysiske lagringskonstruksjoner med ulike kapasiteter; arbeidsbenk med oppskrifter for fakkel og trepinner; sagbukk med effektiv satsvis saging og støtte for eldre lagringsfiler. Busker gir bær og vokser tilbake etter 15 minutter. Enkle målere for matmetthet og varme, samt bærspising og fakkelbelysning, inngår som første trinn i overlevelsessystemet.
+
 ## Utviklingsrekkefølge
-CE 1.1.4B.6: Samlet integrasjon og spilltesting av allerede eksisterende konstruksjonssystem (**implementert**).\nCE 1.1.4C.0: Grunnleggende bygningsinteraksjon og lager for ferdige lagerskur (**implementert**).
-Deretter CE 1.1.4C.1–C.4 med de **12 tidligere avtalte** førindustrielle konstruksjonene. Ikke erstatt listen uten en ny eksplisitt beslutning.
+CE 1.1.4B.6: Samlet integrasjon og spilltesting av allerede eksisterende konstruksjonssystem (**implementert**).
+CE 1.1.4C.0: Grunnleggende bygningsinteraksjon og lager for ferdige lagerskur (**implementert**).
+CE 1.1.4C.1: Grunnleggende førindustrielle overlevelseskonstruksjoner (**implementert**).
+Deretter CE 1.1.4C.2–C.4 med de **12 tidligere avtalte** førindustrielle konstruksjonene. Ikke erstatt listen uten en ny eksplisitt beslutning.
 
 | Fase | Konstruksjon | Opprinnelig materialgrunnlag | Spillfunksjon / utviklingsmål | Eksisterende funksjoner |
 |---|---|---|---|---|

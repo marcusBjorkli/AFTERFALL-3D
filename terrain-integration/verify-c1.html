@@ -1,0 +1,30 @@
+<!doctype html><html lang="no"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>AFTERFALL CE 1.1.4C.1 – test</title><style>body{font:16px system-ui;background:#11251d;color:#e5f1e7;padding:20px;max-width:760px;margin:auto}section{background:#253e31;border-radius:12px;padding:16px;border:1px solid #92b8a1}.good{color:#a8e1b6}.bad{color:#ffc0ae}pre{white-space:pre-wrap;line-height:1.6}</style></head><body><h1>AFTERFALL CE 1.1.4C.1</h1><p>Regresjonstester av byggeregler og overlevelsesfunksjoner. Spillerens lagrede data påvirkes ikke.</p><section><strong id="summary">Tester …</strong><pre id="results"></pre></section><script type="module">
+import {SURVIVAL_DEFS,buildSurvival,restoreSurvival,moveSurvivalStock,fuelCampfire,warmAt,dryBerries,craftWorkbench,eatBerries,igniteTorch} from './survival-structures-114c1.js';
+const cat={stone:{name:'Stein',unit:'L',mass:2.65,volume:.001},firewood:{name:'Ved',unit:'stk',mass:4.0625,volume:.0075},planks:{name:'Planker',unit:'stk',mass:6.625,volume:.012},battens:{name:'Lekter',unit:'stk',mass:3.0625,volume:.0055},logs:{name:'Tømmer',unit:'stk',mass:35,volume:.065},sticks:{name:'Pinner',unit:'stk',mass:.3,volume:.001},berries:{name:'Bær',unit:'stk',mass:.2,volume:.0005},dried_berries:{name:'Tørkede bær',unit:'stk',mass:.1,volume:.00025},torch:{name:'Fakkel',unit:'stk',mass:.9,volume:.003},sawdust:{name:'Sagflis',unit:'L',mass:.5,volume:.001}};
+const lim={mass:300,volume:.15},tests=[],test=(n,fn)=>{try{if(!fn())throw Error('Forventet sann');tests.push([n,true])}catch(e){tests.push([n,false,String(e)])}};
+const placed=[],types=Object.entries(SURVIVAL_DEFS);
+for(const [i,[type,def]] of types.entries()){
+ const pos={id:'demo-'+type,x:10+i*4,y:0,z:15,angle:0},r=buildSurvival(type,pos,{...def.cost},placed,cat,lim);
+ test('Bygg '+def.name,()=>!r.error&&Object.keys(r.inventory).length===0);
+ if(r.structure)placed.push(r.structure);
+ test('Hindre overlapp for '+def.name,()=>!!buildSurvival(type,{...pos,id:'new',x:pos.x+.1},{...def.cost},placed,cat,lim).error);
+}
+test('Fem konstruksjoner kan gjenopprettes',()=>restoreSurvival(placed,cat).structures.size===5);
+test('Gamle spill uten C.1-felt støttes',()=>restoreSurvival(undefined,cat).structures.size===0);
+const crate=placed.find(s=>s.type==='crate'),woodshed=placed.find(s=>s.type==='woodshed');
+const d=moveSurvivalStock(crate,{planks:4},cat,lim,'planks',3,'deposit');
+test('Kassen tar imot trelast',()=>d.structure.items.planks===3&&d.inventory.planks===1);
+const take=moveSurvivalStock(d.structure,d.inventory,cat,lim,'planks',2,'withdraw');
+test('Materialer kan tas ut igjen',()=>take.inventory.planks===3&&take.structure.items.planks===1);
+test('Vedskjul avviser stein',()=>!!moveSurvivalStock(woodshed,{stone:2},cat,lim,'stone',2,'deposit').error);
+const fire=placed.find(s=>s.type==='campfire'),burn=fuelCampfire(fire,{firewood:2},1000000);
+test('Bålet bruker ved og brenner åtte minutter',()=>burn.structure.litUntil===1480000&&burn.inventory.firewood===1);
+test('Varme virker innen fire meter',()=>warmAt([burn.structure],fire.x,fire.z,1000010)&&!warmAt([burn.structure],fire.x+8,fire.z,1000010));
+test('Bær kan tørkes ved tent bål',()=>dryBerries(burn.structure,{berries:2},1000010).inventory.dried_berries===1);
+test('Tørkede bær gir metthet',()=>eatBerries({dried_berries:1},85).hunger===100);
+const bench=placed.find(s=>s.type==='workbench'),crafted=craftWorkbench(bench,{sticks:2,firewood:1},cat,lim,'torch');
+test('Fakkel kan produseres',()=>crafted.inventory.torch===1);
+test('Fakkel lyser fem minutter',()=>igniteTorch(crafted.inventory,1000000).torchUntil===1300000);
+test('Arbeidsbenk lager trepinner',()=>craftWorkbench(bench,{planks:1},cat,lim,'pegs').inventory.sticks===8);
+const n=tests.filter(x=>x[1]).length;document.getElementById('summary').textContent=n+' / '+tests.length+' bestått';document.getElementById('summary').className=n===tests.length?'good':'bad';document.getElementById('results').textContent=tests.map(([s,ok,err])=>(ok?'✓ ':'✗ ')+s+(err?' – '+err:'')).join('\n');
+</script></body></html>
