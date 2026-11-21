@@ -704,6 +704,115 @@ function setPileMenu(open,id=null){
  pileFocusRefresh();
  return true;
 }
+// Mobile terrain survey: grid lines and elevation labels follow ground() exactly.
+function terrainGridClear(){
+ if(!terrainGridGroup||!scene)return;
+ scene.remove(terrainGridGroup);
+ terrainGridGroup.traverse(o=>{
+  if(o.geometry)o.geometry.dispose();
+  if(o.material)o.material.dispose();
+ });
+ terrainGridGroup=null;
+}
+function terrainGridVisibility(){
+ const show=terrainMode.enabled&&inventoryState.selectedTool==='shovel'&&!paused&&!smallPlacement;
+ $('terrainGridHud').hidden=!show;
+ if(!show)terrainGridClear();
+}
+function terrainGridLabel(level,classification){
+ const label=level.toFixed(1).replace('.',','),key=label+'|'+classification;
+ if(terrainLabelTextures.has(key))return terrainLabelTextures.get(key);
+ const canvas=document.createElement('canvas');canvas.width=112;canvas.height=44;
+ const ctx=canvas.getContext('2d');
+ const hue=classification==='flat'?'#75e6ac':classification==='cut'?'#ffd18e':classification==='fill'?'#8cc5fd':'#e2edc6';
+ ctx.fillStyle='#09231ed9';ctx.fillRect(1,1,110,42);
+ ctx.strokeStyle=hue;ctx.lineWidth=2;ctx.strokeRect(1,1,110,42);
+ ctx.font='bold 26px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';
+ ctx.fillStyle=hue;ctx.fillText(label,56,23);
+ const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+ if(terrainLabelTextures.size>350){for(const old of terrainLabelTextures.values())old.dispose();terrainLabelTextures.clear();}
+ terrainLabelTextures.set(key,texture);return texture;
+}
+function terrainGridDraw(){
+ if(!terrainMode.enabled||inventoryState.selectedTool!=='shovel'||paused||smallPlacement){
+  terrainGridVisibility();return;
+ }
+ const now=performance.now();if(now-terrainGridLast<460)return;terrainGridLast=now;
+ const aim=earthAim(42);
+ if(!aim){$('terrainGridHud').hidden=false;$('terrainGridDetail').textContent='Sikt mot bakken innen 42 m.';terrainGridClear();return;}
+ const target=terrainMode.target??quantizeTarget(ground(p.x,p.z));
+ const cells=readGridCells(ground,aim.x,aim.z,target,{radius:3});
+ const key=Math.round(aim.x)+','+Math.round(aim.z)+'|'+target+'|'+terrainMode.revision;
+ if(key!==terrainGridSignature){
+  terrainGridSignature=key;terrainGridClear();
+  const group=new THREE.Group();group.name='CE 1.1.4C.1.4 – kartlagt høyderutenett';
+  const vertices=[],colors=[];
+  const col={
+   flat:[.25,.95,.5],cut:[1,.65,.26],fill:[.29,.58,1],uneven:[.89,.89,.82]
+  };
+  for(const cell of cells){
+   const x=cell.x,z=cell.z;
+   const corners=[[x-.5,z-.5],[x+.5,z-.5],[x+.5,z+.5],[x-.5,z+.5]];
+   const color=col[cell.classification];
+   for(let k=0;k<4;k++){
+    for(const [a,b] of [corners[k],corners[(k+1)%4]]){
+     vertices.push(a-PAD_X,ground(a,b)+.065,b-PAD_Z);colors.push(...color);
+    }
+   }
+   const texture=terrainGridLabel(cell.level,cell.classification);
+   const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:true,depthWrite:false}));
+   sprite.position.set(x-PAD_X,cell.level+.20,z-PAD_Z);
+   sprite.scale.set(.75,.29,1);group.add(sprite);
+  }
+  const geom=new THREE.BufferGeometry();
+  geom.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
+  geom.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+  const edges=new THREE.LineSegments(geom,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:.88,depthWrite:false}));
+  group.add(edges);scene.add(group);terrainGridGroup=group;
+ }
+ const h=ground(aim.x,aim.z),difference=h-target;
+ const connected=flatConnectedCells(ground,aim.x,aim.z,{
+  radius:8,valid:(x,z)=>!earthRestricted(x,z,true)&&!waterBodyAt(x,z)
+ });
+ const state=Math.abs(difference)<=GRADE_TOLERANCE?'På målkote':difference>0?'Over målkote – grav':'Under målkote – fyll';
+ $('terrainGridDetail').textContent='Sikte: '+h.toFixed(2).replace('.',',')+' m · Mål: '+target.toFixed(2).replace('.',',')+' m · '+state+' · Flat sammenhengende flate: '+connected.area+' rutenoder';
+ $('terrainGridHud').hidden=false;
+ $('terrainReadout').textContent='Sikte: '+h.toFixed(2).replace('.',',')+' m · '+(terrainMode.locked?'Dybdelås på':'Fri graving');
+}
+function terrainModeSync(){
+ if(terrainMode.target===null)terrainMode.target=quantizeTarget(ground(p.x,p.z))??0;
+ $('terrainTarget').value=terrainMode.target.toFixed(2);
+ $('terrainLock').checked=terrainMode.locked;
+ $('terrainGridToggle').textContent=terrainMode.enabled?'▦ Høyderutenett: På':'▦ Høyderutenett: Av';
+ $('terrainGridToggle').setAttribute('aria-pressed',String(terrainMode.enabled));
+ terrainGridVisibility();
+}
+function terrainModeInit(){
+ terrainModeSync();
+ $('terrainGridToggle').onclick=()=>{
+  terrainMode.enabled=!terrainMode.enabled;terrainMode.revision++;terrainGridSignature='';
+  terrainModeSync();worldSave();terrainGridDraw();
+ };
+ $('terrainUseAim').onclick=()=>{
+  const aim=earthAim(42);
+  if(!aim){toolMessage('Sikt mot et terrengpunkt innen 42 m.');return;}
+  terrainMode.target=quantizeTarget(ground(aim.x,aim.z));
+  terrainMode.revision++;terrainGridSignature='';
+  terrainModeSync();worldSave();terrainGridDraw();
+  toolMessage('Målkote valgt: '+terrainMode.target.toFixed(2).replace('.',',')+' m.');
+ };
+ $('terrainTarget').onchange=()=>{
+  const value=quantizeTarget(Number($('terrainTarget').value.trim().replace(',','.')));
+  if(value===null){terrainModeSync();toolMessage('Ugyldig målkote.');return;}
+  terrainMode.target=value;terrainMode.revision++;terrainGridSignature='';
+  terrainModeSync();worldSave();terrainGridDraw();
+ };
+ $('terrainLock').onchange=()=>{
+  terrainMode.locked=$('terrainLock').checked&&terrainMode.target!==null;
+  terrainMode.revision++;terrainGridSignature='';
+  terrainModeSync();worldSave();terrainGridDraw();
+ };
+}
 function earthUI(){
  const shovel=inventoryState.selectedTool==='shovel';
  $('earthTools').style.display=shovel?'block':'none';
@@ -3525,8 +3634,8 @@ function gradeInit(){
  $('gradeSuggest').onclick=()=>{if(gradeSuggestedLevel!==null){$('gradeLevel').value=gradeSuggestedLevel.toFixed(1);gradeElevationRefresh()}};
  gradeRefresh();
 }
-async function init(){await worldInitialize();renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.insertBefore(renderer.domElement,document.body.firstChild);camera=new THREE.PerspectiveCamera(73,innerWidth/innerHeight,.08,260);camera.rotation.order='YXZ';clock=new THREE.Clock();buildWorld();gradeInit();constructionInit();buildingStoreInit();survivalInit();earthAvailabilityUpdate();pileMeshRefresh();sawStationsRefresh();initWeather();initInventoryUI();loadHudUpdate();weatherState.elapsed=WEATHER_DAY_SECONDS*.5;load();relocatePlayerFromStructure();updateWeather(0);updateCamera();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});$('status').textContent='4 × 4 km · dynamiske terrengchunks, elver, innsjøer og hav aktive · Utforsk, samle ressurser og bygg';animate()}
-function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05);if(!paused){let speed=3.5*(survivalNeeds.hunger<15?.86:1)*(survivalNeeds.warmth<15?.86:1),turnSpeed=2.1,forward=-joy.y,turn=joy.x;p.yaw-=turn*turnSpeed*dt;let fx=-Math.sin(p.yaw),fz=-Math.cos(p.yaw);move(fx*forward*speed*dt,fz*forward*speed*dt);p.seconds+=dt;updateCamera();if((Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4)))updateChunks()}waterTime.value+=dt;updateWeather(paused?0:dt);survivalTick(paused?0:dt);treeRegrowthTick();survivalPlacePreview();renderer.render(scene,camera);if($('gradeOverlay').classList.contains('show')&&performance.now()-gradeLastHud>300){gradeLastHud=performance.now();gradeElevationRefresh()}if(performance.now()-gradeLiveLast>200){gradeLiveLast=performance.now();gradeLiveRefresh()}if(performance.now()-pileFocusLast>100){pileFocusLast=performance.now();pileFocusRefresh()}if(performance.now()-constructionLastRefresh>300){constructionLastRefresh=performance.now();constructionUpdateHud()}if(Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4))earthAvailabilityUpdate();if(toolToastUntil&&performance.now()>toolToastUntil){$('toolToast').style.display='none';toolToastUntil=0}$('status').textContent=`UTENDØRS · X ${p.x.toFixed(1)} · Z ${p.z.toFixed(1)} · ${terrainChunks.size} chunks · ${Math.round(1/Math.max(dt,.01))} FPS`}
+async function init(){await worldInitialize();renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.insertBefore(renderer.domElement,document.body.firstChild);camera=new THREE.PerspectiveCamera(73,innerWidth/innerHeight,.08,260);camera.rotation.order='YXZ';clock=new THREE.Clock();buildWorld();gradeInit();constructionInit();buildingStoreInit();survivalInit();earthAvailabilityUpdate();pileMeshRefresh();sawStationsRefresh();initWeather();initInventoryUI();loadHudUpdate();weatherState.elapsed=WEATHER_DAY_SECONDS*.5;load();terrainModeInit();relocatePlayerFromStructure();updateWeather(0);updateCamera();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});$('status').textContent='4 × 4 km · dynamiske terrengchunks, elver, innsjøer og hav aktive · Utforsk, samle ressurser og bygg';animate()}
+function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05);if(!paused){let speed=3.5*(survivalNeeds.hunger<15?.86:1)*(survivalNeeds.warmth<15?.86:1),turnSpeed=2.1,forward=-joy.y,turn=joy.x;p.yaw-=turn*turnSpeed*dt;let fx=-Math.sin(p.yaw),fz=-Math.cos(p.yaw);move(fx*forward*speed*dt,fz*forward*speed*dt);p.seconds+=dt;updateCamera();if((Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4)))updateChunks()}waterTime.value+=dt;updateWeather(paused?0:dt);survivalTick(paused?0:dt);treeRegrowthTick();terrainGridDraw();survivalPlacePreview();renderer.render(scene,camera);if($('gradeOverlay').classList.contains('show')&&performance.now()-gradeLastHud>300){gradeLastHud=performance.now();gradeElevationRefresh()}if(performance.now()-gradeLiveLast>200){gradeLiveLast=performance.now();gradeLiveRefresh()}if(performance.now()-pileFocusLast>100){pileFocusLast=performance.now();pileFocusRefresh()}if(performance.now()-constructionLastRefresh>300){constructionLastRefresh=performance.now();constructionUpdateHud()}if(Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4))earthAvailabilityUpdate();if(toolToastUntil&&performance.now()>toolToastUntil){$('toolToast').style.display='none';toolToastUntil=0}$('status').textContent=`UTENDØRS · X ${p.x.toFixed(1)} · Z ${p.z.toFixed(1)} · ${terrainChunks.size} chunks · ${Math.round(1/Math.max(dt,.01))} FPS`}
 const joyEl=$('joy'),knob=$('knob');function joyMove(e){let r=joyEl.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,len=Math.max(1,Math.hypot(dx,dy)),v=Math.min(1,len/48);joy.x=dx/len*v;joy.y=dy/len*v;knob.style.transform=`translate(${joy.x*44}px,${joy.y*44}px)`}
 joyEl.addEventListener('pointerdown',e=>{e.preventDefault();joyEl.setPointerCapture(e.pointerId);joyMove(e)});joyEl.addEventListener('pointermove',e=>{if(joyEl.hasPointerCapture(e.pointerId))joyMove(e)});function joyEnd(){joy.x=joy.y=0;knob.style.transform='translate(0,0)'}joyEl.addEventListener('pointerup',joyEnd);joyEl.addEventListener('pointercancel',joyEnd);
 document.addEventListener('pointerdown',e=>{
