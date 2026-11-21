@@ -1,0 +1,36 @@
+<!doctype html><html lang="no"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>AFTERFALL CE 1.1.4C.1.5 – Havnivå og resettest</title><style>body{font:16px system-ui;background:#10231d;color:#e9f4eb;max-width:840px;margin:auto;padding:22px}section{background:#1d3829;border:1px solid #7aab89;border-radius:12px;padding:16px}.good{color:#a6e6b3}.bad{color:#fcacab}pre{font:13px/1.5 ui-monospace,monospace;white-space:pre-wrap}</style></head><body><h1>AFTERFALL CE 1.1.4C.1.5 – Havnivå 0</h1><p>Automatiske tester av ny kotereferanse, landgulv, havbunn og fremtidige nye spill. Endrer ikke nettleserens lagringer.</p><section><strong id="summary">Kjører tester …</strong><pre id="details"></pre></section><script type="module">
+import {SEA_LEVEL,DRY_LAND_FLOOR,normalizeDryGround,limitDryCut,datumInvariant,LEGACY_TEST_KEYS,RESET_MARKER,RESET_VALUE} from './sea-datum-114c15.js';
+import {freshWorldSnapshot,freshPlayerCheckpoint,makeSlot,validSlot} from './game-slots-114c142.js';
+import {quantizeTarget,terrainTargetStep,readGridCells,plotFlatAt} from './terrain-grade-114c14.js';
+const results=[],check=(name,fn)=>{try{if(!fn())throw Error('Uventet resultat');results.push({name,ok:true})}catch(e){results.push({name,ok:false,error:String(e)})}};
+check('Ordinær havflate er 0,00 m',()=>SEA_LEVEL===0);
+check('Minimum tørt land er 0,05 m',()=>DRY_LAND_FLOOR===.05);
+check('Tørr høy fjellgrunn beholder høyden',()=>normalizeDryGround(47,false)===47);
+check('Tørt terreng under havflaten løftes til 0,05 m',()=>normalizeDryGround(-3,false)===.05);
+check('Havbunn forblir under 0,00 m',()=>normalizeDryGround(-8,true)===-8);
+check('Undervannsbunn like under 0 bevares',()=>normalizeDryGround(-.03,true)===-.03);
+check('Tørr grunn oppfyller kotekravet',()=>datumInvariant(.05,false));
+check('Tørr grunn under 0 avvises',()=>!datumInvariant(-.05,false));
+check('Undervannsgrunn kan være negativ',()=>datumInvariant(-4,true));
+check('Graving fra 0,14 stopper på 0,05',()=>limitDryCut(.14,-.07,false)===.05);
+check('Videre graving ved 0,05 stoppes',()=>limitDryCut(.05,-.1,false)===null);
+check('Graving på havbunn endres ikke av tørrlandsperren',()=>limitDryCut(-3,-3.1,true)===-3.1);
+check('Graving over 0,05 endres ikke',()=>limitDryCut(2,1.9,false)===1.9);
+const newWorld=freshWorldSnapshot(206414),newPlayer=freshPlayerCheckpoint(206414);
+check('Ny verden bruker havreferanse',()=>newWorld.heightDatum==='sea-level-zero-v1');
+check('Tidligere lagringsformat forblir versjon 2',()=>newWorld.version===2);
+check('Ingen gamle terrengendringer',()=>newWorld.edits.length===0&&newWorld.layers.length===0);
+check('Ingen gamle konstruksjoner eller masser',()=>newWorld.constructionPlans.length===0&&newWorld.smallStructures.length===0&&newWorld.piles.length===0);
+check('Tomt startinventar',()=>Object.keys(newWorld.inventory.items).length===0);
+check('Spilleren starter på kjent posisjon',()=>newPlayer.x===288&&newPlayer.z===301);
+check('Ny lagringsplass er gyldig',()=>validSlot(makeSlot(newWorld,newPlayer),206414));
+check('Nullstillingsnøklene er avgrenset',()=>LEGACY_TEST_KEYS.length===8&&LEGACY_TEST_KEYS.every(k=>k.startsWith('afterfall_')||k.startsWith('ce113-')));
+check('Engangsmarkør er definert',()=>RESET_MARKER.includes('114c15')&&RESET_VALUE==='done');
+check('Målkote beregnes i centimeter',()=>quantizeTarget(47.127)===47.13);
+check('Rutenett leser absolutt kote 47 m',()=>readGridCells(()=>47,0,0,47,{radius:1}).every(c=>c.classification==='flat'&&c.level===47));
+check('Målkotelås stopper et gravetrinn på riktig kote',()=>terrainTargetStep(47.08,false,47)===47);
+check('Automatisk flat byggegrunn bruker samme kote',()=>plotFlatAt(()=>47,100,100)?.level===47);
+const success=results.filter(r=>r.ok).length;
+document.getElementById('summary').textContent=success+' / '+results.length+' tester bestått';document.getElementById('summary').className=success===results.length?'good':'bad';
+document.getElementById('details').textContent=results.map(r=>(r.ok?'✓ ':'✗ ')+r.name+(r.error?' – '+r.error:'')).join('\n');
+</script></body></html>

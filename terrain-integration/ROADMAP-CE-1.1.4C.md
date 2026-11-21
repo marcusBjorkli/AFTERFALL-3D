@@ -1,5 +1,12 @@
 # AFTERFALL – godkjent konstruksjonsplan CE 1.1.4C
-Dato: 20. november 2026 · Status: **C.0–C.1.4 implementert; C.2–C.4 planlagt**
+Dato: 20. november 2026 · Status: **C.0–C.1.5 implementert; C.2–C.4 planlagt**
+
+## CE 1.1.4C.1.5 – Felles havnivå og ny spillverden
+**Implementert 21. november 2026.** Hele 3D-spillverdenen bruker nå ordinær havflate som fysisk høydereferanse 0,00 m. Den gamle grafikkforskyvningen (startområdets høyde omtrent 46,98 m) er fjernet fra terreng-, vann- og byggekoordinatene, mens startområdets terrengform beholdes. Tørt terreng under 0 blir løftet til minst 0,05 m; våte sjø- og innsjøbunner kan ligge under null. Spade og rasbalanse hindres i å grave tørrlagt land under denne grensen. Høyderutenett, målkotelås, prosjektplanering, småbygg, konstruksjonseditor og diagnostikk bruker de samme fysiske koteverdiene.
+
+Ved første oppstart av C.1.5 på hver enhet fjernes gamle testlagringer for denne 3D-verdenen fra browserens egne IndexedDB- og localStorage-nøkler, inkludert begge lagringsplasser. En engangsmarkør hindrer ny tilbakestilling ved senere oppstart. Andre nettsteder og AFTERFALL-prosjekter, øvrig kode og GitHub-historikk berøres ikke. Sletting skjer i nettleseren når den nye versjonen åpnes, ikke direkte på brukers enhet fra GitHub.
+
+**Testing:** Se `verify-c15.html` og `QA-CE-1.1.4C.1.5.md`. Praktisk iPhone-test gjenstår.
 
 ## CE 1.1.4C.1.4.2 – Nytt spill og to lagringsplasser
 **Implementert 21. november 2026.** Hovedmenyen tilbyr «🌱 Nytt spill» med egen bekreftelsesdialog og en reversibel «↔ Bytt til forrige spill»-funksjon. Nåværende spillverden blir sikkerhetskopiert med terrengarbeid, konstruksjoner, fysiske materialhauger, inventar, lagerinnhold, overlevelsesstatus og Marcus sin posisjon før den nye verdenen starter. Original verden og ny verden kan byttes mellom uten sletting. En tredje verden blir ikke opprettet før en eventuell senere utvidelse av lagringssystemet. Alt oppbevares lokalt i samme nettleser; sletting av nettstedsdata kan fjerne begge lagringsplassene.
