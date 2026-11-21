@@ -42,3 +42,12 @@ Status: Implementert i utviklingsgrenen. Mobil/nettlesertesting hos spilleren gj
 - [ ] Prøv småbygg og bygg via editoren på den flate flekken uten å opprette prosjekt.
 - [ ] Lagre, last inn, og kontroller gamle planerte tomter, det nye bygget, terrengendringer og målkotelås.
 - [ ] Test på mobil med lang spilløkt for ytelse og interaksjon med andre UI-elementer.
+
+## CE 1.1.4C.1.4.1 – Rutenettet følger spilleren
+- Høyderutenettet er nå sentrert rundt Marcus (9 × 9 ruter, én meter per rute). Det oppdateres når Marcus flytter seg til en ny terrengrute.
+- Rutenettet er fremdeles forankret til det faktiske terrengets globale 1-metersnett: det flyttes ikke kontinuerlig relativt til landskapet eller ved kamerarotasjon.
+- Rutenettet vises også når siktekorset peker opp mot himmelen eller ikke treffer bakken.
+- Hud viser terrenghøyden der Marcus står og størrelsen på sammenhengende plan flate. Valg av målkote via siktekorset (inntil 42 meter) er bevart som egen funksjon.
+- Det er ingen endring i geometri, massebalanse, gravetrinn, bygninger, konstruksjonsplaner eller lagringsformat.
+
+**Regresjonstester (6/6 bestått):** rutenett uten siktepunkt, 81 høyderuter + linjemesh, forflytning av siktekors uten rutenettforflytning, rutenettforflytning sammen med Marcus, varig visning ved himmelsikte, koteavlesning fra spillerens posisjon.
