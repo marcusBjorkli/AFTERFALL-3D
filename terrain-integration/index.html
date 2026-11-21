@@ -2826,8 +2826,9 @@ function gradeChangeStatus(action){
 }
 // CE 1.1: authoritative game host and visible set-out; no construction or material consumption.
 let autoFlatCache={when:0,x:NaN,z:NaN,revision:-1,grade:null};
-function autoFlatAvailable(x,z){
- if(x<3||z<3||x>WORLD-3||z>WORLD-3||earthRestricted(x,z,true)||gradingAt(x,z))return false;
+function autoFlatAvailable(x,z,ignoreId=null){
+ const grade=gradingAt(x,z);
+ if(x<3||z<3||x>WORLD-3||z>WORLD-3||earthRestricted(x,z,true)||(grade&&grade.id!==ignoreId))return false;
  if(collides(x-PAD_X,z-PAD_Z))return false;
  if([...survivalStructures.values()].some(q=>Math.hypot(q.x-x,q.z-z)<(SURVIVAL_DEFS[q.type]?.r||.8)+.55))return false;
  if([...sawStations.values()].some(q=>Math.hypot(q.x-x,q.z-z)<1.2))return false;
@@ -2837,7 +2838,7 @@ function autoFlatAvailable(x,z){
 function autoFlatStillValid(q){
  if(!q?.autoFlat||!['completed','archived'].includes(q.status)||!Number.isFinite(q.level))return false;
  for(let z=q.z0;z<=q.z1;z++)for(let x=q.x0;x<=q.x1;x++)
-  if(Math.abs(ground(x,z)-q.level)>GRADE_TOLERANCE||!autoFlatAvailable(x,z))return false;
+  if(Math.abs(ground(x,z)-q.level)>GRADE_TOLERANCE||!autoFlatAvailable(x,z,q.id))return false;
  for(let z=q.z0;z<q.z1;z++)for(let x=q.x0;x<q.x1;x++)
   if(Math.abs(ground(x+.5,z+.5)-q.level)>GRADE_TOLERANCE)return false;
  return true;
@@ -3591,7 +3592,7 @@ function constructionBegin(){
  if(!containsPlayer(q,p.x,p.z)){toolMessage('Gå inn på området for å prosjektere.');return;}
  const site=constructionReady(q);
  if(!site){toolMessage('Byggeflaten må være plan og ha stabile skråninger.');return;}
- constructionSession={id:globalThis.crypto?.randomUUID?.()||('ce11-'+Date.now()+'-'+Math.random().toString(36).slice(2)),site,accepted:null};
+ constructionSession={id:globalThis.crypto?.randomUUID?.()||('ce11-'+Date.now()+'-'+Math.random().toString(36).slice(2)),site,accepted:null,autoGrade:q.autoFlat?q:null};
  stopShovelHold();joyEnd();lookPointer=null;constructionOpen=true;paused=true;
  $('constructionBarTitle').textContent=q.name+' · '+site.length+' × '+site.width+' m';
  $('constructionClose').disabled=false;$('constructionOverlay').hidden=false;
@@ -3617,7 +3618,7 @@ async function constructionReceive(e){
  const id=msg.plan?.planId;
  const respond=(accepted,reason)=>constructionSend('plan-result',{session:session.id,planId:id,accepted,reason});
  if(session.accepted){respond(session.accepted===id,session.accepted===id?undefined:'Byggeplassen er allerede reservert.');return;}
- const q=gradingProjects.find(q=>q.id===session.site.id),site=constructionReady(q);
+ const q=gradingProjects.find(q=>q.id===session.site.id)||(session.autoGrade?.id===session.site.id?session.autoGrade:null),site=constructionReady(q);
  if(!site||!sameSite(site,session.site)||!containsPlayer(q,p.x,p.z)){respond(false,'Byggeplassen er ikke lenger godkjent, eller spilleren står utenfor.');return;}
  if(constructionPlans.has(site.id)){respond(false,'Det finnes allerede en byggeplan på dette området.');return;}
  if([...constructionPlans.values()].some(p=>p.planId===id)){respond(false,'Byggeplan-ID er allerede brukt på en annen byggeplass.');return;}
@@ -3629,14 +3630,18 @@ async function constructionReceive(e){
  if(result.error){respond(false,result.error);return;}
  const plan=result.plan;
  constructionBusy=true;$('constructionClose').disabled=true;
+ const newAuto=!!session.autoGrade&&!gradingProjects.some(q=>q.id===site.id);
+ if(newAuto)gradingProjects.push(session.autoGrade);
  constructionPlans.set(site.id,plan);
  try{await worldSave(true);}
  catch(err){
-  constructionPlans.delete(site.id);constructionBusy=false;$('constructionClose').disabled=false;
+  constructionPlans.delete(site.id);
+  if(newAuto)gradingProjects.splice(gradingProjects.indexOf(session.autoGrade),1);
+  constructionBusy=false;$('constructionClose').disabled=false;
   respond(false,'Kunne ikke lagre byggeplanen. '+err.message);return;
  }
  session.accepted=plan.planId;
- try{constructionRender();gradeRefresh();}catch(err){console.error('Byggeplassvisualisering:',err);}
+ try{constructionRender();gradeRefresh();if(newAuto)refreshPlotPlants(session.autoGrade);}catch(err){console.error('Byggeplassvisualisering:',err);}
  constructionBusy=false;$('constructionClose').disabled=false;
  respond(true);
  // Return to the existing game scene after successful persistence.
