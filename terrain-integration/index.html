@@ -253,7 +253,7 @@ body.site-hud-active #gradeProgressHud{display:none!important}
 #terrainGridHud[hidden]{display:none!important}
 #terrainGridHud strong{display:block;font-size:12px}
 @media(max-height:680px){#terrainGridHud{top:calc(86px + env(safe-area-inset-top))}#earthTools{max-height:calc(78dvh - 38px);overflow:auto}}
-/* CE 1.1.4C.2.1.1.1 – mobile HUD: gameplay controls stay clear and usable. */
+/* CE 1.1.4C.2.1.1 – mobile HUD: gameplay controls stay clear and usable. */
 #terrainSettingsBackdrop,#terrainSettingsToggle,#terrainSettingsClose,.terrain-settings-heading{display:none}
 @media(max-width:700px),(pointer:coarse) and (max-height:560px){
  #hud{padding:6px 8px;gap:5px;align-items:flex-start;z-index:5}
@@ -895,7 +895,7 @@ function terrainModeSync(){
  $('terrainGridToggle').setAttribute('aria-pressed',String(terrainMode.enabled));
  terrainGridVisibility();
 }
-// CE 1.1.4C.2.1.1.1: optional mobile survey modal; the shovel buttons stay visible.
+// CE 1.1.4C.2.1.1: optional mobile survey modal; the shovel buttons stay visible.
 let terrainSettingsOpen=false;
 function mobileTerrainLayout(){
  return window.matchMedia('(max-width:700px), (pointer:coarse) and (max-height:560px)').matches;
