@@ -1785,7 +1785,7 @@ function harvestNode(cx,cz,type,k,x,z,y,radius,kind){
 function harvestCandidateAllowed(x,z){
  if(x<2||z<2||x>WORLD-2||z>WORLD-2)return false;
  const h=ground(x,z),sl=vegetationSlope(x,z);
- return !exposedRockAt(x,z)&&vegetationAllowed(x,z,h,sl);
+ return vegetationAllowed(x,z,h,sl);
 }
 // CE 1.1.4C.2.1.1f.1 – exposed, immovable fjell created from
 // deterministic fBm/noise and clipped against the ACTUAL terrain surface.
@@ -2638,7 +2638,7 @@ function vegetationSlope(x,z){
 }
 function vegetationAllowed(x,z,h,slope){
  const cap=mountainCapAt(x,z);
- if(h+PAD_H<.8||slope>.78||(exposedRockAt(x,z)&&!(cap&&!cap.hasLake&&slope<.35)))return false;
+ if(h+PAD_H<.8||slope>.78||(exposedRockAt(x,z)&&!(cap&&slope<.35)))return false;
  if(mountainLakeAt(x,z))return false;
  const water=waterBodyAt(x,z);
  if(water&&h+PAD_H<water.level+2.2)return false;
@@ -2694,6 +2694,57 @@ function buildChunkVegetation(cx,cz,lod){
 }
 
 function chunkKey(cx,cz){return cx+','+cz}
+
+function buildChunkAlpineWater(cx,cz,lod){
+ // A horizontal water plane cut exactly at the basin/shoreline of the SAME
+ // terrain heightfield. No terrain overlay; only water is a separate mesh.
+ const xMin=cx*64,zMin=cz*64,xMax=xMin+64,zMax=zMin+64;
+ const step=lod===0?2:lod===1?4:8,meshes=[];
+ function clip(poly,field){
+  if(poly.length<3)return [];
+  const out=[];
+  for(let i=0;i<poly.length;i++){
+   const a=poly[i],b=poly[(i+1)%poly.length],fa=field(a),fb=field(b);
+   if((fa<=0)!==(fb<=0)){
+    const t=clamp(fa/(fa-fb),0,1);
+    out.push({x:a.x+(b.x-a.x)*t,z:a.z+(b.z-a.z)*t});
+   }
+   if(fb<=0)out.push(b);
+  }
+  return out;
+ }
+ for(const cap of MOUNTAIN_PLATEAUS){
+  if(!cap.hasLake||cap.x+27<xMin||cap.x-27>xMax||cap.z+27<zMin||cap.z-27>zMax)continue;
+  const level=mountainCapTop(cap)-.85,radius=26;
+  const verts=[],indices=[];
+  const startX=Math.max(xMin,Math.floor((cap.x-radius)/step)*step);
+  const startZ=Math.max(zMin,Math.floor((cap.z-radius)/step)*step);
+  const endX=Math.min(xMax,Math.ceil((cap.x+radius)/step)*step);
+  const endZ=Math.min(zMax,Math.ceil((cap.z+radius)/step)*step);
+  for(let z=startZ;z<endZ-.001;z+=step)for(let x=startX;x<endX-.001;x+=step){
+   const corners=[[x,z],[x+step,z],[x,z+step],[x+step,z+step]];
+   for(const inds of [[0,2,1],[1,2,3]]){
+    let poly=inds.map(k=>({x:corners[k][0],z:corners[k][1]}));
+    poly=clip(poly,p=>(p.x-cap.x)**2+(p.z-cap.z)**2-radius*radius);
+    poly=clip(poly,p=>ground(p.x,p.z)-level+.04);
+    if(poly.length<3)continue;
+    const base=verts.length/3;
+    for(const point of poly)verts.push(point.x-PAD_X,level+.045,point.z-PAD_Z);
+    for(let j=1;j<poly.length-1;j++)indices.push(base,base+j,base+j+1);
+   }
+  }
+  if(indices.length){
+   const geometry=new THREE.BufferGeometry();
+   geometry.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+   geometry.setIndex(indices);geometry.computeVertexNormals();
+   const mesh=new THREE.Mesh(geometry,lakeMaterial);
+   mesh.name='Fjellvann – '+cap.index;
+   mesh.receiveShadow=false;scene.add(mesh);meshes.push(mesh);
+  }
+ }
+ return meshes;
+}
+
 function createTerrainChunk(cx,cz,lod){
  const SEG=lod===0?64:lod===1?32:16,step=64/SEG,stride=SEG+1,verts=[],colors=[],indices=[],ox=cx*64,oz=cz*64;
  const heights=new Float64Array(stride*stride);
@@ -2733,11 +2784,11 @@ function createTerrainChunk(cx,cz,lod){
  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));geo.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));geo.setIndex(indices);geo.computeVertexNormals();
  const land=new THREE.Mesh(geo,terrainMaterial);land.receiveShadow=true;scene.add(land);
  const water=buildChunkRivers(cx,cz),stillWater=buildChunkStillWater(cx,cz,lod),
- plants=buildChunkVegetation(cx,cz,lod),ore=buildChunkOre(cx,cz,lod);
+ alpineWater=buildChunkAlpineWater(cx,cz,lod),plants=buildChunkVegetation(cx,cz,lod),ore=buildChunkOre(cx,cz,lod);
  harvestNodes.set(chunkKey(cx,cz),plants.nodes.concat(ore.nodes));
- return {cx,cz,lod,land,water,stillWater,vegetation:plants.meshes,oreMeshes:ore.meshes};
+ return {cx,cz,lod,land,water,stillWater,alpineWater,vegetation:plants.meshes,oreMeshes:ore.meshes};
 }
-function disposeChunk(c){harvestNodes.delete(chunkKey(c.cx,c.cz));for(const mesh of c.oreMeshes||[]){scene.remove(mesh)}for(const mesh of c.vegetation||[])scene.remove(mesh);scene.remove(c.land);c.land.geometry.dispose();if(c.water){scene.remove(c.water);c.water.geometry.dispose()}for(let m of c.stillWater||[]){scene.remove(m);m.geometry.dispose()}}
+function disposeChunk(c){harvestNodes.delete(chunkKey(c.cx,c.cz));for(const mesh of c.oreMeshes||[]){scene.remove(mesh)}for(const mesh of c.vegetation||[])scene.remove(mesh);scene.remove(c.land);c.land.geometry.dispose();if(c.water){scene.remove(c.water);c.water.geometry.dispose()}for(let m of c.stillWater||[]){scene.remove(m);m.geometry.dispose()}for(let m of c.alpineWater||[]){scene.remove(m);m.geometry.dispose()}}
 const CHUNK=64,ACTIVE_RADIUS=3;
 function updateChunks(force=false){let px=clamp(Math.floor(p.x/CHUNK),0,63),pz=clamp(Math.floor(p.z/CHUNK),0,63),desired=new Map();
  for(let dz=-ACTIVE_RADIUS;dz<=ACTIVE_RADIUS;dz++)for(let dx=-ACTIVE_RADIUS;dx<=ACTIVE_RADIUS;dx++){let cx=px+dx,cz=pz+dz;if(cx<0||cz<0||cx>63||cz>63)continue;let distance=Math.max(Math.abs(dx),Math.abs(dz)),lod=distance<=1?0:distance<=2?1:2;desired.set(chunkKey(cx,cz),{cx,cz,lod})}
