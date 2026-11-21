@@ -1,10 +1,10 @@
 // CE 1.1.4C.1: physical survival stations. Build costs are gameplay values.
 export const SURVIVAL_DEFS={
- campfire:{name:'Bålplass',icon:'🔥',cost:{stone:12,firewood:1},r:.65},
- crate:{name:'Lagringskasse',icon:'📦',cost:{planks:6,battens:2},r:.55,capacity:{mass:300,volume:.45}},
- workbench:{name:'Arbeidsbenk',icon:'🪚',cost:{logs:1,planks:4},r:.95},
- sawbuck:{name:'Sagbukk',icon:'🪵',cost:{logs:1,battens:2},r:.85},
- woodshed:{name:'Vedskjul',icon:'🪵',cost:{logs:1,planks:5},r:1.35,capacity:{mass:1800,volume:4.2}}
+ campfire:{name:'Bålplass',icon:'🔥',cost:{stone:12,firewood:1},r:.65,description:'Varme innen fire meter, vedfyring og tørking av bær.'},
+ crate:{name:'Lagringskasse',icon:'📦',cost:{planks:6,battens:2},r:.55,description:'Liten oppbevaringskasse med eget inventar.',capacity:{mass:300,volume:.45}},
+ workbench:{name:'Arbeidsbenk',icon:'🪚',cost:{logs:1,planks:4},r:.95,description:'Enkle oppskrifter for fakler og trepinner.'},
+ sawbuck:{name:'Sagbukk',icon:'🪵',cost:{logs:1,battens:2},r:.85,description:'Saging av flere råenheter per arbeidsoperasjon.'},
+ woodshed:{name:'Vedskjul',icon:'🪵',cost:{logs:1,planks:5},r:1.35,description:'Oppbevaring av ved, tømmer og øvrig trelast.',capacity:{mass:1800,volume:4.2}}
 };
 export const WOOD_RESOURCES=['logs','planks','battens','sticks','firewood','sawdust'];
 export const WORK_RECIPES={torch:{name:'Fakkel',input:{sticks:2,firewood:1},output:{torch:1}},pegs:{name:'Trepinner',input:{planks:1},output:{sticks:8,sawdust:2}}};
