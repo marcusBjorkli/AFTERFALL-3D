@@ -461,8 +461,8 @@ const RESOURCE_CATALOG=Object.freeze({
  sawdust:{name:'Sagflis',mass:.5,volume:.001,unit:'L'},berries:{name:'Bær',mass:.2,volume:.0005,unit:'stk'},dried_berries:{name:'Tørkede bær',mass:.1,volume:.00025,unit:'stk'},torch:{name:'Fakkel',mass:.9,volume:.003,unit:'stk'}
 });
 const TOOL_CATALOG=Object.freeze({
- shovel:{name:'Spade',icon:'🪏',verb:'Grave / fylle',description:'Grav jord, sand og leire. Bruk hakke til stein og fast fjell.'},
- pickaxe:{name:'Hakke',icon:'⛏️',verb:'Bryte berg',description:'Bryt stein og malm ved å sikte på en forekomst innen 5 meter.'},
+ shovel:{name:'Spade',icon:'🪏',verb:'Grave / fylle',description:'Grav jord, sand, leire og løs stein. Fast fjell brytes med hakke.'},
+ pickaxe:{name:'Hakke',icon:'⛏️',verb:'Bryte fjell',description:'Bryt fast fjell og malm. Uttatt fjell blir løs stein, håndtert med spade.'},
  axe:{name:'Øks',icon:'🪓',verb:'Hogge',description:'Hogg voksne trær og busker innen 5 meter. Trær gir 3–6 tømmer og vokser tilbake. Overskudd legges i haug.'},
  saw:{name:'Sag',icon:'🪚',verb:'Sage',description:'Sag tømmer til planker, ved eller lekter med massebevaring.'},
  hammer:{name:'Hammer',icon:'🔨',verb:'Bygge',description:'Lever materialer ved byggeplassen og monter neste komplette modul.'}
@@ -493,8 +493,8 @@ function originalGround(x,z){return baseGround(x,z)}
 function geoLayer(x,z,depth){
  const a=noise(x/24+37,z/24-17),b=noise(x/9-19,z/9+51);
  if(depth<.3+a*.22)return 'soil';
- if(depth<.8+a*.3)return a>.52?'sand':'stone';
- if(depth<1.5+a*.55+b*.2)return b>.5?'clay':'stone';
+ if(depth<.8+a*.3)return a>.52?'sand':'soil';
+ if(depth<1.5+a*.55+b*.2)return b>.5?'clay':'soil';
  return 'bedrock';
 }
 function geoLimit(x,z){return 1.5+noise(x/24+37,z/24-17)*.55+noise(x/9-19,z/9+51)*.2}
@@ -541,8 +541,8 @@ function earthAim(maxRange=6.5){
 // Check the entire candidate patch before committing inventory, terrain or persistence.
 const SLOPE_RULES=Object.freeze({
  soil:{degrees:30,name:'jord'},sand:{degrees:30,name:'sand'},
- clay:{degrees:40,name:'fast jord/leire'},stone:{degrees:40,name:'stein'},
- bedrock:{degrees:89,name:'fast fjell'}
+ clay:{degrees:40,name:'fast jord/leire'},stone:{degrees:40,name:'løs stein'},
+ bedrock:{degrees:89,name:'fjell'}
 });
 // CE 1.1.2: strict local repose comparisons on the Moore neighbourhood.
 // Only the higher node supplies sliding material. Solid rock does not slide.
@@ -735,7 +735,7 @@ function dmCut(e,layers=null){
  while(left>DM_EPS){
   const depth=Math.max(0,-offset),idx=boundaries.findIndex(v=>v>depth+DM_EPS);
   if(idx<0)return null;
-  const type=idx===0?'soil':idx===1?(a>.52?'sand':'stone'):(b>.5?'clay':'stone');
+  const type=idx===0?'soil':idx===1?(a>.52?'sand':'soil'):(b>.5?'clay':'soil');
   const n=Math.min(left,Math.max(0,offset+boundaries[idx]));if(n<=DM_EPS)return null;
   add(type,n);left-=n;offset-=n;
  }
@@ -765,10 +765,9 @@ function dmTransaction(cut,fill,material,origin,cutResult=null,dump=false){
  if(dump&&(!fill||Math.abs(e.before-n.after)>DM_EPS||e.after<=e.before||e.after>5000+DM_EPS||e.volume>slideRoom(n,true)/1000+DM_EPS||(q&&e.y>q.level+DM_EPS)))return {error:'Ugyldig deponering.'};
  if(cut){
   const product=cutResult||dmCut(cut,n.stack);
-  if(!product)return {error:'Fast berg eller beskyttet lag. Bruk hakke til berg.'};
-  // The shovel cannot extract building stone, even from a deposited layer.
-  // Geological settling still uses dmCut directly; the tool rule is only for player actions.
-  if(!cutResult&&product.byType.has('stone'))return {error:'Stein i gravetrinnet. Bruk hakke.'};
+  if(!product)return {error:'Fast fjell under løsmassene. Bruk hakke; uttatt fjell blir stein.'};
+  // Deposited and surface stone is loose and can be dug with a shovel.
+  // Bedrock is not part of dmCut: it requires a pickaxe.
   for(const [type,l] of product.byType){const meta=RESOURCE_CATALOG[type];if(!meta)return {error:'Ukjent materiale.'};plan.items[type]=(plan.items[type]||0)+l/(meta.volume*1000);}
   if(!terrainLoadFits(plan.items))return {error:'Ikke plass til hele gravetrinnet. Deponer eller fyll først.'};
   slideApplyCut(n,cut,product);plan.cutL=cut.volume*1000;
@@ -830,6 +829,15 @@ function gradeCandidates(aim,project){
 function earthAction(fill){
  if(typeof fill!=='boolean'||earthActionBusy||!shovelHoldAllowed())return;earthActionBusy=true;
  try{
+  if(!fill){
+   const loose=harvestTarget();
+   if(loose&&(loose.type==='ore'||loose.type==='buried')&&loose.kind==='stone'){
+    if(earthRestricted(loose.x,loose.z)||gradingAt(loose.x,loose.z)){
+     toolMessage('Steinen ligger på beskyttet terreng.');return;
+    }
+    harvestCollect(loose,[['stone',3]]);return;
+   }
+  }
   const fail=msg=>{stopShovelHold();toolMessage(msg);$('earthWorkStatus').textContent=msg;$('earthWorkStatus').hidden=false;};
   const aim=earthAim();if(!aim)return fail('Sikt på bakken innen 6,5 meter.');
   const x=Math.round(aim.x),z=Math.round(aim.z),project=gradingAt(x,z);
@@ -1664,8 +1672,7 @@ function dmRockCut(e,type){
  const result=cm>DM_EPS?dmCut({...e,cm}):{stack:[],byType:new Map(),parts:[]};
  if(!result)return {error:'Kunne ikke beregne løsmasselagene over berget.'};
  if(e.cm-cm<=DM_EPS){
-  if(!result.byType.has('stone'))return {error:'Bruk spade – trinnet består av jord, sand eller leire.'};
-  return result;
+  return {error:'Løsmasser over fjellet. Bruk spade før du bryter fast fjell.'};
  }
  result.byType.set(type,(result.byType.get(type)||0)+(e.cm-cm)*10);
  return result;
@@ -1677,7 +1684,7 @@ function rockBreak(){
  const e=dmNode(x,z,false,q?q.level:null);
  if(!e){toolMessage('Målkote eller høydegrense nådd.');return;}
  const mineral=buriedOreKind(Math.floor(x/64),Math.floor(z/64),(x*13+z*7)%16);
- const type=(noise(x/7+43,z/7-51)>.84)?mineral:'stone';
+ const type=(noise(x/7+43,z/7-51)>.92)?mineral:'stone';
  const cut=dmRockCut(e,type);if(cut.error){toolMessage(cut.error);return;}
  const damage=(rockDamage.get(key)||0)+1;
  if(damage<3){rockDamage.set(key,damage);worldSave();toolMessage('Bergslag '+damage+'/3');return;}
@@ -1862,32 +1869,39 @@ function harvestRenewableTree(n,reward){
  const logs=reward.find(r=>r[0]==='logs')?.[1]||0,onGround=result.overflow.logs||0;
  toolMessage(n.type==='shrub'?'Busk høstet: '+reward.map(([id,q])=>q+' '+RESOURCE_CATALOG[id].name.toLowerCase()).join(', ')+'. Nye busker om 15 min.':'Hogd tre: '+logs+' tømmer'+(onGround?' ('+onGround+' i haug)':'')+' · ny vekst om 5 min.');
 }
+function harvestCollect(n,reward){
+ const totals=inventoryTotals(),mass=reward.reduce((sum,[id,q])=>sum+q*RESOURCE_CATALOG[id].mass,0),
+ volume=reward.reduce((sum,[id,q])=>sum+q*RESOURCE_CATALOG[id].volume,0);
+ if(totals.mass+mass>LOAD_MAX_KG+1e-7||totals.volume+volume>LOAD_MAX_M3+1e-9){
+  toolMessage('Inventaret er fullt. Legg fra deg ressurser før uttak.');return false;
+ }
+ harvestedIds.add(n.id);rockDamage.delete(n.id);
+ for(const [id,q] of reward)inventoryState.items[id]=(inventoryState.items[id]||0)+q;
+ worldSave();pileMeshRefresh();loadHudUpdate();saveHarvest();
+ const c=terrainChunks.get(chunkKey(n.cx,n.cz));
+ if(c){disposeChunk(c);terrainChunks.set(chunkKey(n.cx,n.cz),createTerrainChunk(n.cx,n.cz,c.lod));}
+ toolMessage('Samlet: '+reward.map(([id,q])=>q+' '+RESOURCE_CATALOG[id].name).join(', '));
+ return true;
+}
 function harvestUse(){
  if(performance.now()-harvestLastAction<320)return;
  harvestLastAction=performance.now();
  const n=harvestTarget(),tool=inventoryState.selectedTool;
  if(!n){if(tool==='pickaxe')rockBreak();else toolMessage('Sikt på et tre eller en busk innen 5 meter.');return}
- if((tool==='axe'&&(n.type==='ore'||n.type==='buried'))||(tool==='pickaxe'&&n.type!=='ore'&&n.type!=='buried')){
-  toolMessage((n.type==='ore'||n.type==='buried')?'Velg hakke for denne forekomsten.':'Velg øks for tre eller busk.');return;
+ if(n.kind==='stone'&&n.type!=='bedrock'){toolMessage('Løs stein: bruk spade og Grav.');return;}
+ const isRock=n.type==='bedrock',isOre=n.type==='ore'||n.type==='buried';
+ if((tool==='axe'&&(isOre||isRock))||(tool==='pickaxe'&&!isOre&&!isRock)){
+  toolMessage(isOre||isRock?'Bruk hakke for fjell og malm.':'Bruk øks for trær og busker.');return;
  }
  if(tool!=='axe'&&tool!=='pickaxe')return;
- const reward=harvestReward(n);
- if(isRenewableTree(n.id)){harvestRenewableTree(n,reward);return;}
- const totals=inventoryTotals();
- const mass=reward.reduce((sum,[id,q])=>sum+q*RESOURCE_CATALOG[id].mass,0);
- const volume=reward.reduce((sum,[id,q])=>sum+q*RESOURCE_CATALOG[id].volume,0);
- if(totals.mass+mass>LOAD_MAX_KG+1e-7||totals.volume+volume>LOAD_MAX_M3+1e-9){toolMessage('Inventaret er fullt. Legg fra deg ressurser før høsting.');return}
- harvestedIds.add(n.id);
- // Ressursutbytte og uttaksstatus lagres i separate eksisterende systemer.
- for(const [id,q] of reward)inventoryState.items[id]=(inventoryState.items[id]||0)+q;
- worldSave();pileMeshRefresh();loadHudUpdate();
- saveHarvest();
- const c=terrainChunks.get(chunkKey(n.cx,n.cz));
- if(c){
-  // Gjenbygg kun berørt chunk. Chunkenes globale data er uendret.
-  disposeChunk(c);terrainChunks.set(chunkKey(n.cx,n.cz),createTerrainChunk(n.cx,n.cz,c.lod));
+ if(isRock){
+  if(earthRestricted(n.x,n.z)||gradingAt(n.x,n.z)){toolMessage('Fjellflaten er beskyttet av et planeringsområde.');return;}
+  const strikes=(rockDamage.get(n.id)||0)+1;
+  if(strikes<3){rockDamage.set(n.id,strikes);worldSave();toolMessage('Fjellhugg '+strikes+'/3');return;}
  }
- toolMessage('Samlet: '+reward.map(([id,q])=>q+' '+RESOURCE_CATALOG[id].name).join(', '));
+ const reward=isRock?[['stone',24]]:harvestReward(n);
+ if(isRenewableTree(n.id)){harvestRenewableTree(n,reward);return;}
+ harvestCollect(n,reward);
 }
 
 const inventoryState={selectedTool:'shovel',items:Object.create(null)};
