@@ -4157,6 +4157,19 @@ async function constructionReceive(e){
  if(!site||!sameSite(site,session.site)||(!session.remotePlacement&&!containsPlayer(q,p.x,p.z))){respond(false,'Byggeplassen er ikke lenger godkjent, eller spilleren står utenfor.');return;}
  if(constructionPlans.has(site.id)){respond(false,'Det finnes allerede en byggeplan på dette området.');return;}
  if([...constructionPlans.values()].some(p=>p.planId===id)){respond(false,'Byggeplan-ID er allerede brukt på en annen byggeplass.');return;}
+ // An automatic blueprint must correspond to the catalogue entry selected in
+ // the game and its preview orientation. Free-editor projects are unaffected.
+ if(session.prefabType){
+  const selected=READY_BUILD_PLOTS[session.prefabType],project=msg.plan?.project;
+  const deck=Array.isArray(project?.modules)?project.modules.find(m=>m?.type==='floorDeck'):null;
+  const turns=Number.isFinite(deck?.angle)?((deck.angle%360)+360)%360:null;
+  const required=selected?constructionPickSize(session.prefabType):null;
+  if(!selected||project?.name!==selected.name||!deck||turns!==session.prefabAngle||
+     site.length<required.length||site.width<required.width){
+   respond(false,'Byggeplanen samsvarer ikke med valgt byggetegning, orientering eller byggegrunn. Ingen endringer er lagret.');
+   return;
+  }
+ }
  let result;
  try{
   if(JSON.stringify(msg.plan).length>24*1024*1024)throw Error('Byggeplanen er for stor.');
