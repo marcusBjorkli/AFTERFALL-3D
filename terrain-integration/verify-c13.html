@@ -1,0 +1,29 @@
+<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>AFTERFALL CE 1.1.4C.1.3 – Terrengtest</title><style>body{font:16px system-ui;color:#e5f0e7;background:#10231d;max-width:850px;margin:auto;padding:20px}section{background:#21392f;border:1px solid #85a58d;padding:16px;border-radius:12px}.ok{color:#a5e9b8}.fail{color:#ffb5b2}pre{white-space:pre-wrap;font:13px/1.6 ui-monospace,monospace}a{color:#a5e9b8}</style></head><body><h1>CE 1.1.4C.1.3 – Terrengutvidelse</h1><p>Kontrollerer flate koteområder, beskyttede byggeplasser og tilstøtende planeringsfelt uten å endre spillerens lagringsfiler.</p><section><strong id="summary">Kjører …</strong><pre id="results"></pre></section><p><a href="./?v=114c13">Tilbake til AFTERFALL</a></p><script type="module">
+import {SURVIVAL_DEFS} from './survival-structures-114c1.js';
+import {validateSmallGround} from './survival-placement-114c12.js?v=114c13';
+import {gradeTouches,gradeIntersectsArea,gradeSharedBorderNode,validateGradeExtension} from './grade-extension-114c13.js';
+const results=[],check=(name,fn)=>{try{if(!fn())throw Error('Feil resultat');results.push({name,ok:true})}catch(e){results.push({name,ok:false,error:String(e)})}};
+const parent={id:'old',name:'Lagerskur',status:'completed',x0:10,x1:20,z0:10,z1:20,level:2};
+const ext={x0:20,x1:26,z0:12,z1:18,level:2};
+const flat={heightAt:()=>2,restricted:()=>false,waterAt:()=>false,collides:()=>false,player:{x:0,z:0},other:[],sawbucks:[],piles:[]};
+const small=(x,z,opts=flat,grades=[parent],type='crate')=>validateSmallGround(type,{x,z,y:2,angle:90},grades,SURVIVAL_DEFS,opts);
+check('Plassering på gammel godkjent tomt',()=>!small(13,13).error);
+check('Flatt terreng uten prosjekt-ID',()=>!small(40,40,flat,[]).error);
+check('Flat utvidelse kan brukes',()=>!small(23,15,flat,[parent,{...ext,status:'completed'}]).error);
+check('Uferdig planering blokkerer',()=>!!small(23,15,flat,[{...ext,status:'active'}]).error);
+check('Ujevn kote blokkerer',()=>!!small(13,13,{...flat,heightAt:(x,z)=>x>13.2?2.1:2}).error);
+check('Vann blokkerer',()=>!!small(13,13,{...flat,waterAt:()=>true}).error);
+check('Vegg blokkerer',()=>!!small(13,13,{...flat,collides:()=>true}).error);
+check('Materialhaug blokkerer',()=>!!small(13,13,{...flat,piles:[{x:13,z:13}]}).error);
+check('Marcus blokkerer',()=>!!small(13,13,{...flat,player:{x:13,z:13}}).error);
+check('Småbygg blokkerer',()=>!!small(13,13,{...flat,other:[{x:13,z:13,type:'campfire'}]}).error);
+check('Utvidelse deler side med forelder',()=>gradeTouches(parent,ext));
+check('Godkjent tilstøtende felt',()=>!validateGradeExtension(parent,ext,[parent]).error);
+check('Hjørne uten felles side avvises',()=>!!validateGradeExtension(parent,{x0:20,x1:26,z0:20,z1:26,level:2},[parent]).error);
+check('Felt med ulik kote avvises',()=>!!validateGradeExtension(parent,{...ext,level:2.1},[parent]).error);
+check('Overlapp med gammel tomt avvises',()=>!!validateGradeExtension(parent,{...ext,x0:19},[parent]).error);
+check('Ikke tilstøtende felt avvises',()=>!!validateGradeExtension(parent,{...ext,x0:21},[parent]).error);
+check('Felles grensenode identifiseres',()=>gradeSharedBorderNode(20,14,[parent],ext,2));
+check('Ingen inngrep i gammel tomt',()=>!gradeSharedBorderNode(19,14,[parent],ext,2));
+const passed=results.filter(r=>r.ok).length;document.getElementById('summary').textContent=passed+' / '+results.length+' tester bestått';document.getElementById('summary').className=passed===results.length?'ok':'fail';document.getElementById('results').textContent=results.map(r=>(r.ok?'✓ ':'✗ ')+r.name+(r.error?' – '+r.error:'')).join('\n');
+</script></body></html>

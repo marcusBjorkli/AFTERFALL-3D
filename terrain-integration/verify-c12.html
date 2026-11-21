@@ -1,4 +1,4 @@
-<!doctype html><html lang="no"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>AFTERFALL CE 1.1.4C.1.2 – plasseringskontroll</title><style>body{background:#10231d;color:#edf4ed;font:16px system-ui;max-width:820px;margin:0 auto;padding:20px}section{background:#20392d;border:1px solid #83aa90;border-radius:14px;padding:16px}.good{color:#a5f0bc}.bad{color:#ffb2a9}pre{white-space:pre-wrap;font:13px/1.7 ui-monospace,monospace}a{color:#9de1b2}</style></head><body><h1>CE 1.1.4C.1.2 – småbygg</h1><p>Test av godkjent planert byggegrunn, kollisjoner og rotasjon. Testene berører ikke spillagringen.</p><section><strong id="summary">Kjører tester …</strong><pre id="results"></pre></section><p><a href="./?v=114c12">Tilbake til spillet</a></p><script type="module">
+<!doctype html><html lang="no"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>AFTERFALL CE 1.1.4C.1.3 – eldre plasseringskontroller oppdatert</title><style>body{background:#10231d;color:#edf4ed;font:16px system-ui;max-width:820px;margin:0 auto;padding:20px}section{background:#20392d;border:1px solid #83aa90;border-radius:14px;padding:16px}.good{color:#a5f0bc}.bad{color:#ffb2a9}pre{white-space:pre-wrap;font:13px/1.7 ui-monospace,monospace}a{color:#9de1b2}</style></head><body><h1>CE 1.1.4C.1.2 – småbygg</h1><p>Test av flatt terreng, kollisjoner og rotasjon. Regel om prosjekt-ID er erstattet i C.1.3. Testene berører ikke spillagringen.</p><section><strong id="summary">Kjører tester …</strong><pre id="results"></pre></section><p><a href="./?v=114c12">Tilbake til spillet</a></p><script type="module">
 import {SURVIVAL_DEFS,buildSurvival,restoreSurvival} from './survival-structures-114c1.js';
 import {normalizeSmallAngle,rotateSmallAngle,validateSmallGround} from './survival-placement-114c12.js';
 const checks=[],test=(name,fn)=>{try{if(!fn())throw Error('Uventet resultat');checks.push({name,ok:true})}catch(e){checks.push({name,ok:false,error:String(e)})}};
@@ -7,9 +7,9 @@ const cfg={heightAt:()=>2,restricted:()=>false,waterAt:()=>false,collides:()=>fa
 const check=(type,p=pos,plans=[q],e=cfg)=>validateSmallGround(type,p,plans,SURVIVAL_DEFS,e);
 for(const type of Object.keys(SURVIVAL_DEFS))test('Godkjent terreng: '+SURVIVAL_DEFS[type].name,()=>!check(type).error);
 test('Godkjent arkivert terreng',()=>!check('campfire',pos,[{...q,status:'archived'}]).error);
-test('Ingen planering avvises',()=>!!check('campfire',pos,[]).error);
+test('Flatt terreng uten registrert planering er godkjent',()=>!check('campfire',pos,[]).error);
 test('Pågående planering avvises',()=>!!check('campfire',pos,[{...q,status:'active'}]).error);
-test('Utenfor byggeplass avvises',()=>!!check('woodshed',{...pos,x:10.5}).error);
+test('Flatt terreng på eldre byggeplass gjenbrukes',()=>!check('woodshed',{...pos,x:10.5}).error);
 test('Feil kote avvises',()=>!!check('crate',{...pos,y:2.1}).error);
 test('Ujevn overflate avvises',()=>!!check('crate',pos,[q],{...cfg,heightAt:(x,z)=>x>13.4?2.1:2}).error);
 test('Beskyttet terreng avvises',()=>!!check('campfire',pos,[q],{...cfg,restricted:(x,z)=>z>13.4}).error);

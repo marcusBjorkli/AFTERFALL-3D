@@ -1,5 +1,5 @@
 # AFTERFALL – godkjent konstruksjonsplan CE 1.1.4C
-Dato: 20. november 2026 · Status: **C.0 og C.1 implementert; C.2–C.4 planlagt**
+Dato: 20. november 2026 · Status: **C.0–C.1.3 implementert; C.2–C.4 planlagt**
 
 ## CE 1.1.4C.0 – Grunnleggende bygningsinteraksjon og lagring
 **Implementert 21. november 2026.** Eksisterende ferdige lagerskur har nå et interaktivt lager som kan fylles fra inventaret og tømmes tilbake til inventaret. Innholdet lagres per byggeplan og eksisterende B.6-spilltilstand leses videre uten migrering av verdens-/inventarformat. Dette er en funksjonalitetsfase før nye C.1-konstruksjoner.
@@ -11,6 +11,9 @@ Spillfunksjoner: bålvarme, vedforbruk og tørking av bær; to fysiske lagringsk
 
 ## CE 1.1.4C.1.2 – Godkjent småbyggplassering (forbedring etter C.1)
 Implementert 21. november 2026. Nye småbygg må nå plasseres **innenfor én ferdig godkjent planeringsflate**, med hele byggeavtrykket innenfor området og kontroll av terrengkote, vann, tidligere bygninger, ressurslager og spilleren. Spilleren velger plass ved å sikte på terrenget, ser nøyaktig forhåndsvisning (grønn/rød), roterer med 5° skyveknapp eller 15°-knapper og bekrefter separat. Dette gjelder bålplass, lagringskasse, arbeidsbenk, sagbukk og vedskjul. Eksisterende småbygg og lagringsfiler beholdes uten ombygging.
+
+## CE 1.1.4C.1.3 – Gjenbruk og utvidelse av planert terreng
+**Implementert 21. november 2026.** Småbygg valideres mot faktisk flat kote og fysisk kollisjon; registrert prosjekttilknytning er ikke lenger et krav. Ledig del av en tomt med ferdig bygg kan gjenbrukes. Planering → «Utvid valgt område» oppretter et selvstendig tilstøtende felt på samme kote, med felles grense og referanse til originaltomten. Opprinnelig byggeplan, lagerskur, inventar og lagringsfiler endres ikke. Eksisterende småbygg beholder posisjon og retning.
 
 ## Utviklingsrekkefølge
 CE 1.1.4B.6: Samlet integrasjon og spilltesting av allerede eksisterende konstruksjonssystem (**implementert**).
