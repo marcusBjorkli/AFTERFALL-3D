@@ -2564,11 +2564,16 @@ function gradeRefresh(){
  gradeProjectListRefresh();
  gradeProgressRefresh(q,q?gradeSummary(q):null);
  const selected=gradingProjects.find(v=>v.id===gradeViewId)||q;
+ const extensionBase=gradingProjects.find(v=>v.id===gradeExtensionBaseId);
+ $('gradeExtend').textContent=extensionBase?'Avbryt utvidelse':'↗ Utvid valgt område';
+ $('gradeExtend').disabled=!extensionBase&&(!selected||!['completed','archived'].includes(selected.status));
+ $('gradeCreate').textContent=extensionBase?'Opprett utvidelse på kote '+extensionBase.level.toFixed(1)+' m':'Opprett nytt prosjekt';
  if(!selected){$('gradeInfo').textContent='Ingen aktivt planeringsprosjekt. Opprett et nytt eller gjenåpne et tidligere prosjekt.'}
  else{
   const r=gradeSummary(selected),edge=r.progress===100?gradeSlopeStatus(selected):null;
   $('gradeInfo').textContent=`${selected.name} · ${selected.status==='archived'?'Arkivert':selected.status==='completed'?'Godkjent':'Pågår'}\nAreal: ${(selected.x1-selected.x0)*(selected.z1-selected.z0)} m² · Kote ${selected.level.toFixed(1)} m\nBeregnet skjæring: ${r.cut.toFixed(2)} m³ · Fylling: ${r.fill.toFixed(2)} m³ (nodevolum inkl. rand)\nGjenstår: ${r.remaining.toFixed(2)} m³ · Ferdig: ${r.progress.toFixed(1)} %${edge?(edge.ok?'\nRand­skråning: stabil':'\nRand­skråning: ustabil – arbeid utenfor området'):''}`;
  }
+ if(extensionBase)$('gradeInfo').textContent+='\nUTVIDELSE: Bruk hjørne A/B til å markere et tilstøtende felt ved «'+extensionBase.name+'» på samme kote. Den gamle byggeplassen forblir uendret.';
  const group=new THREE.Group();
  for(const project of gradingProjects){
   const finishedSurface=constructionPlans.has(project.id)?null:gradeFinishedMesh(project);
@@ -2605,24 +2610,71 @@ function gradeOpen(on){
  if(on&&smallPlacement)survivalPlaceCancel();
  stopShovelHold();$('gradeOverlay').classList.toggle('show',on);if(on){if(activeGrade())$('gradeLevel').value=activeGrade().level.toFixed(1);if(pileMenuOpen)setPileMenu(false);if(inventoryOpen)showInventory(false);gradeRefresh()}paused=on||$('panel').classList.contains('show')}
 function gradeCorner(which){gradeOpen(false);const aim=earthAim();if(!aim){toolMessage('Sikt på bakken innen 6,5 m og prøv igjen.');return}const corner={x:Math.round(aim.x),z:Math.round(aim.z)};if(which==='a')gradeCornerA=corner;else gradeCornerB=corner;toolMessage('Hjørne '+which.toUpperCase()+' registrert: '+corner.x+', '+corner.z);gradeDraftRefresh();gradeElevationRefresh()}
+function gradeStartExtension(){
+ if(gradeExtensionBaseId){
+  gradeExtensionBaseId=null;gradeCornerA=null;gradeCornerB=null;
+  gradeRefresh();gradeElevationRefresh();toolMessage('Utvidelsen er avbrutt.');return;
+ }
+ const q=gradingProjects.find(v=>v.id===gradeViewId)||activeGrade();
+ if(!q||!['completed','archived'].includes(q.status)){toolMessage('Velg først et godkjent planeringsområde.');return;}
+ gradeExtensionBaseId=q.id;
+ gradeCornerA=null;gradeCornerB=null;
+ $('gradeLevel').value=q.level.toFixed(1);
+ $('gradeName').value=('Utvidelse av '+q.name).slice(0,48);
+ gradeRefresh();gradeElevationRefresh();
+ toolMessage('Marker to hjørner på utsiden av området. Utvidelsen må dele én side med eksisterende område.');
+}
 function gradeCreate(){
  if(!gradeCornerA||!gradeCornerB){$('gradeInfo').textContent='Velg begge hjørnene først.';return}
- const level=dmRound(Number($('gradeLevel').value.replace(',','.'))),x0=Math.min(gradeCornerA.x,gradeCornerB.x),x1=Math.max(gradeCornerA.x,gradeCornerB.x),z0=Math.min(gradeCornerA.z,gradeCornerB.z),z1=Math.max(gradeCornerA.z,gradeCornerB.z);
- if(!Number.isFinite(level)||!$('gradeLevel').value.trim()||x1<=x0||z1<=z0||x1-x0>20||z1-z0>20||x0<2||z0<2||x1>=WORLD-2||z1>=WORLD-2){$('gradeInfo').textContent='Ugyldig kote eller område. Bruk 1–20 m per side.';return}
- for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++)if(earthRestricted(x,z)){$('gradeInfo').textContent='Området overlapper vann eller beskyttet terreng.';return}
- for(const q of gradingProjects)if(x0<=q.x1&&x1>=q.x0&&z0<=q.z1&&z1>=q.z0){$('gradeInfo').textContent='Prosjekter kan ikke overlappe eller dele terrengnoder. Velg et annet område.';return}
+ const parent=gradingProjects.find(q=>q.id===gradeExtensionBaseId);
+ if(gradeExtensionBaseId&&!parent){
+  gradeExtensionBaseId=null;$('gradeInfo').textContent='Utvidelsens opprinnelige område mangler.';return;
+ }
+ const level=dmRound(Number($('gradeLevel').value.replace(',','.')));
+ const x0=Math.min(gradeCornerA.x,gradeCornerB.x),x1=Math.max(gradeCornerA.x,gradeCornerB.x);
+ const z0=Math.min(gradeCornerA.z,gradeCornerB.z),z1=Math.max(gradeCornerA.z,gradeCornerB.z);
+ if(!Number.isFinite(level)||!$('gradeLevel').value.trim()||x1<=x0||z1<=z0||x1-x0>20||z1-z0>20||x0<2||z0<2||x1>=WORLD-2||z1>=WORLD-2){
+  $('gradeInfo').textContent='Ugyldig kote eller område. Bruk 1–20 m per side.';return;
+ }
+ const candidate={x0,x1,z0,z1,level};
+ if(parent){
+  const validation=validateGradeExtension(parent,candidate,gradingProjects,WORLD);
+  if(validation.error){$('gradeInfo').textContent=validation.error;return;}
+ }else for(const q of gradingProjects){
+  if(x0<=q.x1&&x1>=q.x0&&z0<=q.z1&&z1>=q.z0){
+   $('gradeInfo').textContent='Området overlapper et annet prosjekt. Velg «Utvid valgt område» for å forlenge en godkjent flate.';return;
+  }
+ }
+ for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++){
+  const shared=!!parent&&gradeSharedBorderNode(x,z,gradingProjects,candidate,level);
+  if(shared){
+   if(Math.abs(ground(x,z)-level)>.025){$('gradeInfo').textContent='Felles grense er ikke planert til riktig kote.';return;}
+   continue; // Never excavate an occupied, approved original site.
+  }
+  if(earthRestricted(x,z)){$('gradeInfo').textContent='Området overlapper vann eller beskyttet terreng.';return;}
+ }
  if(gradingProjects.length>=30){$('gradeInfo').textContent='Maksimalt 30 lagrede planeringsprosjekter.';return}
  const id='grade-'+Date.now()+'-'+Math.floor(Math.random()*100000);
  const name=$('gradeName').value.trim().slice(0,48)||'Planering '+(gradingProjects.length+1);
- const initialHeights={};for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++)initialHeights[earthKey(x,z)]=ground(x,z);
- gradingProjects.push({id,name,status:'active',x0,z0,x1,z1,level,initialHeights,schemaVersion:GRADE_SCHEMA.version});
- activeGradeId=id;gradeViewId=null;gradeCornerA=null;gradeCornerB=null;
- worldSave();gradeRefresh();toolMessage('Planeringsprosjekt opprettet.');
+ const initialHeights={};
+ for(let z=z0;z<=z1;z++)for(let x=x0;x<=x1;x++)initialHeights[earthKey(x,z)]=ground(x,z);
+ gradingProjects.push({id,name,status:'active',x0,z0,x1,z1,level,initialHeights,schemaVersion:GRADE_SCHEMA.version,...(parent?{parentGradeId:parent.id}:{})});
+ activeGradeId=id;gradeViewId=null;gradeExtensionBaseId=null;gradeCornerA=null;gradeCornerB=null;
+ worldSave();gradeRefresh();
+ toolMessage(parent?'Utvidelse opprettet. Planer det nye feltet og godkjenn det.':'Planeringsprosjekt opprettet.');
 }
 function gradeChangeStatus(action){
  const q=gradingProjects.find(v=>v.id===gradeViewId)||activeGrade();
  if(!q){$('gradeInfo').textContent='Velg et prosjekt først.';return}
- if(constructionPlans.has(q.id)){ $('gradeInfo').textContent='Området er reservert til en byggeplan. Planering, sletting og gjenåpning er sperret i CE 1.1.';return; }
+ if(constructionPlans.has(q.id)){
+  $('gradeInfo').textContent='Dette området har en bygning og er låst. Bruk «Utvid valgt område» i stedet.';return;
+ }
+ if(['reopen','delete'].includes(action)&&[...survivalStructures.values()].some(s=>s.x>=q.x0&&s.x<=q.x1&&s.z>=q.z0&&s.z<=q.z1)){
+  $('gradeInfo').textContent='Dette området inneholder småbygg og kan ikke graves om eller slettes.';return;
+ }
+ if(action==='delete'&&gradingProjects.some(other=>other.parentGradeId===q.id)){
+  $('gradeInfo').textContent='Dette området har egne utvidelser og kan ikke slettes.';return;
+ }
  if(action==='complete'){
   if(q.status!=='active'){toolMessage('Prosjektet er allerede godkjent eller arkivert.');return}
   if(gradeSummary(q).progress!==100){$('gradeInfo').textContent='Prosjektet kan ikke godkjennes før alle terrengnoder har eksakt målkote.';return}
@@ -3437,7 +3489,7 @@ function constructionInit(){
 }
 function gradeInit(){
  $('gradeToggle').onclick=()=>gradeOpen(true);$('gradeClose').onclick=()=>gradeOpen(false);
- $('gradeFirst').onclick=()=>gradeCorner('a');$('gradeSecond').onclick=()=>gradeCorner('b');$('gradeCreate').onclick=gradeCreate;
+ $('gradeFirst').onclick=()=>gradeCorner('a');$('gradeSecond').onclick=()=>gradeCorner('b');$('gradeCreate').onclick=gradeCreate;$('gradeExtend').onclick=gradeStartExtension;
  $('gradeClearCorners').onclick=()=>{gradeCornerA=null;gradeCornerB=null;gradeDraftRefresh();gradeElevationRefresh();};
  $('gradeComplete').onclick=()=>gradeChangeStatus('complete');
  $('gradeArchive').onclick=()=>gradeChangeStatus('archive');
