@@ -1,5 +1,5 @@
 # AFTERFALL – godkjent konstruksjonsplan CE 1.1.4C
-Dato: 20. november 2026 · Status: **C.0–C.1.5 implementert; C.2–C.4 planlagt**
+Dato: 20. november 2026 · Oppdatert: 21. november 2026 · Status: **C.2.1 implementert; C.2.2–C.2.5 og C.3–C.4 planlagt**
 
 ## CE 1.1.4C.1.5 – Felles havnivå og ny spillverden
 **Implementert 21. november 2026.** Hele 3D-spillverdenen bruker nå ordinær havflate som fysisk høydereferanse 0,00 m. Den gamle grafikkforskyvningen (startområdets høyde omtrent 46,98 m) er fjernet fra terreng-, vann- og byggekoordinatene, mens startområdets terrengform beholdes. Tørt terreng under 0 blir løftet til minst 0,05 m; våte sjø- og innsjøbunner kan ligge under null. Spade og rasbalanse hindres i å grave tørrlagt land under denne grensen. Høyderutenett, målkotelås, prosjektplanering, småbygg, konstruksjonseditor og diagnostikk bruker de samme fysiske koteverdiene.
@@ -31,6 +31,25 @@ Implementert 21. november 2026. Nye småbygg må nå plasseres **innenfor én fe
 Sammenhengende plane terrengnoder registreres løpende uten å opprette et prosjekt. Nye store bygg kan prosjekteres på en fysisk flat, egnet byggeflate på minst 3 × 3 m. Automatisk byggegrunn på inntil 20 × 20 m er kun en midlertidig kandidat inntil byggeplanen godkjennes; da opprettes en kompatibel automatisk reservert tomt. Småbygg benytter fortsatt fysisk kontroll av sin egen byggeflate. Manuell prosjektbasert planering beholdes som valgfritt verktøy.
 
 Gammel terrengmodell, høydenett, masser, trær, konstruksjoner, lagringsformater og planeringsprosjekter er beholdt.
+
+## Godkjent detaljplan CE 1.1.4C.2 – Boliger og produksjonsbygninger
+**Godkjent 21. november 2026.** C.2 omfatter kun de tre opprinnelig avtalte bygningstypene: **lagerskur**, **enkel hytte** og **åpent verksted**. C.3/C.4 og de øvrige avtalte konstruksjonene beholdes uendret. Spillprinsippet er enkel førindustriell overlevelse, ikke BIM.
+
+| Delversjon | Status | Leveranse | Akseptansekriterier |
+|---|---|---|---|
+| **CE 1.1.4C.2.1 – Lagerskur** | Implementert | Forbedret UI for eksisterende ferdigbygg: volum- og massekapasitet, «Legg inn maks» begrenset av tilgjengelig lagerplass, «Ta maks» begrenset av spillerens bæreevne og valg mellom flere nærliggende lagerskur | Hvert lager er selvstendig per byggeplan-ID; overføringer er materialbevarende og lagres transaksjonelt; gammel oppskrift og ferdigtegning beholdes |
+| **CE 1.1.4C.2.2 – Enkel hytte** | Planlagt | Gjenbruk av ferdigtegning med ly, opphold og en enkel hvil-/søvninteraksjon; vurder enkel effekt på varme/utholdenhet uten nye unødvendige målere | Spilleren kan gå inn og ut, dører og kollisjon fungerer, hvile har tydelig konsekvens og lagret tilstand |
+| **CE 1.1.4C.2.3 – Åpent verksted** | Planlagt | En åpen variant av dagens verksted-tegning; integrer arbeidsbenk og sagbukk i et brukbart produksjonsområde. Råvarer må samles og leveres fysisk | Åpen konstruksjon kan bygges og brukes; produksjon krever eksisterende ressurser; ingen gratis materialer |
+| **CE 1.1.4C.2.4 – Flere bygninger** | Planlagt | Plassering av flere selvstendige bygg på samme/tilstøtende egnede flater, separat lagring/tilstand og korrekt fysisk kollisjon | Flere bygg og lagre eksisterer uavhengig, uten overlapp, duplisering eller tvungen planeringsprosjektopprettelse |
+| **CE 1.1.4C.2.5 – Integrasjon og testing** | Planlagt | Helhetlig spillsekvens: samle materialer → bygg lagerskur → bygg hytte → bygg åpent verksted → bruk funksjonene → lagre/last inn | Byggeprogresjon, materialregnskap, interaksjon, dører, kollisjon, lagringer og mobilbetjening er verifisert |
+
+### Gjennomført CE 1.1.4C.2.1 – Lagerskur
+- Eksisterende C.0-lagringsmotor og den godkjente ferdigtegningen brukes uendret.
+- Det vises kapasitet i både kg og liter, med ledig plass og visuell prosentvis fylling.
+- «Legg inn maks» forsøker bare å flytte det antallet som faktisk får plass; «Ta maks» respekterer både vekt- og volumbegrensning for inventaret.
+- Flere ferdigbygde lagerskur innenfor interaksjonsavstand kan velges fra samme grensesnitt; hver bygning beholder egen lagringsbeholdning.
+- Lagrede materialer forblir i det eksisterende `buildingStores`-feltet i verdenssnapshotet (`version=2`). Ingen migrering, nye materialtyper eller endringer i byggeoppskrifter.
+- QA: `verify-c21.html` og `QA-CE-1.1.4C.2.1.md`. Praktisk iPhone-testing gjenstår.
 
 ## Utviklingsrekkefølge
 CE 1.1.4B.6: Samlet integrasjon og spilltesting av allerede eksisterende konstruksjonssystem (**implementert**).
@@ -69,7 +88,7 @@ Materialene er konstruksjonsgrunnlag fra den godkjente listen. Brensel og innsat
 Bålplass, lagringskasse, arbeidsbenk, sagbukk og vedskjul. Etabler varme/matlaging, fysisk lager og håndverksproduksjon. Revider eksisterende sagbukk til C.1-systemet uten å bryte gamle lagringsfiler.
 
 ### CE 1.1.4C.2 – Boliger og produksjonsbygninger
-Lagerskur, enkel hytte og åpent verksted. Videreutvikle eksisterende ferdigtegninger, introduksjon av lagrings- og oppholdsfunksjoner og test av mange bygninger på ulike plasser.
+Lagerskur, enkel hytte og åpent verksted. Den detaljerte, nå godkjente leveranserekkefølgen er **C.2.1–C.2.5** (se tabellen over). C.2.1 er implementert; C.2.2–C.2.5 gjenstår.
 
 ### CE 1.1.4C.3 – Keramikk og trekull
 Leireovn og kullmile. Ressursflyt, varmebehandling, brenselforbruk, tidsbruk og lagring av produkter. Ingen moderne industrimaskiner.
