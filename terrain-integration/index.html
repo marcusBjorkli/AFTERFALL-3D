@@ -1539,7 +1539,7 @@ function useSelectedTool(){
  if(inventoryState.selectedTool==='axe'||inventoryState.selectedTool==='pickaxe'){harvestUse();return}
  if(inventoryState.selectedTool==='shovel')return;
  if(inventoryState.selectedTool==='saw'){sawOpen();return}
- if(inventoryState.selectedTool==='hammer'){survivalOpenMenu('build');return}
+ if(inventoryState.selectedTool==='hammer'){constructionBegin();return}
  toolMessage(tool.icon+' '+tool.description);
 }
 // iPhone-friendly press-and-hold: one immediate action, then 500 ms cadence.
