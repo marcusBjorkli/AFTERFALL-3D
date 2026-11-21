@@ -2632,7 +2632,7 @@ function gradeSummary(q){
   const now=ground(x,z),base=q.initialHeights?.[earthKey(x,z)]??originalGround(x,z),delta=q.level-now;
   const original=q.level-base;
   if(original<0)cut+=-original;else fill+=original;
-  if(!gradeNodeDone(now,q.level))remaining+=Math.abs(delta);else done++;
+  if(q.autoFlat?Math.abs(delta)>GRADE_TOLERANCE:!gradeNodeDone(now,q.level))remaining+=Math.abs(delta);else done++;
   total++;
  }
  return {cut,fill,remaining,progress:total?100*done/total:0};
