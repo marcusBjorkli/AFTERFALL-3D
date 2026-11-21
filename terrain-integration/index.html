@@ -2839,6 +2839,180 @@ function buildingStoreInit(){
  $('buildingStoreClose').onclick=closeBuildingStore;
  buildingStoreRefreshButton();
 }
+// CE 1.1.4C.1 – small, manually placed survival constructions.
+function nearSmallStructure(){
+ let best=null,d=2.8;
+ for(const s of survivalStructures.values()){
+  const dist=Math.hypot(s.x-p.x,s.z-p.z)-SURVIVAL_DEFS[s.type].r;
+  if(dist<d){best=s;d=dist;}
+ }
+ // Existing sawbucks remain valid and interactable without migration.
+ for(const s of sawStations.values()){
+  if(survivalStructures.has(s.id))continue;
+  const dist=Math.hypot(s.x-p.x,s.z-p.z)-SURVIVAL_DEFS.sawbuck.r;
+  if(dist<d){best={...s,type:'sawbuck',y:ground(s.x,s.z),angle:0,items:{},litUntil:0,legacy:true};d=dist;}
+ }
+ return best;
+}
+function refreshSurvivalButtons(){
+ const modal=paused||constructionOpen||constructionInfoOpen||buildingStoreOpenId!==null||pileMenuOpen||inventoryOpen||sawOpenFlag||$('gradeOverlay').classList.contains('show');
+ $('survivalToggle').hidden=modal;
+ const target=modal?null:nearSmallStructure(),btn=$('survivalInteract');
+ btn.hidden=!target;
+ if(target)btn.textContent='🛠 '+SURVIVAL_DEFS[target.type].name;
+}
+function survivalOpenMenu(mode='build'){
+ if(paused||survivalOpen)return;
+ survivalMode=mode;survivalTargetId=mode==='interact'?nearSmallStructure()?.id:null;
+ if(mode==='interact'&&!survivalTargetId){toolMessage('Gå nær en overlevelseskonstruksjon.');return;}
+ survivalOpen=true;paused=true;stopShovelHold();joyEnd();lookPointer=null;
+ $('survivalOverlay').hidden=false;renderSurvivalMenu();constructionUpdateHud();
+}
+function survivalCloseMenu(){
+ if(survivalBusy)return;
+ survivalOpen=false;survivalTargetId=null;$('survivalOverlay').hidden=true;
+ paused=false;joyEnd();constructionUpdateHud();
+}
+function survivalElement(tag,text=''){const e=document.createElement(tag);e.textContent=text;return e;}
+function survivalButton(host,label,callback,disabled=false){
+ const b=survivalElement('button',label);b.type='button';b.disabled=disabled||survivalBusy;b.onclick=callback;host.append(b);return b;
+}
+function survivalPosition(type){
+ const r=2.1+(SURVIVAL_DEFS[type]?.r||0),x=clamp(p.x-Math.sin(p.yaw)*r,2,WORLD-2),z=clamp(p.z-Math.cos(p.yaw)*r,2,WORLD-2),y=ground(x,z);
+ return {x,y,z,angle:((p.yaw*180/Math.PI)%360+360)%360,id:'small-'+SEED+'-'+(globalThis.crypto?.randomUUID?.()||Date.now()+'-'+Math.random().toString(36).slice(2))};
+}
+function survivalPlaceAllowed(type,place){
+ const d=SURVIVAL_DEFS[type];if(!d)return 'Ukjent konstruksjon.';
+ for(const [x,z] of [[place.x,place.z],[place.x-d.r,place.z],[place.x+d.r,place.z],[place.x,place.z-d.r],[place.x,place.z+d.r]]){
+  if(earthRestricted(x,z)||waterBodyAt(x,z)?.level>=ground(x,z)+PAD_H-.1)return 'Krever tørt og tilgjengelig terreng.';
+  if(Math.abs(ground(x,z)-place.y)>.36)return 'Terrenget er for ujevnt. Planer et mindre område først.';
+  if(collides(x-PAD_X,z-PAD_Z))return 'Kolliderer med eksisterende bygning.';
+ }
+ if([...piles.values()].some(q=>Math.hypot(q.x-place.x,q.z-place.z)<d.r+stockDimensions(q).radius+.3))return 'Flytt materialhaugen før bygging.';
+ if([...sawStations.values()].some(q=>!survivalStructures.has(q.id)&&Math.hypot(q.x-place.x,q.z-place.z)<d.r+1.2))return 'For nær eksisterende sagbukk.';
+ return null;
+}
+async function survivalTransaction(result,update,message){
+ if(survivalBusy)return;
+ if(result?.error){renderSurvivalMenu(result.error);return;}
+ const previousInventory=inventoryState.items;
+ const before=update(),newInventory=result.inventory;
+ survivalBusy=true;
+ if(newInventory)inventoryState.items=Object.assign(Object.create(null),newInventory);
+ renderSurvivalMenu('Lagrer …');
+ try{await worldSave(true);}
+ catch(e){
+  inventoryState.items=previousInventory;before();
+  survivalBusy=false;survivalRender();sawStationsRefresh();
+  renderSurvivalMenu('Lagring mislyktes – endringene er tilbakeført: '+e.message);return;
+ }
+ survivalBusy=false;
+ survivalRender();sawStationsRefresh();loadHudUpdate();renderInventory();earthAvailabilityUpdate();
+ renderSurvivalMenu(message);
+}
+function survivalBuild(type){
+ if(survivalBusy)return;
+ const place=survivalPosition(type),invalid=survivalPlaceAllowed(type,place);
+ if(invalid){renderSurvivalMenu(invalid);return;}
+ const result=buildSurvival(type,place,inventoryState.items,survivalStructures,RESOURCE_CATALOG,{mass:LOAD_MAX_KG,volume:LOAD_MAX_M3});
+ if(result.error){renderSurvivalMenu(result.error);return;}
+ survivalTransaction(result,()=>{
+  survivalStructures.set(place.id,result.structure);
+  if(type==='sawbuck')sawStations.set(place.id,{id:place.id,x:place.x,z:place.z});
+  return ()=>{survivalStructures.delete(place.id);if(type==='sawbuck')sawStations.delete(place.id);};
+ },SURVIVAL_DEFS[type].name+' bygget. Materialene er brukt.');
+}
+function survivalTarget(){
+ return survivalStructures.get(survivalTargetId)||(()=>{
+  const s=sawStations.get(survivalTargetId);
+  return s?{...s,type:'sawbuck',legacy:true,items:{},litUntil:0}:null;
+ })();
+}
+function survivalAct(action,options={}){
+ const s=survivalTarget();if(!s||Math.hypot(p.x-s.x,p.z-s.z)>4){renderSurvivalMenu('Gå nær konstruksjonen.');return;}
+ let result,update=()=>()=>{},text='';
+ if(action==='deposit'||action==='withdraw'){
+  const id=options.id,qty=options.qty;
+  result=moveSurvivalStock(s,inventoryState.items,RESOURCE_CATALOG,{mass:LOAD_MAX_KG,volume:LOAD_MAX_M3},id,qty,action);
+  if(!result.error){
+   update=()=>{survivalStructures.set(s.id,result.structure);return ()=>survivalStructures.set(s.id,s);};
+   text=(action==='deposit'?'Lagret ':'Hentet ')+stockFmt(qty)+' '+RESOURCE_CATALOG[id].unit+' '+RESOURCE_CATALOG[id].name.toLowerCase();
+  }
+ }else if(action==='ignite'){
+  result=fuelCampfire(s,inventoryState.items);if(!result.error){update=()=>{survivalStructures.set(s.id,result.structure);return ()=>survivalStructures.set(s.id,s);};text='Bålet brenner i ytterligere 8 minutter.';}
+ }else if(action==='dry'){result=dryBerries(s,inventoryState.items);text='Tørket to porsjoner bær til én porsjon tørkede bær.';}
+ else if(action==='craft'){result=craftWorkbench(s,inventoryState.items,RESOURCE_CATALOG,{mass:LOAD_MAX_KG,volume:LOAD_MAX_M3},options.recipe,options.count||1);text='Produsert: '+(WORK_RECIPES[options.recipe]?.name||'redskap');}
+ else if(action==='eat'){
+  result=eatBerries(inventoryState.items,survivalNeeds.hunger);
+  if(!result.error){const old=survivalNeeds.hunger;update=()=>{survivalNeeds.hunger=result.hunger;return ()=>{survivalNeeds.hunger=old;}};text='Spist tørkede bær · Mat '+Math.round(result.hunger)+' %';}
+ }
+ else if(action==='torch'){
+  result=igniteTorch(inventoryState.items,Date.now(),survivalNeeds.torchUntil);
+  if(!result.error){const old=survivalNeeds.torchUntil;update=()=>{survivalNeeds.torchUntil=result.torchUntil;return ()=>{survivalNeeds.torchUntil=old;}};text='Fakkelen lyser i ytterligere 5 minutter.';}
+ }
+ if(result)survivalTransaction(result,update,text);
+}
+function renderSurvivalMenu(message=''){
+ if(!survivalOpen)return;
+ const host=$('survivalBody');host.replaceChildren();$('survivalFeedback').textContent=message;
+ $('survivalTitle').textContent=survivalMode==='build'?'🛠 Småkonstruksjoner':'🛠 '+(SURVIVAL_DEFS[survivalTarget()?.type]?.name||'Konstruksjon');
+ if(survivalMode==='build'){
+  const note=survivalElement('p','Småkonstruksjoner plasseres på tørt, tilstrekkelig jevnt terreng foran Marcus. Materialer trekkes fra inventaret.');
+  host.append(note);
+  for(const [type,def] of Object.entries(SURVIVAL_DEFS)){
+   const card=survivalElement('section');card.className='s-card';
+   card.append(survivalElement('h3',def.icon+' '+def.name),survivalElement('p',def.description||''));
+   const cost=Object.entries(def.cost).map(([id,n])=>n+' '+RESOURCE_CATALOG[id].unit+' '+RESOURCE_CATALOG[id].name.toLowerCase()+' ('+stockFmt(inventoryState.items[id]||0)+' tilgjengelig)').join(' · ');
+   card.append(survivalElement('p',cost));survivalButton(card,'Bygg '+def.name.toLowerCase(),()=>survivalBuild(type),Object.entries(def.cost).some(([id,n])=>(inventoryState.items[id]||0)<n));
+   host.append(card);
+  }
+  if((inventoryState.items.torch||0)>0)survivalButton(host,'🔥 Tenn fakkel',()=>survivalActGlobal('torch'));
+  if((inventoryState.items.dried_berries||0)>0)survivalButton(host,'🍽️ Spis tørkede bær',()=>survivalActGlobal('eat'));
+  return;
+ }
+ const s=survivalTarget();if(!s){host.append(survivalElement('p','Konstruksjonen finnes ikke lenger.'));return;}
+ if(s.type==='crate'||s.type==='woodshed'){
+  const c=SURVIVAL_DEFS[s.type].capacity,t=resourceTotals(s.items,RESOURCE_CATALOG);
+  host.append(survivalElement('p','Lagret: '+stockFmt(t.mass)+' / '+c.mass+' kg · '+stockFmt(t.volume*1000)+' / '+(c.volume*1000)+' L'));
+  for(const id of Object.keys(RESOURCE_CATALOG)){
+   if(s.type==='woodshed'&&!WOOD_RESOURCES.includes(id))continue;
+   if((inventoryState.items[id]||0)<=0&&(s.items[id]||0)<=0)continue;
+   const card=survivalElement('section');card.className='s-card';
+   card.append(survivalElement('h3',RESOURCE_CATALOG[id].name),survivalElement('p','Inventar: '+stockFmt(inventoryState.items[id]||0)+' '+RESOURCE_CATALOG[id].unit+' · Lagret: '+stockFmt(s.items[id]||0)+' '+RESOURCE_CATALOG[id].unit));
+   const input=survivalElement('input');input.type='number';input.inputMode='decimal';input.min=RESOURCE_CATALOG[id].unit==='stk'?'1':'.001';input.step=RESOURCE_CATALOG[id].unit==='stk'?'1':'.001';input.value='1';card.append(input);
+   const doAction=(action,max)=>survivalAct(action,{id,qty:max?(action==='deposit'?inventoryState.items[id]||0:Math.max(0,Math.min(s.items[id]||0,RESOURCE_CATALOG[id].unit==='stk'?Math.floor(loadCapacity(id)):Math.floor(loadCapacity(id)*1000)/1000))):Number(input.value)});
+   survivalButton(card,'Legg inn',()=>doAction('deposit',false),(inventoryState.items[id]||0)<=0);
+   survivalButton(card,'Ta ut',()=>doAction('withdraw',false),(s.items[id]||0)<=0);
+   survivalButton(card,'Legg inn alt',()=>doAction('deposit',true),(inventoryState.items[id]||0)<=0);
+   survivalButton(card,'Ta maks',()=>doAction('withdraw',true),(s.items[id]||0)<=0);
+   host.append(card);
+  }
+ }else if(s.type==='campfire'){
+  const left=Math.max(0,Math.ceil(((s.litUntil||0)-Date.now())/60000));
+  host.append(survivalElement('p',left?'Brenner · '+left+' minutter igjen · varme innen 4 meter.':'Slukket · ett vedstykke gir åtte minutters varme.'));
+  survivalButton(host,'🔥 Tenn / legg på ved (1)',()=>survivalAct('ignite'),(inventoryState.items.firewood||0)<1);
+  survivalButton(host,'🍓 Tørk 2 bær → 1 porsjon',()=>survivalAct('dry'),!left||(inventoryState.items.berries||0)<2);
+  if((inventoryState.items.dried_berries||0)>0)survivalButton(host,'🍽️ Spis tørkede bær',()=>survivalAct('eat'));
+ }else if(s.type==='workbench'){
+  for(const [id,r] of Object.entries(WORK_RECIPES)){
+   const card=survivalElement('section');card.className='s-card';
+   card.append(survivalElement('h3',r.name),survivalElement('p',Object.entries(r.input).map(([k,v])=>v+' '+RESOURCE_CATALOG[k].name.toLowerCase()).join(' + ')+' → '+Object.entries(r.output).map(([k,v])=>v+' '+RESOURCE_CATALOG[k].name.toLowerCase()).join(' + ')));
+   survivalButton(card,'Lag '+r.name.toLowerCase(),()=>survivalAct('craft',{recipe:id,count:1}),Object.entries(r.input).some(([k,v])=>(inventoryState.items[k]||0)<v));host.append(card);
+  }
+  if((inventoryState.items.torch||0)>0)survivalButton(host,'🔥 Tenn fakkel (1)',()=>survivalAct('torch'));
+ }else if(s.type==='sawbuck'){
+  host.append(survivalElement('p','Sagbukken lar deg sage større partier tømmer, ved og lekter.'));
+  survivalButton(host,'🪚 Åpne trebearbeiding',()=>{survivalCloseMenu();sawOpen();});
+ }
+}
+function survivalActGlobal(action){
+ const s=nearSmallStructure()||{type:'workbench',id:'personal'};
+ const result=action==='torch'?igniteTorch(inventoryState.items,Date.now(),survivalNeeds.torchUntil):eatBerries(inventoryState.items,survivalNeeds.hunger);
+ if(result.error){renderSurvivalMenu(result.error);return;}
+ const oldH=survivalNeeds.hunger,oldT=survivalNeeds.torchUntil;
+ survivalTransaction(result,()=>{if(action==='torch')survivalNeeds.torchUntil=result.torchUntil;else survivalNeeds.hunger=result.hunger;return ()=>{survivalNeeds.hunger=oldH;survivalNeeds.torchUntil=oldT;};},action==='torch'?'Fakkel tent.':'Matmetthet økt.');
+}
+
 function constructionNearestDoor(){
  let best=null,dist=2.3;
  for(const d of constructionDoors){
