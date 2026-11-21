@@ -3,7 +3,7 @@ import {distanceToStorehouse,isCompletedStorehouse,storeCapacity,transferToStore
 const tests=[],eq=(name,fn)=>{try{if(!fn())throw Error('Mislukkes');tests.push({name,ok:true})}catch(e){tests.push({name,ok:false,error:String(e)})}};
 const catalog={planks:{name:'Planker',unit:'stk',mass:6.625,volume:.012},logs:{name:'Tømmer',unit:'stk',mass:35,volume:.065},stone:{name:'Stein',unit:'L',mass:2.65,volume:.001}};
 const plan={planId:'test-skur',status:'complete',project:{name:'Lagerskur',modules:[{type:'floorDeck'},{type:'doorWall'},{type:'doorLeaf'},{type:'flatRoof'},...Array.from({length:7},()=>({type:'solidWall'}))]},setout:{area:9,world:[[10,0,10],[13,0,10],[13,0,13],[10,0,13]]}};
-const inputs={inventory:{logs:3,planks:6},stored:{},resource:'logs',amount:2,direction:'deposit',plan,catalog,inventoryLimit:{mass:300,volume:.15}};
+const inputs={inventory:{logs:3},stored:{},resource:'logs',amount:2,direction:'deposit',plan,catalog,inventoryLimit:{mass:300,volume:.15}};
 const saved=transferToStore(inputs);
 eq('Ferdig lagerskur kan brukes',()=>isCompletedStorehouse(plan));
 eq('Uferdig lagerskur er låst',()=>!isCompletedStorehouse({...plan,status:'building'}));
