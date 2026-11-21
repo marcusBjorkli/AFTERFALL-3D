@@ -2601,6 +2601,7 @@ function gradeRefresh(){
 }
 function slopeRulesText(){return 'Rasvinkler: jord/sand 30°, leire/stein 40°. Fast fjell raser ikke. Masser flyttes automatisk til stabile skråninger.'}
 function gradeOpen(on){
+ if(on&&smallPlacement)survivalPlaceCancel();
  stopShovelHold();$('gradeOverlay').classList.toggle('show',on);if(on){if(activeGrade())$('gradeLevel').value=activeGrade().level.toFixed(1);if(pileMenuOpen)setPileMenu(false);if(inventoryOpen)showInventory(false);gradeRefresh()}paused=on||$('panel').classList.contains('show')}
 function gradeCorner(which){gradeOpen(false);const aim=earthAim();if(!aim){toolMessage('Sikt på bakken innen 6,5 m og prøv igjen.');return}const corner={x:Math.round(aim.x),z:Math.round(aim.z)};if(which==='a')gradeCornerA=corner;else gradeCornerB=corner;toolMessage('Hjørne '+which.toUpperCase()+' registrert: '+corner.x+', '+corner.z);gradeDraftRefresh();gradeElevationRefresh()}
 function gradeCreate(){
@@ -2678,7 +2679,7 @@ function siteAmountShort(v){
 let constructionHudSignature='';
 function constructionUpdateHud(){
  const q=constructionContext(),plan=q&&constructionPlans.get(q.id),button=$('constructionToggle'),hud=$('constructionHud');
- const modal=constructionOpen||constructionInfoOpen||paused||pileMenuOpen||inventoryOpen||sawOpenFlag||$('gradeOverlay').classList.contains('show');
+ const modal=constructionOpen||constructionInfoOpen||paused||!!smallPlacement||pileMenuOpen||inventoryOpen||sawOpenFlag||$('gradeOverlay').classList.contains('show');
  button.hidden=!q||modal||plan?.status==='complete';button.textContent=plan?'Byggeplass':'Bygg';
  constructionDoorRefresh();buildingStoreRefreshButton();refreshSurvivalButtons();
  const show=!!plan&&!modal&&plan.status!=='complete';
@@ -3234,6 +3235,18 @@ function survivalTick(dt){
  }
 }
 function survivalInit(){
+ // Mobile tap / desktop click confirms; dragging still aims the camera.
+ let tap=null;
+ renderer.domElement.addEventListener('pointerdown',e=>{
+  if(!smallPlacement||e.button!==0)return;
+  tap={id:e.pointerId,x:e.clientX,y:e.clientY,time:performance.now()};
+ });
+ renderer.domElement.addEventListener('pointerup',e=>{
+  if(!tap||tap.id!==e.pointerId)return;
+  const value=tap;tap=null;
+  if(smallPlacement&&Math.hypot(e.clientX-value.x,e.clientY-value.y)<11&&performance.now()-value.time<650)survivalPlaceConfirm();
+ });
+ renderer.domElement.addEventListener('pointercancel',()=>{tap=null;});
  $('survivalToggle').onclick=()=>survivalOpenMenu('build');
  $('smallPlacementLeft').onclick=()=>survivalPlaceRotate(-1);
  $('smallPlacementRight').onclick=()=>survivalPlaceRotate(1);
@@ -3436,11 +3449,11 @@ function gradeInit(){
  gradeRefresh();
 }
 async function init(){await worldInitialize();renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.insertBefore(renderer.domElement,document.body.firstChild);camera=new THREE.PerspectiveCamera(73,innerWidth/innerHeight,.08,260);camera.rotation.order='YXZ';clock=new THREE.Clock();buildWorld();gradeInit();constructionInit();buildingStoreInit();survivalInit();earthAvailabilityUpdate();pileMeshRefresh();sawStationsRefresh();initWeather();initInventoryUI();loadHudUpdate();weatherState.elapsed=WEATHER_DAY_SECONDS*.5;load();relocatePlayerFromStructure();updateWeather(0);updateCamera();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});$('status').textContent='4 × 4 km · dynamiske terrengchunks, elver, innsjøer og hav aktive · Utforsk, samle ressurser og bygg';animate()}
-function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05);if(!paused){let speed=3.5*(survivalNeeds.hunger<15?.86:1)*(survivalNeeds.warmth<15?.86:1),turnSpeed=2.1,forward=-joy.y,turn=joy.x;p.yaw-=turn*turnSpeed*dt;let fx=-Math.sin(p.yaw),fz=-Math.cos(p.yaw);move(fx*forward*speed*dt,fz*forward*speed*dt);p.seconds+=dt;updateCamera();if((Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4)))updateChunks()}waterTime.value+=dt;updateWeather(paused?0:dt);survivalTick(paused?0:dt);treeRegrowthTick();renderer.render(scene,camera);if($('gradeOverlay').classList.contains('show')&&performance.now()-gradeLastHud>300){gradeLastHud=performance.now();gradeElevationRefresh()}if(performance.now()-gradeLiveLast>200){gradeLiveLast=performance.now();gradeLiveRefresh()}if(performance.now()-pileFocusLast>100){pileFocusLast=performance.now();pileFocusRefresh()}if(performance.now()-constructionLastRefresh>300){constructionLastRefresh=performance.now();constructionUpdateHud()}if(Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4))earthAvailabilityUpdate();if(toolToastUntil&&performance.now()>toolToastUntil){$('toolToast').style.display='none';toolToastUntil=0}$('status').textContent=`UTENDØRS · X ${p.x.toFixed(1)} · Z ${p.z.toFixed(1)} · ${terrainChunks.size} chunks · ${Math.round(1/Math.max(dt,.01))} FPS`}
+function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05);if(!paused){let speed=3.5*(survivalNeeds.hunger<15?.86:1)*(survivalNeeds.warmth<15?.86:1),turnSpeed=2.1,forward=-joy.y,turn=joy.x;p.yaw-=turn*turnSpeed*dt;let fx=-Math.sin(p.yaw),fz=-Math.cos(p.yaw);move(fx*forward*speed*dt,fz*forward*speed*dt);p.seconds+=dt;updateCamera();if((Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4)))updateChunks()}waterTime.value+=dt;updateWeather(paused?0:dt);survivalTick(paused?0:dt);treeRegrowthTick();survivalPlacePreview();renderer.render(scene,camera);if($('gradeOverlay').classList.contains('show')&&performance.now()-gradeLastHud>300){gradeLastHud=performance.now();gradeElevationRefresh()}if(performance.now()-gradeLiveLast>200){gradeLiveLast=performance.now();gradeLiveRefresh()}if(performance.now()-pileFocusLast>100){pileFocusLast=performance.now();pileFocusRefresh()}if(performance.now()-constructionLastRefresh>300){constructionLastRefresh=performance.now();constructionUpdateHud()}if(Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4))earthAvailabilityUpdate();if(toolToastUntil&&performance.now()>toolToastUntil){$('toolToast').style.display='none';toolToastUntil=0}$('status').textContent=`UTENDØRS · X ${p.x.toFixed(1)} · Z ${p.z.toFixed(1)} · ${terrainChunks.size} chunks · ${Math.round(1/Math.max(dt,.01))} FPS`}
 const joyEl=$('joy'),knob=$('knob');function joyMove(e){let r=joyEl.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,len=Math.max(1,Math.hypot(dx,dy)),v=Math.min(1,len/48);joy.x=dx/len*v;joy.y=dy/len*v;knob.style.transform=`translate(${joy.x*44}px,${joy.y*44}px)`}
 joyEl.addEventListener('pointerdown',e=>{e.preventDefault();joyEl.setPointerCapture(e.pointerId);joyMove(e)});joyEl.addEventListener('pointermove',e=>{if(joyEl.hasPointerCapture(e.pointerId))joyMove(e)});function joyEnd(){joy.x=joy.y=0;knob.style.transform='translate(0,0)'}joyEl.addEventListener('pointerup',joyEnd);joyEl.addEventListener('pointercancel',joyEnd);
 document.addEventListener('pointerdown',e=>{
- if(paused||e.button!==0||e.target.closest('button,select,input,#joy,#panel,#toolHud,#inventoryPanel,#pileControls,#constructionHud,#survivalOverlay'))return;
+ if(paused||e.button!==0||e.target.closest('button,select,input,#smallPlacementHud,#joy,#panel,#toolHud,#inventoryPanel,#pileControls,#constructionHud,#survivalOverlay'))return;
  if(e.clientX<innerWidth*.35)return;
  lookPointer=e.pointerId;lookLastX=e.clientX;lookLastY=e.clientY;
  if(e.target.setPointerCapture)e.target.setPointerCapture(e.pointerId);
@@ -3457,8 +3470,15 @@ document.addEventListener('pointermove',e=>{
 function endLook(e){if(e.pointerId===lookPointer)lookPointer=null}
 document.addEventListener('pointerup',endLook);
 document.addEventListener('pointercancel',endLook);
-const panel=$('panel');function showPanel(on){if(on){if(activeGrade())$('gradeLevel').value=activeGrade().level.toFixed(1);if(pileMenuOpen)setPileMenu(false);if($('diagOverlay').classList.contains('show'))diagOpen(false)}paused=on||inventoryOpen;panel.classList.toggle('show',on);joyEnd()}$('menu').onclick=()=>showPanel(true);$('resume').onclick=()=>showPanel(false);$('save').onclick=save;$('load').onclick=()=>{load();showPanel(false)};
+const panel=$('panel');function showPanel(on){if(on){if(smallPlacement)survivalPlaceCancel();if(activeGrade())$('gradeLevel').value=activeGrade().level.toFixed(1);if(pileMenuOpen)setPileMenu(false);if($('diagOverlay').classList.contains('show'))diagOpen(false)}paused=on||inventoryOpen;panel.classList.toggle('show',on);joyEnd()}$('menu').onclick=()=>showPanel(true);$('resume').onclick=()=>showPanel(false);$('save').onclick=save;$('load').onclick=()=>{load();showPanel(false)};
 addEventListener('keydown',e=>{
+ if(smallPlacement){
+  const key=e.key.toLowerCase();
+  if(key==='escape'){e.preventDefault();survivalPlaceCancel();return;}
+  if(key==='r'||key==='e'){e.preventDefault();survivalPlaceRotate(1);return;}
+  if(key==='q'){e.preventDefault();survivalPlaceRotate(-1);return;}
+  if(key==='enter'||key===' '){e.preventDefault();survivalPlaceConfirm();return;}
+ }
  if(survivalOpen){if(e.key==='Escape'){e.preventDefault();survivalCloseMenu();}return;}
  if(pileMenuOpen){if(e.key==='Escape'){e.preventDefault();setPileMenu(false);}return;}
  if(e.key==='Escape'&&$('diagOverlay').classList.contains('show')){e.preventDefault();diagOpen(false);return;}
