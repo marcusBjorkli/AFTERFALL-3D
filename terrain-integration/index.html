@@ -1284,7 +1284,7 @@ const harvestedIds=new Set(),harvestNodes=new Map();
 const REGROW_SAPLING_MS=300000,REGROW_MATURE_MS=900000;
 const treeRegrowth=new Map(),regrowthSeen=new Map();
 let regrowthLastCheck=0;
-function isRenewableTree(id){return /^\d+:\d+:(spruce|pine):\d+$/.test(id);}
+function isRenewableTree(id){return /^\d+:\d+:(spruce|pine|shrub):\d+$/.test(id);}
 function treeGrowthStage(cut,now=Date.now()){
  if(!Number.isFinite(cut))return 3;
  const age=Math.max(0,now-cut);
@@ -1449,8 +1449,8 @@ function harvestRenewableTree(n,reward){
  if(result.error){toolMessage(result.error);return;}
  inventoryState.items=Object.assign(Object.create(null),result.items);stockCommit(stock);
  recordTreeCut(n.id);worldSave();pileMeshRefresh();loadHudUpdate();refreshChunkPlants(chunkKey(n.cx,n.cz));
- const logs=reward.find(r=>r[0]==='logs')[1],onGround=result.overflow.logs||0;
- toolMessage('Hogd tre: '+logs+' tømmer'+(onGround?' ('+onGround+' i haug)':'')+' · ny vekst om 5 min.');
+ const logs=reward.find(r=>r[0]==='logs')?.[1]||0,onGround=result.overflow.logs||0;
+ toolMessage(n.type==='shrub'?'Busk høstet: '+reward.map(([id,q])=>q+' '+RESOURCE_CATALOG[id].name.toLowerCase()).join(', ')+'. Nye busker om 15 min.':'Hogd tre: '+logs+' tømmer'+(onGround?' ('+onGround+' i haug)':'')+' · ny vekst om 5 min.');
 }
 function harvestUse(){
  if(performance.now()-harvestLastAction<320)return;
@@ -2093,9 +2093,11 @@ function buildChunkVegetation(cx,cz,lod){
     instances.trunk.push({x,y:y+height*.25,z,scale:height*.5,rot:0});
     if(stage===3)nodes.push({...harvestNode(cx,cz,type,k,x,z,y+height*.48,1.1,type),k,scale});
    }else{
-    const scale=(type==='shrub'?.45:.65)+vegetationRandom(cx,cz,k,61)*(type==='shrub'?.55:.55);
+    const stage=type==='shrub'?treeGrowthStage(treeRegrowth.get(id)):3;
+    if(stage===0)continue;
+    const scale=((type==='shrub'?.45:.65)+vegetationRandom(cx,cz,k,61)*.55)*(stage===1?.3:1);
     instances[type].push({x,y:y+(type==='shrub'?.65:.24)*scale,z,scale,rot:vegetationRandom(cx,cz,k,67)*Math.PI*2});
-    if(type==='shrub')nodes.push({...harvestNode(cx,cz,type,k,x,z,y+.65*scale,.9,type),k});
+    if(type==='shrub'&&stage===3)nodes.push({...harvestNode(cx,cz,type,k,x,z,y+.65*scale,.9,type),k});
    }
   }
  }
