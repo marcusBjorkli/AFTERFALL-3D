@@ -802,7 +802,8 @@ function terrainModeInit(){
   toolMessage('Målkote valgt: '+terrainMode.target.toFixed(2).replace('.',',')+' m.');
  };
  $('terrainTarget').onchange=()=>{
-  const value=quantizeTarget(Number($('terrainTarget').value.trim().replace(',','.')));
+  const raw=$('terrainTarget').value.trim().replace(',','.');
+  const value=raw?quantizeTarget(Number(raw)):null;
   if(value===null){terrainModeSync();toolMessage('Ugyldig målkote.');return;}
   terrainMode.target=value;terrainMode.revision++;terrainGridSignature='';
   terrainModeSync();worldSave();terrainGridDraw();
