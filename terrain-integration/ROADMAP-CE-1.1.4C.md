@@ -9,6 +9,9 @@ Dato: 20. november 2026 · Status: **C.0 og C.1 implementert; C.2–C.4 planlagt
 
 Spillfunksjoner: bålvarme, vedforbruk og tørking av bær; to fysiske lagringskonstruksjoner med ulike kapasiteter; arbeidsbenk med oppskrifter for fakkel og trepinner; sagbukk med effektiv satsvis saging og støtte for eldre lagringsfiler. Busker gir bær og vokser tilbake etter 15 minutter. Enkle målere for matmetthet og varme, samt bærspising og fakkelbelysning, inngår som første trinn i overlevelsessystemet.
 
+## CE 1.1.4C.1.2 – Godkjent småbyggplassering (forbedring etter C.1)
+Implementert 21. november 2026. Nye småbygg må nå plasseres **innenfor én ferdig godkjent planeringsflate**, med hele byggeavtrykket innenfor området og kontroll av terrengkote, vann, tidligere bygninger, ressurslager og spilleren. Spilleren velger plass ved å sikte på terrenget, ser nøyaktig forhåndsvisning (grønn/rød), roterer med 5° skyveknapp eller 15°-knapper og bekrefter separat. Dette gjelder bålplass, lagringskasse, arbeidsbenk, sagbukk og vedskjul. Eksisterende småbygg og lagringsfiler beholdes uten ombygging.
+
 ## Utviklingsrekkefølge
 CE 1.1.4B.6: Samlet integrasjon og spilltesting av allerede eksisterende konstruksjonssystem (**implementert**).
 CE 1.1.4C.0: Grunnleggende bygningsinteraksjon og lager for ferdige lagerskur (**implementert**).
