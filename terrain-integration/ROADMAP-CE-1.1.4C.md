@@ -1,5 +1,5 @@
 # AFTERFALL – godkjent konstruksjonsplan CE 1.1.4C
-Dato: 20. november 2026 · Status: **C.0–C.1.3 implementert; C.2–C.4 planlagt**
+Dato: 20. november 2026 · Status: **C.0–C.1.4 implementert; C.2–C.4 planlagt**
 
 ## CE 1.1.4C.0 – Grunnleggende bygningsinteraksjon og lagring
 **Implementert 21. november 2026.** Eksisterende ferdige lagerskur har nå et interaktivt lager som kan fylles fra inventaret og tømmes tilbake til inventaret. Innholdet lagres per byggeplan og eksisterende B.6-spilltilstand leses videre uten migrering av verdens-/inventarformat. Dette er en funksjonalitetsfase før nye C.1-konstruksjoner.
@@ -14,6 +14,13 @@ Implementert 21. november 2026. Nye småbygg må nå plasseres **innenfor én fe
 
 ## CE 1.1.4C.1.3 – Gjenbruk og utvidelse av planert terreng
 **Implementert 21. november 2026.** Småbygg valideres mot faktisk flat kote og fysisk kollisjon; registrert prosjekttilknytning er ikke lenger et krav. Ledig del av en tomt med ferdig bygg kan gjenbrukes. Planering → «Utvid valgt område» oppretter et selvstendig tilstøtende felt på samme kote, med felles grense og referanse til originaltomten. Opprinnelig byggeplan, lagerskur, inventar og lagringsfiler endres ikke. Eksisterende småbygg beholder posisjon og retning.
+
+## CE 1.1.4C.1.4 – Høyderutenett og automatisk planering
+**Implementert 21. november 2026.** Spaden har dynamisk 1 × 1 m høydemodus som følger terrenget, med lokale koteetiketter og fargekodet høydeforskjell (grønn = flat/på kote, oransje = grave, blå = fylle). Siktekote kan hentes fra terrenget opptil 42 m unna. Valgfri målkotelås hindrer direkte graving, fylling og lokal masseutjevning i å gå forbi valgt kote. Prosjektfrie gravetrinn bruker eksisterende materialregnskap og terrenglagring.
+
+Sammenhengende plane terrengnoder registreres løpende uten å opprette et prosjekt. Nye store bygg kan prosjekteres på en fysisk flat, egnet byggeflate på minst 3 × 3 m. Automatisk byggegrunn på inntil 20 × 20 m er kun en midlertidig kandidat inntil byggeplanen godkjennes; da opprettes en kompatibel automatisk reservert tomt. Småbygg benytter fortsatt fysisk kontroll av sin egen byggeflate. Manuell prosjektbasert planering beholdes som valgfritt verktøy.
+
+Gammel terrengmodell, høydenett, masser, trær, konstruksjoner, lagringsformater og planeringsprosjekter er beholdt.
 
 ## Utviklingsrekkefølge
 CE 1.1.4B.6: Samlet integrasjon og spilltesting av allerede eksisterende konstruksjonssystem (**implementert**).

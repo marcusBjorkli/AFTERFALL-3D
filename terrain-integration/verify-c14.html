@@ -1,0 +1,34 @@
+<!doctype html><html lang="no"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>AFTERFALL CE 1.1.4C.1.4 – høydetest</title><style>body{background:#10241c;color:#e7f2e9;font:16px system-ui;max-width:780px;margin:auto;padding:20px}section{border:1px solid #80aa8c;background:#203b2b;border-radius:12px;padding:16px}.good{color:#a8ecc0}.bad{color:#ffadad}pre{font:13px/1.55 ui-monospace,monospace;white-space:pre-wrap}</style></head><body><h1>CE 1.1.4C.1.4 – Terrengtester</h1><p>Tester kotegrense, rutevisning, flate byggeplasser og sammenhengende områder. Ingen spillagringer endres.</p><section><strong id="summary">Tester …</strong><pre id="details"></pre></section><script type="module">
+import {quantizeTarget,terrainTargetStep,readGridCells,plotFlatAt,flatConnectedCells} from './terrain-grade-114c14.js';
+const tests=[],test=(name,fn)=>{try{if(!fn())throw Error('Feil resultat');tests.push({name,ok:true})}catch(e){tests.push({name,ok:false,error:String(e)})}};
+const h=()=>16.8;
+test('Målkote i cm presisjon',()=>quantizeTarget(16.847)===16.85);
+test('Ugyldig målkote avvises',()=>quantizeTarget(NaN)===null);
+test('Graving stopper nøyaktig på målkoten',()=>terrainTargetStep(16.84,false,16.8)===16.8);
+test('Graving ved valgt kote stopper helt',()=>terrainTargetStep(16.8,false,16.8)===null);
+test('Graving under målkoten stoppes',()=>terrainTargetStep(16.76,false,16.8)===null);
+test('Fylling stopper nøyaktig på målkoten',()=>terrainTargetStep(16.76,true,16.8)===16.8);
+test('Fylling ved målkoten stoppes',()=>terrainTargetStep(16.8,true,16.8)===null);
+test('Fylling over målkoten stoppes',()=>terrainTargetStep(16.84,true,16.8)===null);
+test('Fri graving uten dybdelås',()=>terrainTargetStep(16.8,false,16.8,false)===16.7);
+test('Fri fylling uten kotelås',()=>terrainTargetStep(16.8,true,16.8,false)===16.9);
+const cells=readGridCells((x,z)=>x<0?17:16.8,0,0,16.8,{radius:1});
+test('Høyderutenett leser 9 terrengceller',()=>cells.length===9);
+test('Farge for høyere terreng',()=>cells.some(c=>c.classification==='cut'));
+test('Farge for målplanert terreng',()=>cells.some(c=>c.classification==='flat'));
+test('Farge for under målkote',()=>readGridCells(()=>16.7,0,0,16.8,{radius:1}).every(c=>c.classification==='fill'));
+test('Flatt 20 × 20 m felt gjenkjennes',()=>plotFlatAt(h,100,100)?.size===20);
+test('Avgrensning til 6 × 6 m',()=>plotFlatAt((x,z)=>x>103?16.9:16.8,100,100)?.size===6);
+test('En enkelt flat node gir ikke byggegrunn',()=>plotFlatAt((x,z)=>x===100&&z===100?16.8:17,100,100)===null);
+test('Mellomliggende høydeavvik avvises',()=>plotFlatAt((x,z)=>Number.isInteger(x)&&Number.isInteger(z)?16.8:16.92,100,100)===null);
+test('Fysisk blokkering avvises',()=>plotFlatAt(h,100,100,{valid:(x,z)=>x!==100})===null);
+test('Sammenhengende flate 3 × 3 noder',()=>flatConnectedCells((x,z)=>Math.abs(x)<=1&&Math.abs(z)<=1?16.8:17,0,0,{radius:5}).area===9);
+test('Barriere deler flate',()=>flatConnectedCells((x,z)=>x>0?17:16.8,0,0,{radius:4}).area===45);
+test('Maksimalt 20 m per tomt',()=>plotFlatAt(h,100,100)?.area===400);
+let safe=true;for(let i=-12;i<=12;i++)for(const fill of [false,true]){
+ const n=terrainTargetStep(16.8+i*.01,fill,16.8);
+ if(n!==null&&(fill?n>16.8000001:n<16.7999999))safe=false;
+}
+test('50 grave-/fylletrinn overskrider aldri målkoten',()=>safe);
+const n=tests.filter(t=>t.ok).length;document.getElementById('summary').textContent=n+' / '+tests.length+' tester bestått';document.getElementById('summary').className=n===tests.length?'good':'bad';document.getElementById('details').textContent=tests.map(t=>(t.ok?'✓ ':'✗ ')+t.name+(t.error?' – '+t.error:'')).join('\n');
+</script></body></html>
