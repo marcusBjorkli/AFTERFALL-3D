@@ -973,7 +973,7 @@ function sawStationsRefresh(){
  if(sawGroup){scene.remove(sawGroup);sawGroup.traverse(o=>{if(o.isMesh){o.geometry.dispose();o.material.dispose()}})}
  sawGroup=new THREE.Group();sawGroup.name='Sagbukker';
  for(const st of sawStations.values()){
-  const g=new THREE.Group();g.position.set(st.x-PAD_X,ground(st.x,st.z),st.z-PAD_Z);
+  const g=new THREE.Group();g.position.set(st.x-PAD_X,ground(st.x,st.z),st.z-PAD_Z);g.rotation.y=(survivalStructures.get(st.id)?.angle||0)*Math.PI/180;
   const beam=new THREE.Mesh(new THREE.BoxGeometry(1.55,.16,.24),new THREE.MeshLambertMaterial({color:0x977451}));beam.position.y=.8;g.add(beam);
   for(const side of [-.5,.5])for(const angle of [-1,1]){
    const leg=new THREE.Mesh(new THREE.BoxGeometry(.11,.9,.11),new THREE.MeshLambertMaterial({color:0x705034}));leg.position.set(side,.4,angle*.26);leg.rotation.x=angle*.26;g.add(leg);
@@ -3017,13 +3017,8 @@ function survivalActGlobal(action){
 }
 
 // Low-poly physical meshes; sagbucks reuse the existing station renderer.
-function survivalRender(){
- if(!scene)return;
- if(survivalGroup){
-  scene.remove(survivalGroup);
-  survivalGroup.traverse(o=>{if(o.isMesh){o.geometry?.dispose();o.material?.dispose();}});
- }
- survivalGroup=new THREE.Group();survivalGroup.name='CE 1.1.4C.1.1 – førindustrielle konstruksjoner';
+// Shared geometry for physical stations and their placement previews.
+function createSurvivalVisual(s){
  const addBox=(g,w,h,d,x,y,z,color,tilt=0)=>{
   const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial({color}));
   m.position.set(x,y,z);m.rotation.z=tilt;g.add(m);return m;
@@ -3032,10 +3027,9 @@ function survivalRender(){
   const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,7),new THREE.MeshLambertMaterial({color}));
   m.position.set(x,y,z);m.rotation.z=rotate;g.add(m);return m;
  };
- for(const s of survivalStructures.values()){
-  if(s.type==='sawbuck')continue;
-  const g=new THREE.Group();g.name=SURVIVAL_DEFS[s.type].name+' '+s.id;
-  g.position.set(s.x-PAD_X,ground(s.x,s.z),s.z-PAD_Z);g.rotation.y=s.angle*Math.PI/180;
+
+ const g=new THREE.Group();g.name=SURVIVAL_DEFS[s.type].name+' '+s.id;
+ g.position.set(s.x-PAD_X,ground(s.x,s.z),s.z-PAD_Z);g.rotation.y=s.angle*Math.PI/180;
   if(s.type==='campfire'){
    const ring=new THREE.Group();
    for(let i=0;i<9;i++){
@@ -3075,7 +3069,26 @@ function survivalRender(){
     addLog(g,.13,1.05,x,y,.05,0x98724b,Math.PI/2);
    }
   }
-  survivalGroup.add(g);
+
+ if(s.type==='sawbuck'){
+  addBox(g,1.55,.16,.24,0,.8,0,0x977451);
+  for(const side of [-.5,.5])for(const angle of [-1,1]){
+   const leg=addBox(g,.11,.9,.11,side,.4,angle*.26,0x705034);
+   leg.rotation.x=angle*.26;
+  }
+ }
+ return g;
+}
+function survivalRender(){
+ if(!scene)return;
+ if(survivalGroup){
+  scene.remove(survivalGroup);
+  survivalGroup.traverse(o=>{if(o.isMesh){o.geometry?.dispose();o.material?.dispose();}});
+ }
+ survivalGroup=new THREE.Group();survivalGroup.name='CE 1.1.4C.1.2 – førindustrielle konstruksjoner';
+ for(const s of survivalStructures.values()){
+  if(s.type==='sawbuck')continue;
+  survivalGroup.add(createSurvivalVisual(s));
  }
  scene.add(survivalGroup);
 }
