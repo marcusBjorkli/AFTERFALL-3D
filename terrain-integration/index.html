@@ -1434,7 +1434,34 @@ function migrateOverload(){
   }
  }
 }
+// CE 1.1.4C.1.5 – one-time deletion of this 3D world's test data only.
+function deleteLegacyWorldDB(database){
+ return new Promise((resolve,reject)=>{
+  const tx=database.transaction('world','readwrite'),store=tx.objectStore('world');
+  store.delete(CE_WORLD_KEY);store.delete(OTHER_SLOT_KEY);
+  tx.oncomplete=()=>resolve();
+  tx.onerror=()=>reject(tx.error||new Error('Kunne ikke slette testlagring.'));
+  tx.onabort=()=>reject(tx.error||new Error('Sletting av testlagring ble avbrutt.'));
+ });
+}
+async function resetTestWorldForSeaDatum(){
+ if(localStorage.getItem(RESET_MARKER)===RESET_VALUE)return false;
+ // Pending retries safely if an interrupted reset never reached completion.
+ localStorage.setItem(RESET_MARKER,'pending');
+ if('indexedDB' in window){
+  let legacyDB;
+  try{legacyDB=await openWorldDB();await deleteLegacyWorldDB(legacyDB);}
+  catch(error){throw new Error('Testlagringene kunne ikke nullstilles: '+error.message);}
+  finally{legacyDB?.close();}
+ }
+ for(const key of LEGACY_TEST_KEYS)localStorage.removeItem(key);
+ // Complete only after the old test records are removed.
+ localStorage.setItem(RESET_MARKER,RESET_VALUE);
+ return true;
+}
 async function worldInitialize(){
+ const justReset=await resetTestWorldForSeaDatum();
+ if(justReset)console.info('AFTERFALL: gammel testprogresjon er nullstilt for havnivåbasert terreng.');
  // VIKTIG: Første migrering fra v0.6.0 skal skje før spillverdenen bygges.
  earthLoad();
  if(earthSaved){const legacy=earthSaved;earthSaved=null;applyWorldSnapshot(legacy)}
