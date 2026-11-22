@@ -2716,11 +2716,21 @@ function riverSample(x,z,sourceHeight=null){
  return best;
 }
 
+// Keep the original nearest-cell decision ONLY for existing dry-surface
+// normalisation. This preserves the established heightfield and saved sites
+// outside the deliberately local f.4.6.2B shoreline repair.
+function historicDrySurfaceWet(x,z){
+ if(!hydroHeight||x<0||z<0||x>WORLD||z>WORLD)return false;
+ const i=clamp(Math.round(x/HY_STEP),0,HY_N-1),
+  j=clamp(Math.round(z/HY_STEP),0,HY_N-1),idx=hydId(i,j);
+ const source=hydrologySourceElevation(x,z);
+ if(hydroOcean[idx]&&source<.35)return true;
+ const li=hydroLakeId[idx];
+ return li>=0&&hydroLakes[li]?.active&&source<hydroLakes[li].level-.04;
+}
 function drySurfaceAt(x,z,height,river=null){
- // Most inland terrain is already positive: avoid hydrology lookup for every mesh vertex.
  if(height>=DRY_LAND_FLOOR)return height;
- // Submerged seabeds, lakes and riverbeds retain true underwater elevations.
- const submerged=!!waterBodyAt(x,z)||
+ const submerged=historicDrySurfaceWet(x,z)||
   !!(river&&river.distance<river.width*.78&&height<river.water-PAD_H+.04);
  return normalizeDryGround(height,submerged);
 }
