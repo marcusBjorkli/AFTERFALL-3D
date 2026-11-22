@@ -4822,6 +4822,7 @@ function worldMapDraw(){
   ' · Hav: '+(hasOcean?'Ja':'Nei')+' · Spiller X '+p.x.toFixed(0)+', Z '+p.z.toFixed(0)+
   ' · Kotevernede eldre byggeflater: '+qa.protectedSites+' · Eldre prosjekter til kontroll: '+qa.review+
   ' · Hydrologitest: '+qa.risingRivers+' stigende, '+qa.invalidRivers+' ugyldige elvestrekninger'+
+  ' · Bratte terrengkanter (32 m rutenett, > 1,5 m/m): '+qa.verySteep+
   (qa.underTerrain?' · '+qa.underTerrain+' potensielt skjulte elvestrekninger':'')+
   (qa.wetProtected?' · ⚠ '+qa.wetProtected+' eldre byggeflater kan være oversvømt':'');
 }
