@@ -383,7 +383,7 @@ body.prefab-building #constructionOverlay{visibility:hidden!important;pointer-ev
 .world-map-legend{display:flex;justify-content:center;flex-wrap:wrap;column-gap:11px;row-gap:4px;margin-top:10px;font-size:11px}
 .world-map-stats,#worldMapReadout,.world-map-note{font-size:12px;line-height:1.4;margin:9px 0 0}
 #worldMapReadout{background:#234137;border-radius:7px;padding:8px;min-height:30px}
-.world-map-note{color:#b7c9bc;font-size:11px}
+.world-map-note{color:#b7c9bc;font-size:11px}#worldMapTravelStatus{font-size:12px}#worldMapOverlay .world-map-options button{min-height:44px;flex:1 1 140px}
 @media(max-width:500px){#worldMapOverlay article{padding:10px}.world-map-header h2{font-size:16px}#worldMapCanvas{width:min(100%,50dvh)}.world-map-options{gap:5px}}
 </style></head><body><button id="gradeToggle" type="button">📐 Planering</button><button id="constructionToggle" type="button" hidden>Bygg</button><button id="constructionDoorToggle" type="button" hidden>🚪 Åpne dør</button><button id="buildingStoreToggle" type="button" hidden>📦 Åpne lager</button>
 <button id="survivalToggle" type="button" hidden>🛠 Småbygg</button><button id="survivalInteract" type="button" hidden>Bruk konstruksjon</button>
@@ -434,8 +434,8 @@ body.prefab-building #constructionOverlay{visibility:hidden!important;pointer-ev
   <div class="world-map-options"><label for="worldMapMode">Kartlag</label><select id="worldMapMode"><option value="terrain">Terreng og fjell</option><option value="height">Høydekoter</option><option value="water">Hydrologi</option></select><label><input id="worldMapRivers" type="checkbox" checked> Vis elver</label></div>
   <canvas id="worldMapCanvas" width="512" height="512" aria-label="Kart over terreng, fjellkjeder, elver, innsjøer og hav. Trykk for informasjon om en posisjon."></canvas>
   <div class="world-map-legend"><span>🟩 Land og gress</span><span>⬜ Fjell</span><span>🟦 Innsjø og elv</span><span>🔵 Hav</span><span>🟡 Spiller</span><span>🩵 Fjellvannutløp</span><span>⚪ Fosser</span></div>
-  <p id="worldMapStats" class="world-map-stats"></p><p id="worldMapReadout" role="status">Trykk på kartet for å undersøke kote og terrengtype.</p>
-  <p class="world-map-note">Kartlagene bruker terrenggeneratorens data og hydrologinettverk (32 m rutenett). Lokale grave-/fyllendringer er ikke tegnet inn overalt. Fjellvannenes utløp følger nå beregnede nedstrøms ruter. Fossedetaljer og fullstendig kontinuerlig vanngeometri kommer i f.4.5.</p>
+  <div class="world-map-options"><button type="button" id="worldMapTravel" disabled>⚡ Hurtigreis</button><button type="button" id="worldMapObserve">📋 Registrer funn</button><button type="button" id="worldMapExport">⬇ Eksporter logg</button></div><p id="worldMapTravelStatus" role="status">Velg et punkt på kartet.</p><p id="worldMapStats" class="world-map-stats"></p><p id="worldMapReadout" role="status">Trykk på kartet for å undersøke kote og terrengtype.</p>
+  <p class="world-map-note">Kartlagene bruker terrenggeneratorens data og hydrologinettverk (32 m rutenett). Lokale grave-/fyllendringer er ikke tegnet inn overalt. Fjellvannenes utløp følger nå beregnede nedstrøms ruter. Hurtigreise gjelder kun testing. Landingspunkter kontrolleres for vann, bratt terreng og hindringer. Eksporter observasjoner i JSON.</p>
  </article>
 </div>
 <div id="newGameDialog" hidden role="presentation"><article role="dialog" aria-modal="true" aria-labelledby="newGameTitle">
@@ -4827,6 +4827,41 @@ const gameSlotMenu=installGameSlots({
 // It has no writes to saved state and does not generate a second terrain model.
 const worldMapCache=new Map();
 let worldMapSelected=null;
+ const QA_LOG_KEY='afterfall_f45_fasttravel_log';
+ function qaLog(kind,note){
+  let log=[];try{log=JSON.parse(localStorage.getItem(QA_LOG_KEY)||'[]');if(!Array.isArray(log))log=[]}catch(e){}
+  const x=p.x,z=p.z,r=riverSample(x,z),water=waterBodyAt(x,z);
+  log.push({timestamp:new Date().toISOString(),version:TERRAIN_GENERATION_VERSION,kind,note,
+   x:+x.toFixed(2),z:+z.toFixed(2),kote:+ground(x,z).toFixed(2),
+   fjell:+mountainRise(x,z).toFixed(2),water:mountainLakeAt(x,z)?'fjellvann':water?.kind||null,
+   river:r?{distance:r.distance,width:r.width,water:r.water}:null,weather:weatherState.kind});
+  try{localStorage.setItem(QA_LOG_KEY,JSON.stringify(log.slice(-500)))}catch(e){console.warn('QA log:',e)}
+  return log.length;
+ }
+ function qaLanding(x,z){
+  const safe=(a,b)=>{
+   if(a<2||b<2||a>WORLD-2||b>WORLD-2)return false;
+   const h=ground(a,b),r=riverSample(a,b);
+   return Number.isFinite(h)&&h>.15&&!waterBodyAt(a,b)&&!mountainLakeAt(a,b)
+    &&(!r||r.distance>=r.width+2)&&!collides(a-PAD_X,b-PAD_Z)
+    &&Math.abs(ground(a+1,b)-h)<1.4&&Math.abs(ground(a-1,b)-h)<1.4
+    &&Math.abs(ground(a,b+1)-h)<1.4&&Math.abs(ground(a,b-1)-h)<1.4;
+  };
+  if(safe(x,z))return {x,z};
+  for(let radius=4;radius<=64;radius+=4)for(let i=0;i<16;i++){
+   const angle=i*Math.PI/8,a=x+Math.cos(angle)*radius,b=z+Math.sin(angle)*radius;
+   if(safe(a,b))return {x:a,z:b};
+  }
+  return null;
+ }
+ function qaFastTravel(){
+  if(!worldMapSelected)return;
+  const target=qaLanding(worldMapSelected.x,worldMapSelected.z);
+  if(!target){$('worldMapTravelStatus').textContent='Ingen trygg landposisjon innen 64 m. Velg et annet punkt.';return;}
+  p.x=target.x;p.z=target.z;joyEnd();lookPointer=null;updateCamera();updateChunks(true);
+  qaLog('fasttravel','Spiller flyttet via verdenskart');
+  worldMapClose();showPanel(false);
+ }
 function worldMapPalette(h,sea,lake,mountain,mode){
  if(sea)return [27,88,125];
  if(lake)return [42,129,164];
@@ -4991,13 +5026,16 @@ function worldMapOpen(){
 }
 function worldMapClose(){$('worldMapOverlay').hidden=true;worldMapSelected=null;}
 $('worldMapClose').onclick=worldMapClose;
-$('worldMapMode').onchange=worldMapDraw;
+$('worldMapTravel').onclick=qaFastTravel;
+ $('worldMapObserve').onclick=()=>{$('worldMapTravelStatus').textContent='Observasjon registrert: '+qaLog('observation','Manuell inspeksjon')+' loggposter.';};
+ $('worldMapExport').onclick=()=>{const blob=new Blob([localStorage.getItem(QA_LOG_KEY)||'[]'],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='afterfall-f45-testlogg.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+ $('worldMapMode').onchange=worldMapDraw;
 $('worldMapRivers').onchange=worldMapDraw;
 $('worldMapCanvas').addEventListener('pointerdown',e=>{
  const rect=e.currentTarget.getBoundingClientRect();
  worldMapSelected={x:clamp((e.clientX-rect.left)/rect.width*WORLD,0,WORLD),
  z:clamp((e.clientY-rect.top)/rect.height*WORLD,0,WORLD)};
- worldMapDetails(worldMapSelected.x,worldMapSelected.z);worldMapDraw();
+ worldMapDetails(worldMapSelected.x,worldMapSelected.z);$('worldMapTravel').disabled=false;$('worldMapTravelStatus').textContent='Valgt X '+worldMapSelected.x.toFixed(0)+', Z '+worldMapSelected.z.toFixed(0);worldMapDraw();
 });
 
 const panel=$('panel');function showPanel(on){if(on){gameSlotMenu.refresh();if(constructionSitePick)constructionSitePickCancel();if(smallPlacement)survivalPlaceCancel();if(activeGrade())$('gradeLevel').value=activeGrade().level.toFixed(1);if(pileMenuOpen)setPileMenu(false);if($('diagOverlay').classList.contains('show'))diagOpen(false)}paused=on||inventoryOpen;panel.classList.toggle('show',on);joyEnd()}$('menuBuild').onclick=()=>{showPanel(false);survivalOpenMenu('build','drawings');};$('menuDiag').onclick=()=>{showPanel(false);diagOpen(true);};$('menuMap').onclick=worldMapOpen;$('menuInventory').onclick=()=>{showPanel(false);showInventory(true);};$('menu').onclick=()=>showPanel(true);$('resume').onclick=()=>showPanel(false);$('save').onclick=save;$('load').onclick=()=>{load();showPanel(false)};
