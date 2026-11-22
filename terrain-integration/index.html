@@ -3453,7 +3453,7 @@ $('diagActualMesh').onclick=()=>{
  const selected=q?('\\nVed spilleren: terrengmesh '+(q.terrainMesh??'-')+
   ' m | vannmesh '+(q.waterMesh??'-')+
   ' m | delta '+(q.deltaWaterTerrain??'-')+' m | '+q.waterTypes.join(', ')):'';
- const summary='\\n\\nFAKTISK 3D-MESHTEST f.4.6.2A.3 (radius 96 m, 8 m prøver)'+
+ const summary='\\n\\nFAKTISK 3D-MESHTEST f.4.6.2B (radius 96 m, 8 m prøver)'+
   '\\nMålingen er '+(result.valid?'GYLDIG':'UGYLDIG – INGEN TERRENGPUNKTER')+
   '\\nSpillerchunk '+result.preflight.playerKey+
   ' | aktive chunks '+result.preflight.activeChunks+
@@ -3463,7 +3463,10 @@ $('diagActualMesh').onclick=()=>{
   '\\nVannmesh på hydrologisk tørt punkt '+t.dryClassifiedWithWater+
   '\\nFlere vanntyper '+t.multipleWaterTypes+
   '\\nHydrologisk vått uten vannmesh '+t.classifiedWetWithoutWater+
-  '\\nTerrengmesh uten treff '+t.terrainRayMiss+selected+
+  '\\nTerrengmesh uten treff '+t.terrainRayMiss+
+  '\\nInnsjømesh på gammel tørr hydrocelle '+t.nearestCellDryWithLakeMesh+
+  '\\nLokal strandkorrigering '+(SHORE_B.enabled?'PÅ':'AV')+
+  (q&&q.terrainRiseSinceBaseline!==null?'\\nTerrengheving ved spilleren '+q.terrainRiseSinceBaseline+' m':'')+selected+
   '\\nDetaljdata: Bruk Last ned 3D-rapport (JSON).'+
   (result.valid?'':'\\n⚠ FEIL: Nullverdiene over kan ikke brukes til å vurdere vannsystemet.');
  // The original raster report remains available, but actual mesh results
@@ -5246,7 +5249,18 @@ const worldMapCache=new Map();
  // Tests actual loaded render triangles, not only the hydrology raster.
  // Double-sided raycast by casting up and down, so triangle winding is
  // not mistaken for missing geometry. No changes to terrain/water geometry.
- function shoreMeshQa(){
+ function shoreUnrepairedGround(x,z){
+ // Read-only baseline using the original terrain without f.4.6.2B or the
+ // older temporary experiment. The same integer-node fan as visible terrain.
+ const baseNode=(a,b)=>legacyTerrainHeight(a,b,
+  originalGround(a,b)+(earthEdits.get(earthKey(a,b))||0)*.01);
+ x=clamp(x,0,WORLD);z=clamp(z,0,WORLD);
+ if(Number.isInteger(x)&&Number.isInteger(z))return baseNode(x,z);
+ const ix=Math.min(WORLD-1,Math.floor(x)),iz=Math.min(WORLD-1,Math.floor(z)),
+  u=x-ix,v=z-iz;
+ return fanHeight(baseNode(ix,iz),baseNode(ix,iz+1),baseNode(ix+1,iz+1),baseNode(ix+1,iz),u,v);
+}
+function shoreMeshQa(){
   const center={x:+p.x.toFixed(2),z:+p.z.toFixed(2)},radius=96,step=8;
   // A missing player chunk makes the entire result invalid. Resynchronise
   // chunk loading before sampling; this does not alter saved world geometry.
@@ -5266,7 +5280,8 @@ const worldMapCache=new Map();
   const ray=new THREE.Raycaster(),down=new THREE.Vector3(0,-1,0),up=new THREE.Vector3(0,1,0);
   const origin=new THREE.Vector3(),hitsByType=new Map();
   const counters={samplePoints:0,loaded:0,unloaded:0,waterPresent:0,dryClassifiedWithWater:0,
-   classifiedWetWithoutWater:0,multipleWaterTypes:0,aboveTerrain:0,terrainRayMiss:0};
+   classifiedWetWithoutWater:0,multipleWaterTypes:0,nearestCellDryWithLakeMesh:0,
+   aboveTerrain:0,terrainRayMiss:0};
   const records=[],topProblems=[],missingKeys=new Set();
   const rayHeight=(meshes,x,z)=>{
    if(!meshes.length)return [];
@@ -5299,7 +5314,12 @@ const worldMapCache=new Map();
    const waterHeights={river,lake,sea,alpine};
    const types=Object.keys(waterHeights).filter(k=>waterHeights[k].length);
    const hTerrain=land[0]??null,water=types.length?Math.max(...types.flatMap(k=>waterHeights[k])):null;
-   const body=waterBodyAt(x,z,ground(x,z)),r=riverSample(x,z);
+   const i=clamp(Math.round(x/HY_STEP),0,HY_N-1),
+    j=clamp(Math.round(z/HY_STEP),0,HY_N-1);
+   const nearestLake=hydroLakeId[hydId(i,j)];
+   const legacyMismatch=lake.length>0&&nearestLake<0;
+   if(legacyMismatch)counters.nearestCellDryWithLakeMesh++;
+   const body=waterBodyAt(x,z,hTerrain??ground(x,z)),r=riverSample(x,z);
    const riverExpected=!!(r&&r.distance<r.width&&ground(x,z)<r.water-PAD_H+.12);
    const wetExpected=!!body||!!mountainLakeAt(x,z)||riverExpected;
    const rise=hTerrain!==null&&water!==null?water-hTerrain:null;
@@ -5320,6 +5340,8 @@ const worldMapCache=new Map();
     deltaWaterTerrain:rise===null?null:+rise.toFixed(3),
     wetExpected,hydrology:body?{kind:body.kind,level:body.level,id:body.id??null}:null,
     riverExpected,riverDistance:r?+r.distance.toFixed(2):null,
+    nearestHydrologyLake:nearestLake,nearestCellDryWithLakeMesh:legacyMismatch,
+    lakeMaskOccupancy:+waterMaskMembership(x,z,'lake:'+SHORE_B.lakeId).toFixed(4),
     waterTypes:types,waterHeights,category};
    // Report only notable points, retain nearest-to-player diagnostics too.
    if(category.length&&records.length<300)records.push(detail);
@@ -5327,14 +5349,27 @@ const worldMapCache=new Map();
    if(dx===0&&dz===0)hitsByType.set('player',detail);
   }
   const valid=counters.loaded>0;
-  const report={revision:'f.4.6.2A.3',time:new Date().toISOString(),source:'real loaded THREE.BufferGeometry via bidirectional raycasts',
+  const atPlayer=hitsByType.get('player')||null;
+  if(atPlayer){
+   const baseline=shoreUnrepairedGround(center.x,center.z);
+   atPlayer.terrainBaseline=+baseline.toFixed(3);
+   atPlayer.terrainRiseSinceBaseline=atPlayer.terrainMesh===null?null:
+    +(atPlayer.terrainMesh-baseline).toFixed(3);
+   atPlayer.localShoreRepairEnabled=SHORE_B.enabled;
+   atPlayer.legacyRaiseExperimentEnabled=shoreRaiseExperiment.enabled;
+  }
+  const report={revision:'f.4.6.2B',time:new Date().toISOString(),source:'real loaded THREE.BufferGeometry via bidirectional raycasts',
    player:center,center,radius,step,valid,
    failure:valid?null:'Ingen lastede prøvepunkter: geometriske nullverdier er ugyldige.',
    preflight:{...preflight,missingKeys:Array.from(missingKeys)},
-   counters,atPlayer:hitsByType.get('player')||null,
+   counters,atPlayer,
+   shorelineCorrection:{enabled:SHORE_B.enabled,lakeId:SHORE_B.lakeId,
+    center:{x:SHORE_B.x,z:SHORE_B.z},radius:SHORE_B.radius,
+    maxRaise:SHORE_B.maxRaise,legacyRaiseExperiment:shoreRaiseExperiment.enabled,
+    affectsSavedEarthEdits:false,changesHydrologyGrid:false},
    anomalies:records,submergedSamples:topProblems,
-   note:'Water above terrain is normal underwater; only visible-water-classified-dry or unexpectedly abrupt shoreline edges indicate possible faults. The hydrology predicate is approximate; compare images and coordinates. Unloaded chunks are excluded. Nothing is modified.'};
-  if(!lakeQaReport)lakeQaReport={revision:'f.4.6.2A.1',localTests:[]};
+   note:'Read-only QA. A water surface above underwater terrain is normal. Shared interpolated hydrology classification is used; nearestCellDryWithLakeMesh counts historical raster/mesh differences, not necessarily geometry errors. Compare terrainBaseline and terrainRiseSinceBaseline with correction on/off. 0.055 m lake visual surface offset is intentional.'};
+  if(!lakeQaReport)lakeQaReport={revision:'f.4.6.2B',localTests:[]};
   (lakeQaReport.meshGeometryTests||(lakeQaReport.meshGeometryTests=[])).push(report);
   $('lakeQaExport').disabled=false;
   $('lakeQaStatus').textContent=valid?('3D-geometri: '+counters.loaded+' målte punkter, '+
@@ -5400,7 +5435,7 @@ function lakeQaExport(){
   if(!lakeQaReport)return;
   const blob=new Blob([JSON.stringify(lakeQaReport,null,2)],{type:'application/json'}),
    url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download='afterfall-f462a3-meshdiagnostikk-'+new Date().toISOString().slice(0,10)+'.json';
+  a.href=url;a.download='afterfall-f462b-strandlinje-'+new Date().toISOString().slice(0,10)+'.json';
   a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  }
 let worldMapSelected=null;
