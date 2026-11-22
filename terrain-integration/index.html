@@ -434,7 +434,7 @@ body.prefab-building #constructionOverlay{visibility:hidden!important;pointer-ev
   <div class="world-map-options"><label for="worldMapMode">Kartlag</label><select id="worldMapMode"><option value="terrain">Terreng og fjell</option><option value="height">Høydekoter</option><option value="water">Hydrologi</option></select><label><input id="worldMapRivers" type="checkbox" checked> Vis elver</label></div>
   <canvas id="worldMapCanvas" width="512" height="512" aria-label="Kart over terreng, fjellkjeder, elver, innsjøer og hav. Trykk for informasjon om en posisjon."></canvas>
   <div class="world-map-legend"><span>🟩 Land og gress</span><span>⬜ Fjell</span><span>🟦 Innsjø og elv</span><span>🔵 Hav</span><span>🟡 Spiller</span><span>🩵 Fjellvannutløp</span><span>⚪ Fosser</span></div>
-  <div class="world-map-options"><button type="button" id="worldMapTravel" disabled>⚡ Hurtigreis</button><button type="button" id="worldMapObserve">📋 Registrer funn</button><button type="button" id="worldMapExport">⬇ Eksporter logg</button><button type="button" id="lakeQaRun">🔎 Test innsjøbredder</button><button type="button" id="lakeQaExport" disabled>⬇ Innsjørapport</button></div><p id="worldMapTravelStatus" role="status">Velg et punkt på kartet.</p><p id="lakeQaStatus" role="status" aria-live="polite"></p><p id="worldMapStats" class="world-map-stats"></p><p id="worldMapReadout" role="status">Trykk på kartet for å undersøke kote og terrengtype.</p>
+  <div class="world-map-options"><button type="button" id="worldMapTravel" disabled>⚡ Hurtigreis</button><button type="button" id="worldMapObserve">📋 Registrer funn</button><button type="button" id="worldMapExport">⬇ Eksporter logg</button><button type="button" id="lakeQaRun">🔎 Test innsjøbredder</button><button type="button" id="lakeQaLocal">📍 Test området rundt spilleren</button><button type="button" id="lakeQaExport" disabled>⬇ Innsjørapport</button></div><p id="worldMapTravelStatus" role="status">Velg et punkt på kartet.</p><p id="lakeQaStatus" role="status" aria-live="polite"></p><p id="worldMapStats" class="world-map-stats"></p><p id="worldMapReadout" role="status">Trykk på kartet for å undersøke kote og terrengtype.</p>
   <p class="world-map-note">Kartlagene bruker terrenggeneratorens data og hydrologinettverk (32 m rutenett). Lokale grave-/fyllendringer er ikke tegnet inn overalt. Fjellvannenes utløp følger nå beregnede nedstrøms ruter. f.4.5.2C bruker nå identisk firetrekant-vifte som synlig terreng (alle LOD), og registrerer meshstatistikk i innsjørapporten. Havmasken er uendret. Hurtigreise gjelder kun testing. Landingspunkter kontrolleres for vann, bratt terreng og hindringer. Eksporter observasjoner i JSON.</p>
  </article>
 </div>
@@ -4953,11 +4953,68 @@ const worldMapCache=new Map();
   $('lakeQaExport').disabled=false;worldMapDraw();
   console.info('[AFTERFALL lake QA]',report);
  }
+ // f.4.5.2C.1: inspect actual loaded WATER MESH near the player's
+ // position, rather than only a sample of global hydrology-mask boundaries.
+ // This detects missed water triangles even if the global map has no red dot.
+ function lakeQaLocal(){
+  const center={x:p.x,z:p.z},radius=144,step=8;
+  const candidates=[],raycaster=new THREE.Raycaster();
+  const meshes=[];
+  for(const chunk of terrainChunks.values())for(const mesh of chunk.stillWater||[])
+   if(mesh.material===lakeMaterial)meshes.push(mesh);
+  const totals={samples:0,lakeBelowTerrain:0,waterMeshPresent:0,missingWaterMesh:0,notLoaded:0};
+  const hits=[],missing=[];
+  for(let dz=-radius;dz<=radius;dz+=step)for(let dx=-radius;dx<=radius;dx+=step){
+   if(dx*dx+dz*dz>radius*radius)continue;
+   const x=center.x+dx,z=center.z+dz;
+   if(x<2||z<2||x>WORLD-2||z>WORLD-2)continue;
+   const cx=Math.floor(x/64),cz=Math.floor(z/64),chunk=terrainChunks.get(chunkKey(cx,cz));
+   if(!chunk){totals.notLoaded++;continue}
+   const i=clamp(Math.round(x/HY_STEP),0,HY_N-1),j=clamp(Math.round(z/HY_STEP),0,HY_N-1);
+   const ids=new Set();
+   for(let a=-2;a<=2;a++)for(let b=-2;b<=2;b++){
+    const ii=i+a,jj=j+b;if(ii<0||jj<0||ii>=HY_N||jj>=HY_N)continue;
+    const li=hydroLakeId[hydId(ii,jj)];
+    if(li>=0&&hydroLakes[li]?.active)ids.add(li);
+   }
+   if(!ids.size)continue;
+   totals.samples++;
+   const terrain=ground(x,z);
+   for(const lakeId of ids){
+    const lake=hydroLakes[lakeId],mask=lakeQaMask(x,z,lakeId);
+    if(mask<LAKE_SHORE_THRESHOLD||terrain>lake.level-.15)continue;
+    totals.lakeBelowTerrain++;
+    // Test the exact loaded water triangle with a downward ray at world X/Z.
+    raycaster.set(new THREE.Vector3(x-PAD_X,lake.level-PAD_H+5,z-PAD_Z),new THREE.Vector3(0,-1,0));
+    raycaster.far=12;
+    const intersections=raycaster.intersectObjects(chunk.stillWater.filter(m=>m.material===lakeMaterial),false);
+    const present=intersections.some(hit=>Math.abs(hit.point.y-(lake.level-PAD_H+.055))<.25);
+    if(present)totals.waterMeshPresent++;
+    else {
+     totals.missingWaterMesh++;
+     if(missing.length<180)missing.push({x:+x.toFixed(1),z:+z.toFixed(1),
+       lakeId,waterLevel:+lake.level.toFixed(2),ground:+terrain.toFixed(2),
+       mask:+mask.toFixed(3),chunk:[cx,cz],lod:chunk.lod,
+       category:'expected-water-but-no-visible-lake-triangle'});
+    }
+   }
+  }
+  const record={revision:LAKE_SHORE_REVISION,method:'local loaded lake mesh raycast',
+   center,radius,step,totals,missing,loadedLakeMeshes:meshes.length,
+   caveat:'Only samples current loaded chunks and inferred mask+terrain water. Does not detect a gap beyond the membership mask.'};
+  if(!lakeQaReport)lakeQaReport={revision:LAKE_SHORE_REVISION,localTests:[],totals:null};
+  (lakeQaReport.localTests||(lakeQaReport.localTests=[])).push(record);
+  $('lakeQaExport').disabled=false;
+  $('lakeQaStatus').textContent='Lokal 3D-test ved X '+center.x.toFixed(0)+', Z '+center.z.toFixed(0)+
+   ': '+totals.lakeBelowTerrain+' forventede vannprøver, '+totals.missingWaterMesh+
+   ' uten synlig innsjømesh, '+totals.notLoaded+' uten lastet terrengchunk. Eksporter rapporten.';
+  console.info('[AFTERFALL local lake mesh QA]',record);
+ }
  function lakeQaExport(){
   if(!lakeQaReport)return;
   const blob=new Blob([JSON.stringify(lakeQaReport,null,2)],{type:'application/json'}),
    url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download='afterfall-f452b-innsjo-test-'+new Date().toISOString().slice(0,10)+'.json';
+  a.href=url;a.download='afterfall-f452c-lokal-innsjo-test-'+new Date().toISOString().slice(0,10)+'.json';
   a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  }
 let worldMapSelected=null;
@@ -5169,6 +5226,7 @@ function worldMapOpen(){
 function worldMapClose(){$('worldMapOverlay').hidden=true;worldMapSelected=null;}
 $('worldMapClose').onclick=worldMapClose;
 $('lakeQaRun').onclick=lakeQaRun;
+ $('lakeQaLocal').onclick=lakeQaLocal;
  $('lakeQaExport').onclick=lakeQaExport;
  $('worldMapTravel').onclick=qaFastTravel;
  $('worldMapObserve').onclick=()=>{$('worldMapTravelStatus').textContent='Observasjon registrert: '+qaLog('observation','Manuell inspeksjon')+' loggposter.';};
