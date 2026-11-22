@@ -433,7 +433,7 @@ body.prefab-building #constructionOverlay{visibility:hidden!important;pointer-ev
   <header class="world-map-header"><div><h2 id="worldMapTitle">🗺️ Verdenskart</h2><small>4096 × 4096 m · nord opp · øst til høyre</small></div><button type="button" id="worldMapClose">Tilbake til meny</button></header>
   <div class="world-map-options"><label for="worldMapMode">Kartlag</label><select id="worldMapMode"><option value="terrain">Terreng og fjell</option><option value="height">Høydekoter</option><option value="water">Hydrologi</option></select><label><input id="worldMapRivers" type="checkbox" checked> Vis elver</label></div>
   <canvas id="worldMapCanvas" width="512" height="512" aria-label="Kart over terreng, fjellkjeder, elver, innsjøer og hav. Trykk for informasjon om en posisjon."></canvas>
-  <div class="world-map-legend"><span>🟩 Land og gress</span><span>⬜ Fjell</span><span>🟦 Innsjø og elv</span><span>🔵 Hav</span><span>🟡 Spiller</span><span>🩵 Fjellvannutløp</span></div>
+  <div class="world-map-legend"><span>🟩 Land og gress</span><span>⬜ Fjell</span><span>🟦 Innsjø og elv</span><span>🔵 Hav</span><span>🟡 Spiller</span><span>🩵 Fjellvannutløp</span><span>⚪ Fosser</span></div>
   <p id="worldMapStats" class="world-map-stats"></p><p id="worldMapReadout" role="status">Trykk på kartet for å undersøke kote og terrengtype.</p>
   <p class="world-map-note">Kartlagene bruker terrenggeneratorens data og hydrologinettverk (32 m rutenett). Lokale grave-/fyllendringer er ikke tegnet inn overalt. Fjellvannenes utløp følger nå beregnede nedstrøms ruter. Fossedetaljer og fullstendig kontinuerlig vanngeometri kommer i f.4.5.</p>
  </article>
@@ -4938,6 +4938,14 @@ function worldMapDraw(){
    ctx.fillStyle='#c1f5ff';ctx.fill();
   }
   ctx.setLineDash([]);
+  // Only alpine reaches with steep, terrain-derived falls get waterfall
+  // markers. These match the foam/whitewater sections in the 3D world.
+  ctx.fillStyle='#f5ffff';ctx.strokeStyle='#20768c';ctx.lineWidth=1;
+  for(const seg of riverSegments){
+   if(seg.flowKind!=='waterfall')continue;
+   const [wx,wz]=point((seg.a.x+seg.b.x)*.5,(seg.a.z+seg.b.z)*.5);
+   ctx.beginPath();ctx.arc(wx,wz,2.7,0,Math.PI*2);ctx.fill();ctx.stroke();
+  }
  }
  for(const cap of MOUNTAIN_PLATEAUS){
   if(!cap.hasLake)continue;
@@ -4967,6 +4975,8 @@ function worldMapDraw(){
   ' · Fjellvann: '+MOUNTAIN_PLATEAUS.filter(v=>v.hasLake).length+
   ' · Hav: '+(hasOcean?'Ja':'Nei')+
   ' · Fjellvannutløp: '+alpineOutlets.map(o=>(o.id+1)+'→'+o.destination.type).join(', ')+
+  ' · Stryk: '+riverSegments.filter(s=>s.flowKind==='rapids').length+
+  ' · Fossepartier: '+riverSegments.filter(s=>s.flowKind==='waterfall').length+
   ' · Spiller X '+p.x.toFixed(0)+', Z '+p.z.toFixed(0)+
   ' · Kotevernede eldre byggeflater: '+qa.protectedSites+' · Eldre prosjekter til kontroll: '+qa.review+
   ' · Hydrologitest: '+qa.risingRivers+' stigende, '+qa.invalidRivers+' ugyldige elvestrekninger'+
