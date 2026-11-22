@@ -592,7 +592,7 @@ function sedimentDeposit(x,z,height,slope){
   const seg=r.segment,turn=seg?riverInnerBend(seg):0;
   const gradient=seg?Math.abs(seg.a.water-seg.b.water)/Math.max(1,Math.hypot(seg.a.x-seg.b.x,seg.a.z-seg.b.z)):1;
   const nx=seg?(seg.b.z-seg.a.z):0,nz=seg?-(seg.b.x-seg.a.x):0;
-  const side=Math.sign((x-seg.a.x)*nx+(z-seg.a.z)*nz);
+  const side=seg?Math.sign((x-seg.a.x)*nx+(z-seg.a.z)*nz):0;
   // Signed turn: left-hand bend deposits on its inside (left bank).
   const inside=turn*side<-.055;
   const nearBank=1-clamp(Math.abs(r.distance-r.width*.85)/Math.max(2,r.width*1.15),0,1);
