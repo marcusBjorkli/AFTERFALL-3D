@@ -3405,6 +3405,8 @@ function gradeRefresh(){
  else{
   const r=gradeSummary(selected),edge=r.progress===100?gradeSlopeStatus(selected):null;
   $('gradeInfo').textContent=`${selected.name} · ${selected.status==='archived'?'Arkivert':selected.status==='completed'?'Godkjent':'Pågår'}\nAreal: ${(selected.x1-selected.x0)*(selected.z1-selected.z0)} m² · Kote ${selected.level.toFixed(1)} m\nBeregnet skjæring: ${r.cut.toFixed(2)} m³ · Fylling: ${r.fill.toFixed(2)} m³ (nodevolum inkl. rand)\nGjenstår: ${r.remaining.toFixed(2)} m³ · Ferdig: ${r.progress.toFixed(1)} %${edge?(edge.ok?'\nRand­skråning: stabil':'\nRand­skråning: ustabil – arbeid utenfor området'):''}`;
+  if(selected.legacyTerrainAnchor)$('gradeInfo').textContent+='\nKOTEVERN: Eldre godkjent byggeflate er beholdt på sin opprinnelige kote. Nye omkringliggende terrenghøyder kan påvirke randsonen og vannforhold.';
+  if(selected.legacyTerrainReview)$('gradeInfo').textContent+='\nKONTROLL: Påbegynt prosjekt ble opprettet under et eldre terrenggrunnlag. Kontroller målkote og masser før du fortsetter.';
  }
  if(extensionBase)$('gradeInfo').textContent+='\nUTVIDELSE: Bruk hjørne A/B til å markere et tilstøtende felt ved «'+extensionBase.name+'» på samme kote. Den gamle byggeplassen forblir uendret.';
  const group=new THREE.Group();
