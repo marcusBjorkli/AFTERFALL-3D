@@ -2353,6 +2353,30 @@ function buildGlobalHydrology(){
  sources.sort((a,b)=>b.score-a.score);let starts=[];
  for(let s of sources){if(starts.length>=28)break;if(starts.some(t=>Math.hypot(t.x-s.x,t.z-s.z)<170))continue;starts.push(s)}
  for(let s of starts){let id=s.id,steps=0;while(id>=0&&steps++<n){selected.add(id);if(ocean[id])break;id=parent[id]}}
+ // f.4.5.1: Every active inland lake must have an explicit outlet path.
+ // Source selection alone can miss a river connecting two lakes, leaving a
+ // dry corridor on the world map even when priority-flood has a valid route.
+ // Find the lake's actual parent-tree exit (not an invented straight line),
+ // then follow the same downstream topology as ordinary river sources.
+ const lakeOutletNodes=new Set();
+ for(const lake of lakes){
+  if(!lake.active)continue;
+  let exit=-1,best=Infinity;
+  for(const id of lake.members){
+   const down=parent[id];
+   if(down<0||lakeId[down]===lake.id)continue;
+   const score=fill[id]+Math.abs(h[id]-lake.level)*.01;
+   if(score<best){best=score;exit=id}
+  }
+  if(exit<0)continue;
+  lakeOutletNodes.add(exit);
+  let id=exit,steps=0;
+  while(id>=0&&steps++<n){
+   selected.add(id);
+   if(ocean[id])break;
+   id=parent[id];
+  }
+ }
  // Koble BEGGE lokale elver til globalt nedstrøms nett. Det lokale rasterets
  // rand er ingen gyldig hydrologisk endestasjon.
  const connections=[];
@@ -2396,13 +2420,13 @@ function buildGlobalHydrology(){
   levels[down]=Math.min(levels[down],levels[id]-.018);
  }
  let globalSegments=[];
- for(let id of selected){let down=parent[id];if(down<0||!selected.has(down)||ocean[id]||lakeId[id]>=0)continue;
+ for(let id of selected){let down=parent[id];if(down<0||!selected.has(down)||ocean[id]||(lakeId[id]>=0&&!lakeOutletNodes.has(id)))continue;
   let a=hydXY(id),b=hydXY(down),wa=levels[id],wb=levels[down];
   if(ocean[down])wb=0;
   if(lakeId[down]>=0)wb=lakes[lakeId[down]].level;
   if(wa<wb)wa=wb+.015;
   let width=3+Math.min(7,Math.sqrt(acc[id])*.62);
-  globalSegments.push({a:{...a,water:wa,width},b:{...b,water:wb,width:width+.2},id:'river-'+id});
+  globalSegments.push({a:{...a,water:wa,width},b:{...b,water:wb,width:width+.2},id:'river-'+id,lakeOutlet:lakeOutletNodes.has(id)});
  }
  // De lokale og globale segmentene bruker samme romlige indeks og klippealgoritme.
  globalRiverSegments=[...globalSegments,...bridgeSegments];
