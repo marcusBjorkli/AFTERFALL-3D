@@ -3541,6 +3541,11 @@ $('diagActualMesh').onclick=()=>{
   '\\nHydrologisk vått uten vannmesh '+t.classifiedWetWithoutWater+
   '\\nTerrengmesh uten treff '+t.terrainRayMiss+
   '\\nInnsjømesh på gammel tørr hydrocelle '+t.nearestCellDryWithLakeMesh+
+  '\\nStrandkonturpunkter '+t.shoreContourSamples+
+  ' | under innsjøkote '+t.shoreContourBelowWater+
+  '\\nHevede strandpunkter '+t.correctedShoreSamples+
+  ' | største heving '+t.maxShoreLift.toFixed(2)+' m'+
+  ' | bratte korrigerte punkter '+t.steepCorrectedBankSamples+
   '\\nLokal strandkorrigering '+(SHORE_B.enabled?'PÅ':'AV')+
   (q&&q.terrainRiseSinceBaseline!==null?'\\nTerrengheving ved spilleren '+q.terrainRiseSinceBaseline+' m':'')+selected+
   '\\nDetaljdata: Bruk Last ned 3D-rapport (JSON).'+
@@ -5357,7 +5362,8 @@ function shoreMeshQa(){
   const origin=new THREE.Vector3(),hitsByType=new Map();
   const counters={samplePoints:0,loaded:0,unloaded:0,waterPresent:0,dryClassifiedWithWater:0,
    classifiedWetWithoutWater:0,multipleWaterTypes:0,nearestCellDryWithLakeMesh:0,
-   aboveTerrain:0,terrainRayMiss:0};
+   aboveTerrain:0,terrainRayMiss:0,shoreContourSamples:0,shoreContourBelowWater:0,
+   correctedShoreSamples:0,maxShoreLift:0,steepCorrectedBankSamples:0};
   const records=[],topProblems=[],missingKeys=new Set();
   const rayHeight=(meshes,x,z)=>{
    if(!meshes.length)return [];
@@ -5399,6 +5405,20 @@ function shoreMeshQa(){
    const riverExpected=!!(r&&r.distance<r.width&&ground(x,z)<r.water-PAD_H+.12);
    const wetExpected=!!body||!!mountainLakeAt(x,z)||riverExpected;
    const rise=hTerrain!==null&&water!==null?water-hTerrain:null;
+   const shore=shorelineBPrimary(x,z);
+   const baseline=shore?shoreUnrepairedGround(x,z):null;
+   const shoreLift=shore&&hTerrain!==null?Math.max(0,hTerrain-baseline):0;
+   if(shore&&Math.abs(shore.occupancy-SHORE_B.contour)<.055){
+    counters.shoreContourSamples++;
+    if(hTerrain!==null&&hTerrain<shore.level-.02)counters.shoreContourBelowWater++;
+   }
+   if(shoreLift>.03){
+    counters.correctedShoreSamples++;
+    counters.maxShoreLift=Math.max(counters.maxShoreLift,shoreLift);
+    const steep=Math.hypot((ground(x+2,z)-ground(x-2,z))/4,
+     (ground(x,z+2)-ground(x,z-2))/4);
+    if(steep>.85)counters.steepCorrectedBankSamples++;
+   }
    if(!land.length)counters.terrainRayMiss++;
    if(types.length)counters.waterPresent++;
    if(types.length>1)counters.multipleWaterTypes++;
@@ -5419,7 +5439,9 @@ function shoreMeshQa(){
     nearestHydrologyLake:nearestLake,nearestCellDryWithLakeMesh:legacyMismatch,
     lakeMaskOccupancy:body?.kind==='lake'?+waterMaskMembership(x,z,'lake:'+body.id).toFixed(4):
       +(shorelineBPrimary(x,z)?.occupancy||0).toFixed(4),
-    shoreCandidate:shorelineBPrimary(x,z)?.id??null,
+    shoreCandidate:shore?.id??null,
+    shoreBaseline:baseline===null?null:+baseline.toFixed(3),
+    shoreLift:shore?+shoreLift.toFixed(3):null,
     waterTypes:types,waterHeights,category};
    // Report only notable points, retain nearest-to-player diagnostics too.
    if(category.length&&records.length<300)records.push(detail);
@@ -5439,7 +5461,7 @@ function shoreMeshQa(){
    atPlayer.bankSlopeNorthSouth=+((ground(center.x,center.z+2)-ground(center.x,center.z-2))/4).toFixed(3);
    atPlayer.bankSlopeMagnitude=+Math.hypot(atPlayer.bankSlopeEastWest,atPlayer.bankSlopeNorthSouth).toFixed(3);
   }
-  const report={revision:'f.4.6.2B.1',time:new Date().toISOString(),source:'real loaded THREE.BufferGeometry via bidirectional raycasts',
+  const report={revision:'f.4.6.2B.3',time:new Date().toISOString(),source:'real loaded THREE.BufferGeometry via bidirectional raycasts',
    player:center,center,radius,step,valid,
    failure:valid?null:'Ingen lastede prøvepunkter: geometriske nullverdier er ugyldige.',
    preflight:{...preflight,missingKeys:Array.from(missingKeys)},
@@ -5452,7 +5474,7 @@ function shoreMeshQa(){
     affectsSavedEarthEdits:false,changesHydrologyGrid:false},
    anomalies:records,submergedSamples:topProblems,
    note:'Read-only QA. A water surface above underwater terrain is normal. Shared interpolated hydrology classification is used; nearestCellDryWithLakeMesh counts historical raster/mesh differences, not necessarily geometry errors. Compare terrainBaseline and terrainRiseSinceBaseline with correction on/off. 0.055 m lake visual surface offset is intentional.'};
-  if(!lakeQaReport)lakeQaReport={revision:'f.4.6.2B',localTests:[]};
+  if(!lakeQaReport)lakeQaReport={revision:'f.4.6.2B.3',localTests:[]};
   (lakeQaReport.meshGeometryTests||(lakeQaReport.meshGeometryTests=[])).push(report);
   $('lakeQaExport').disabled=false;
   $('lakeQaStatus').textContent=valid?('3D-geometri: '+counters.loaded+' målte punkter, '+
