@@ -3099,7 +3099,8 @@ function rebuildRiverJoinCache(){
 // Nå valideres begge endesnittene, og hvert segment klippes som to triangler.
 // Den hydrologiske senterlinjen og vannstanden endres ikke.
 const riverGeometryStats={segments:0,repaired:0,rejected:0,triangles:0,foamTriangles:0,
- lakeJunctionClipped:0,lakeJunctionBlended:0,lakeJunctionFoamClipped:0};
+ lakeJunctionClipped:0,lakeJunctionBlended:0,lakeJunctionFoamClipped:0,
+ alpineRiverClipped:0,alpineFoamClipped:0};
 function riverCross(a,b,c){return (b.x-a.x)*(c.z-a.z)-(b.z-a.z)*(c.x-a.x)}
 function buildChunkRivers(cx,cz,lod){
  const x0=cx*64,z0=cz*64,x1=x0+64,z1=z0+64,verts=[],idx=[],foamVerts=[],foamIdx=[];
@@ -3209,6 +3210,32 @@ function buildChunkRivers(cx,cz,lod){
    }
    poly=out;
    if(poly.length<3)break;
+  }
+  // C.3.5: the independent mountain-lake mesh owns its submerged
+  // surface, just like a normal lake. Clip overlapping river triangles.
+  for(const cap of MOUNTAIN_PLATEAUS){
+   if(!cap.hasLake||poly.length<3)continue;
+   if(poly.every(p=>Math.hypot(p.x-cap.x,p.z-cap.z)>ALPINE_SHORE_C.radius+5))continue;
+   const level=mountainCapTop(cap)-.85,rad=ALPINE_SHORE_C.radius;
+   const field=p=>Math.min(
+    (rad*rad-(p.x-cap.x)**2-(p.z-cap.z)**2)/rad,
+    level-renderedLand(p.x,p.z)-PAD_H-.04);
+   const out=[];
+   for(let k=0;k<poly.length;k++){
+    const a=poly[k],b=poly[(k+1)%poly.length],fa=field(a),fb=field(b);
+    const inA=fa<=0,inB=fb<=0;
+    if(inA!==inB){
+     const t=clamp(fa/(fa-fb),0,1);
+     out.push({x:a.x+(b.x-a.x)*t,z:a.z+(b.z-a.z)*t,
+      y:a.y+(b.y-a.y)*t});
+    }
+    if(inB)out.push(b);
+   }
+   if(out.length!==poly.length){
+    if(foam)riverGeometryStats.alpineFoamClipped++;
+    else riverGeometryStats.alpineRiverClipped++;
+   }
+   poly=out;
   }
   return poly;
  }
@@ -3572,6 +3599,17 @@ function buildChunkAlpineWater(cx,cz,lod){
  // terrain heightfield. No terrain overlay; only water is a separate mesh.
  const xMin=cx*64,zMin=cz*64,xMax=xMin+64,zMax=zMin+64;
  const step=lod===0?1:lod===1?2:4,meshes=[];
+ // Match visible ground's four-triangle fan at the chunk's LOD.
+ const count=64/step,heights=new Float64Array((count+1)*(count+1));
+ for(let j=0;j<=count;j++)for(let i=0;i<=count;i++)
+  heights[j*(count+1)+i]=nodeHeight(xMin+i*step,zMin+j*step);
+ function landHeight(x,z){
+  const u=clamp((x-xMin)/step,0,count-1e-9),
+   v=clamp((z-zMin)/step,0,count-1e-9);
+  const i=Math.floor(u),j=Math.floor(v),k=j*(count+1)+i;
+  return fanHeight(heights[k],heights[k+count+1],
+   heights[k+count+2],heights[k+1],u-i,v-j);
+ }
  function clip(poly,field){
   if(poly.length<3)return [];
   const out=[];
@@ -3598,7 +3636,7 @@ function buildChunkAlpineWater(cx,cz,lod){
    for(const inds of [[0,2,1],[1,2,3]]){
     let poly=inds.map(k=>({x:corners[k][0],z:corners[k][1]}));
     poly=clip(poly,p=>(p.x-cap.x)**2+(p.z-cap.z)**2-radius*radius);
-    poly=clip(poly,p=>ground(p.x,p.z)-level+.04);
+    poly=clip(poly,p=>landHeight(p.x,p.z)+PAD_H-level+.04);
     if(poly.length<3)continue;
     const base=verts.length/3;
     for(const point of poly)verts.push(point.x-PAD_X,level+.045,point.z-PAD_Z);
@@ -3751,7 +3789,7 @@ $('diagActualMesh').onclick=()=>{
  const selected=q?('\\nVed spilleren: terrengmesh '+(q.terrainMesh??'-')+
   ' m | vannmesh '+(q.waterMesh??'-')+
   ' m | delta '+(q.deltaWaterTerrain??'-')+' m | '+q.waterTypes.join(', ')):'';
- const summary='\\n\\nFAKTISK 3D-MESHTEST f.4.6.2C.2 (radius 96 m, 8 m prøver)'+
+ const summary='\\n\\nFAKTISK 3D-MESHTEST f.4.6.2C.3 (radius 96 m, 8 m prøver)'+
   '\\nMålingen er '+(result.valid?'GYLDIG':'UGYLDIG – INGEN TERRENGPUNKTER')+
   '\\nSpillerchunk '+result.preflight.playerKey+
   ' | aktive chunks '+result.preflight.activeChunks+
@@ -5717,7 +5755,7 @@ function shoreMeshQa(){
    atPlayer.bankSlopeNorthSouth=+((ground(center.x,center.z+2)-ground(center.x,center.z-2))/4).toFixed(3);
    atPlayer.bankSlopeMagnitude=+Math.hypot(atPlayer.bankSlopeEastWest,atPlayer.bankSlopeNorthSouth).toFixed(3);
   }
-  const report={revision:'f.4.6.2C.2',time:new Date().toISOString(),source:'real loaded THREE.BufferGeometry via bidirectional raycasts',
+  const report={revision:'f.4.6.2C.3',time:new Date().toISOString(),source:'real loaded THREE.BufferGeometry via bidirectional raycasts',
    player:center,center,radius,step,valid,
    failure:valid?null:'Ingen lastede prøvepunkter: geometriske nullverdier er ugyldige.',
    preflight:{...preflight,missingKeys:Array.from(missingKeys)},
@@ -5736,7 +5774,7 @@ function shoreMeshQa(){
     maximumBankLift:counters.maxRiverBankLift,maximumBedCut:counters.maxRiverBedCut},
    anomalies:records,submergedSamples:topProblems,
    note:'Read-only QA. A water surface above underwater terrain is normal. Shared interpolated hydrology classification is used; nearestCellDryWithLakeMesh counts historical raster/mesh differences, not necessarily geometry errors. Compare terrainBaseline and terrainRiseSinceBaseline with correction on/off. 0.055 m lake visual surface offset is intentional.'};
-  if(!lakeQaReport)lakeQaReport={revision:'f.4.6.2C.2',localTests:[]};
+  if(!lakeQaReport)lakeQaReport={revision:'f.4.6.2C.3',localTests:[]};
   (lakeQaReport.meshGeometryTests||(lakeQaReport.meshGeometryTests=[])).push(report);
   $('lakeQaExport').disabled=false;
   $('lakeQaStatus').textContent=valid?('3D-geometri: '+counters.loaded+' målte punkter, '+
@@ -5801,7 +5839,7 @@ function lakeQaExport(){
   if(!lakeQaReport)return;
   const blob=new Blob([JSON.stringify(lakeQaReport,null,2)],{type:'application/json'}),
    url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download='afterfall-f462c2-ren-testverden-'+new Date().toISOString().slice(0,10)+'.json';
+  a.href=url;a.download='afterfall-f462c3-fjellvann-'+new Date().toISOString().slice(0,10)+'.json';
   a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  }
 let worldMapSelected=null;
