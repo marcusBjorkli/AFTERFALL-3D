@@ -1936,7 +1936,7 @@ const MOUNTAIN_SPIRES=MOUNTAIN_NETWORKS.flatMap((net,index)=>{
   const z=node[1]+(noise(index*31+k*4+n+11,117)-.5)*190;
   return {x,z,radius:27+noise(index*7+k*3+n+17,71)*18,
    peak:30+noise(index*11+k*3+n+43,93)*55,index:index*100+k*2+n};
- })).filter(peak=>mountainRise(peak.x,peak.z)>12&&coastX(peak.z)-peak.x>125&&MOUNTAIN_PLATEAUS.every(cap=>Math.hypot(cap.x-peak.x,cap.z-peak.z)>cap.outer+peak.radius*.75));
+ })).filter(peak=>MOUNTAIN_PLATEAUS.every(cap=>Math.hypot(cap.x-peak.x,cap.z-peak.z)>cap.outer+peak.radius*.75));
 });
 function smoothMountainEdge(a,b,v){
  const t=clamp((v-a)/(b-a),0,1);return t*t*(3-2*t);
@@ -1968,7 +1968,11 @@ function mountainShape(x,z,height){
   if(Math.abs(dx)>p.radius||Math.abs(dz)>p.radius)continue;
   const warp=1+(.22*(noise(x/11+p.index,z/11-p.index)-.5));
   const d=Math.hypot(dx,dz)/(p.radius*warp);
-  if(d<1)height+=p.peak*Math.pow(1-d,1.18);
+  if(d<1){
+   // Peaks must fade out towards the sea together with their parent range.
+   const coast=clamp((coastX(z)-x-12)/240,0,1);
+   height+=p.peak*Math.pow(1-d,1.18)*coast*coast*(3-2*coast);
+  }
  }
  // Broad flat/grass-topped formations. Their sides are part of the terrain,
  // not separate cliffs/objects.
