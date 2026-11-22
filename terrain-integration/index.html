@@ -2824,7 +2824,11 @@ function shorelineBRaw(x,z,base){
 function shorelineBAdjustment(x,z,base){
  const e=SHORE_B;
  if(!e.enabled||SEED!==e.seed||!hydroHeight||
-    Math.hypot(x-e.x,z-e.z)>=e.radius||shorelineBProtected(x,z))return 0;
+    Math.hypot(x-e.x,z-e.z)>=e.radius)return 0;
+ // Fast discard: only interpolate around the real shore boundary. Avoid
+ // four extra terrain evaluations at every inland or deep-lake mesh node.
+ const share=waterMaskMembership(x,z,'lake:'+e.lakeId);
+ if(share<.055||share>.74||shorelineBProtected(x,z))return 0;
  // Smooth the correction across neighboring terrain vertices instead of
  // creating sawtooth jumps along raster-cell and material boundaries.
  const R=3;
