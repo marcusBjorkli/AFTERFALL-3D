@@ -734,7 +734,7 @@ function slideStep(plan,n,fill){
  let y=dmNext(h,fill,null);
  if(y===null)return null;
  if(bound!==null&&dir*(y-bound)>DM_EPS)y=bound;
- if(!fill)y=limitDryCut(h,y,!!waterBodyAt(n.x,n.z));
+ if(!fill)y=limitDryCut(h,y,!!waterBodyAt(n.x,n.z,ground(n.x,n.z)));
  if(y===null)return null;
  if(dir*(y-h)<=DM_EPS)return null;
  const after=(y-n.base)*100;
@@ -746,7 +746,7 @@ function directStepValid(n,e,fill){
  const q=gradingAt(n.x,n.z),h=slideHeight(n);
  if(slideLocked(n.x,n.z)||!Number.isFinite(e.y)||Math.abs(e.before-n.after)>DM_EPS)return false;
  let expected=terrainTargetStep(h,fill,q?q.level:terrainMode.target,q?true:terrainMode.locked);
- if(!fill&&expected!==null)expected=limitDryCut(h,expected,!!waterBodyAt(n.x,n.z));
+ if(!fill&&expected!==null)expected=limitDryCut(h,expected,!!waterBodyAt(n.x,n.z,ground(n.x,n.z)));
  return expected!==null&&Math.abs(expected-e.y)<=DM_EPS&&Math.abs(n.base+e.after*.01-e.y)<=DM_EPS&&Math.abs(Math.abs(e.after-e.before)*.01-e.volume)<=DM_EPS;
 }
 function slideApplyCut(n,e,result){
@@ -789,7 +789,7 @@ function slideRoom(n,fill){
  let room=fill?5000-n.after:5000+n.after;
  if(q){const bound=fill?Math.max(n.h0,q.level):Math.min(n.h0,q.level);room=Math.min(room,(fill?bound-h:h-bound)*100);}
  else if(terrainMode.locked&&Number.isFinite(terrainMode.target))room=Math.min(room,(fill?terrainMode.target-h:h-terrainMode.target)*100);
- if(!fill&&!waterBodyAt(n.x,n.z))room=Math.min(room,(h-DRY_LAND_FLOOR)*100);
+ if(!fill&&!waterBodyAt(n.x,n.z,ground(n.x,n.z)))room=Math.min(room,(h-DRY_LAND_FLOOR)*100);
  return Math.max(0,room*10);
 }
 function looseLitres(n){const d=n.stack.reduce((s,l)=>s+l.cm,0);return (d+Math.max(0,n.after-d+geoLimit(n.x,n.z)*100))*10;}
@@ -855,7 +855,7 @@ function dmNode(x,z,fill,target){
  const key=earthKey(x,z),before=earthEdits.get(key)||0,base=originalGround(x,z),height=base+before*.01;
  const q=gradingAt(x,z);
  let y=terrainTargetStep(height,fill,q?q.level:terrainMode.target,q?true:terrainMode.locked);
- if(!fill&&y!==null)y=limitDryCut(height,y,!!waterBodyAt(x,z));
+ if(!fill&&y!==null)y=limitDryCut(height,y,!!waterBodyAt(x,z,ground(x,z)));
  if(y===null||Math.abs(y-height)<=DM_EPS)return null;
  const after=(y-base)*100,cm=Math.abs(after-before);
  if(Math.abs(after)>5000)return null;
@@ -1084,7 +1084,7 @@ function terrainGridDraw(){
  }
  const h=ground(p.x,p.z),difference=h-target;
  const connected=flatConnectedCells(ground,p.x,p.z,{
-  radius:8,valid:(x,z)=>!earthRestricted(x,z,true)&&!waterBodyAt(x,z)
+  radius:8,valid:(x,z)=>!earthRestricted(x,z,true)&&!waterBodyAt(x,z,ground(x,z))
  });
  const state=Math.abs(difference)<=GRADE_TOLERANCE?'På målkote':difference>0?'Over målkote – grav':'Under målkote – fyll';
  $('terrainGridDetail').textContent='Marcus: '+h.toFixed(2).replace('.',',')+' m · Mål: '+target.toFixed(2).replace('.',',')+' m · '+state+' · Sammenhengende flate: '+connected.area+' rutenoder';
@@ -4282,7 +4282,7 @@ function survivalButton(host,label,callback,disabled=false){
 // The preview and the final placement use exactly the same validation.
 function survivalPlaceAllowed(type,place){
  const result=validateSmallGround(type,place,gradingProjects,SURVIVAL_DEFS,{
-  heightAt:ground,restricted:(x,z)=>earthRestricted(x,z,true),waterAt:(x,z)=>!!waterBodyAt(x,z),
+  heightAt:ground,restricted:(x,z)=>earthRestricted(x,z,true),waterAt:(x,z)=>!!waterBodyAt(x,z,ground(x,z)),
   collides:(x,z)=>collides(x-PAD_X,z-PAD_Z),player:p,
   other:[...survivalStructures.values()],
   sawbucks:[...sawStations.values()].filter(q=>!survivalStructures.has(q.id)),
@@ -5460,7 +5460,7 @@ let worldMapSelected=null;
  const QA_LOG_KEY='afterfall_f45_fasttravel_log';
  function qaLog(kind,note){
   let log=[];try{log=JSON.parse(localStorage.getItem(QA_LOG_KEY)||'[]');if(!Array.isArray(log))log=[]}catch(e){}
-  const x=p.x,z=p.z,r=riverSample(x,z),water=waterBodyAt(x,z);
+  const x=p.x,z=p.z,r=riverSample(x,z),water=waterBodyAt(x,z,ground(x,z));
   log.push({timestamp:new Date().toISOString(),version:TERRAIN_GENERATION_VERSION,kind,note,
    x:+x.toFixed(2),z:+z.toFixed(2),kote:+ground(x,z).toFixed(2),
    fjell:+mountainRise(x,z).toFixed(2),water:mountainLakeAt(x,z)?'fjellvann':water?.kind||null,
