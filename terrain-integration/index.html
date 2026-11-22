@@ -1,4 +1,4 @@
-<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#14221b"><title>AFTERFALL 3D · CE 1.1.4C.2.1.1f.4.6.2A – lokal terrengtest</title><style>
+<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#14221b"><title>AFTERFALL 3D · CE 1.1.4C.2.1.1f.4.6.2A.1 – geometri-diagnostikk</title><style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101b19;color:#eef4e9;font:14px system-ui,-apple-system,sans-serif;touch-action:none}canvas{display:block}#hud{position:absolute;top:env(safe-area-inset-top);left:0;right:0;display:flex;justify-content:space-between;align-items:start;padding:12px;pointer-events:none}#hud>div{background:#10231dd9;border:1px solid #ffffff24;border-radius:12px;padding:10px;pointer-events:auto}small{color:#b3c4b8}button{background:#263d35;border:1px solid #80948766;border-radius:9px;color:white;padding:10px 12px;font:inherit}#status{position:absolute;top:88px;left:12px;right:12px;pointer-events:none;text-shadow:0 1px 3px #000;font-size:13px}#cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:24px;color:#ffffffa0;pointer-events:none}#joy{position:absolute;left:22px;bottom:calc(24px + env(safe-area-inset-bottom));width:138px;height:138px;border:2px solid #ffffff5e;background:#10271c88;border-radius:50%;touch-action:none}#knob{position:absolute;left:45px;top:45px;width:44px;height:44px;border-radius:50%;background:#b8cfbcbb;pointer-events:none}#actions{position:absolute;right:18px;bottom:calc(36px + env(safe-area-inset-bottom));display:grid;gap:8px}#actions button{min-width:112px;background:#193b2fe6}#panel{position:absolute;inset:0;background:#09140edc;display:none;place-items:center;padding:22px;z-index:8}#panel.show{display:grid}#panel article{width:min(460px,100%);background:#1b2d25;padding:22px;border-radius:16px;max-height:90vh;overflow:auto}#panel button{margin:4px}#warning{color:#f8c28a}
 #saveSlotStatus{font-size:12px;color:#b7d4bf;line-height:1.45;margin:8px 0}
 #switchGame:disabled{opacity:.46}
@@ -411,7 +411,7 @@ body.prefab-building #constructionOverlay{visibility:hidden!important;pointer-ev
 </div>
 <div id="buildingStoreRows"></div><p id="buildingStoreFeedback" role="status" aria-live="polite"></p>
 <p class="building-store-help">Alle materialer oppbevares separat for denne bygningen. Ferdige lagerskur beholder innholdet når spillet lagres.</p>
-</article></div><div id="constructionHud" hidden aria-label="Materialbehov ved byggeplass"></div><div id="constructionOverlay" hidden><div id="constructionBar"><strong id="constructionBarTitle">Byggeplass</strong><button id="constructionClose" type="button">Avbryt / tilbake</button></div><iframe id="constructionFrame" title="AFTERFALL konstruksjonseditor" allow="fullscreen"></iframe></div><div id="sitePickHud" hidden><strong>🏗️ Velg byggeplass</strong><p id="sitePickStatus" role="status">Sikt mot ønsket byggegrunn.</p><div id="sitePickRotation" class="site-pick-rotation" hidden><button id="sitePickRotateLeft" type="button">↶ 90°</button><span id="sitePickAngle" role="status">0°</span><button id="sitePickRotateRight" type="button">↷ 90°</button></div><div><button id="sitePickConfirm" type="button">Bekreft plassering</button><button id="sitePickCancel" type="button">Avbryt</button></div><small>Forhåndsvisning: 3 × 3 m. Rotasjon og ferdigtegninger følger i C.2.1.1e–f.</small></div><div id="prefabStatus" hidden role="dialog" aria-modal="true" aria-labelledby="prefabStatusTitle"><h2 id="prefabStatusTitle">🏗️ Byggeprosjekt</h2><p id="prefabStatusText" role="status">Oppretter byggeplan …</p><button id="prefabStatusCancel" type="button">Avbryt</button></div><div id="constructionInfo" hidden><article><h2 id="constructionInfoTitle">Byggeplass</h2><div id="constructionInfoBody"></div><button id="constructionInfoClose" type="button">Lukk</button></article></div><div id="gradeOverlay" role="presentation"><section id="gradePanel" role="dialog" aria-modal="true" aria-label="Terrengplanering"><h2>📐 Planering · CE 1.1.4C.2.1.1</h2><p>Manuelle planeringsprosjekter er valgfrie. Bruk spadens «Høyderutenett» for kotevisning, målkotelås og fri graving. Terrenget gjenkjennes automatisk som plant når kotehøydene samsvarer. Ønsker du et eget prosjekt, kan du fremdeles velge to hjørner (maks 20 × 20 m). Fysiske masser, stabilitet og eksisterende bygg beskyttes.</p><p style="font-size:12px;color:#bdd7c5">⛰️ Rasvinkler (spillverdier): jord/sand 30°, leire/stein 40°. Fast fjell raser ikke. Hold inne Grav/Fyll for gjentatte spadetak. Større bygninger kan også plasseres på automatisk registrerte, plane flater med stabile rand­skråninger.</p><div id="gradeProjectList" aria-label="Lagrede planeringsprosjekter"></div><p><label for="gradeName">Prosjektnavn: </label><input id="gradeName" type="text" maxlength="48" value="Nytt planeringsområde" style="width:min(250px,90%)"></p><button id="gradeFirst">1. Sett hjørne A</button><button id="gradeSecond">2. Sett hjørne B</button><button id="gradeClearCorners" type="button" disabled>Nullstill hjørner</button><div id="gradeDraftStatus" aria-live="polite"></div><div id="gradeHeights" aria-live="polite">Måler terrengkoter …</div><div id="gradeStats" aria-live="polite">Marker hjørne A og B for å beregne områdets koteverdier.</div><button id="gradeSuggest" type="button" disabled>Bruk foreslått kote</button><p><label for="gradeLevel">Prosjektert kote (m): </label><input id="gradeLevel" type="number" step="0.1" inputmode="decimal"></p><button id="gradeCreate">Opprett nytt prosjekt</button><button id="gradeExtend" type="button">↗ Utvid valgt område</button><button id="gradeComplete">Godkjenn fullført</button><button id="gradeArchive">Arkiver prosjekt</button><button id="gradeReopen">Gjenåpne prosjekt</button><button id="gradeDelete">Slett valgt prosjekt</button><div id="gradeDelta" aria-live="polite"></div><div id="gradeInfo" aria-live="polite">Ingen prosjekt.</div><button id="gradeClose">Lukk ✕</button></section></div><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small id="releaseVersion" data-release="ce114c211f462test">CE 1.1.4C.2.1.1f.4.6.2A · TERRRENGTEST</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="gradeDraftHud" hidden><strong>UTSTIKKING · NYTT OMRÅDE</strong><span id="gradeDraftDetail"></span></div><div id="gradeLive" role="status" aria-live="off" hidden></div><div id="gradeProgressHud" hidden><strong id="gradeProgressLabel">Planering</strong><div id="gradeProgressTrack"><div id="gradeProgressFill"></div></div><small id="gradeProgressDetail"></small></div><div id="terrainGridHud" hidden><strong>⛰️ Terrenghøyder</strong><span id="terrainGridDetail"></span></div><div id="weatherHud">☀ 12:00 · Klart</div><div id="joy"><div id="knob"></div></div><div id="terrainSettingsBackdrop" hidden aria-hidden="true"></div><div id="earthTools"><div class="earthButtons"><button id="earthDig" type="button">Grav</button><button id="earthFill" type="button">Fyll</button></div><div id="earthAvailability" aria-live="polite" style="font-size:11px;line-height:1.3;color:#c9e3d6;margin-top:5px"></div><div id="earthWorkStatus" hidden aria-live="polite"></div>
+</article></div><div id="constructionHud" hidden aria-label="Materialbehov ved byggeplass"></div><div id="constructionOverlay" hidden><div id="constructionBar"><strong id="constructionBarTitle">Byggeplass</strong><button id="constructionClose" type="button">Avbryt / tilbake</button></div><iframe id="constructionFrame" title="AFTERFALL konstruksjonseditor" allow="fullscreen"></iframe></div><div id="sitePickHud" hidden><strong>🏗️ Velg byggeplass</strong><p id="sitePickStatus" role="status">Sikt mot ønsket byggegrunn.</p><div id="sitePickRotation" class="site-pick-rotation" hidden><button id="sitePickRotateLeft" type="button">↶ 90°</button><span id="sitePickAngle" role="status">0°</span><button id="sitePickRotateRight" type="button">↷ 90°</button></div><div><button id="sitePickConfirm" type="button">Bekreft plassering</button><button id="sitePickCancel" type="button">Avbryt</button></div><small>Forhåndsvisning: 3 × 3 m. Rotasjon og ferdigtegninger følger i C.2.1.1e–f.</small></div><div id="prefabStatus" hidden role="dialog" aria-modal="true" aria-labelledby="prefabStatusTitle"><h2 id="prefabStatusTitle">🏗️ Byggeprosjekt</h2><p id="prefabStatusText" role="status">Oppretter byggeplan …</p><button id="prefabStatusCancel" type="button">Avbryt</button></div><div id="constructionInfo" hidden><article><h2 id="constructionInfoTitle">Byggeplass</h2><div id="constructionInfoBody"></div><button id="constructionInfoClose" type="button">Lukk</button></article></div><div id="gradeOverlay" role="presentation"><section id="gradePanel" role="dialog" aria-modal="true" aria-label="Terrengplanering"><h2>📐 Planering · CE 1.1.4C.2.1.1</h2><p>Manuelle planeringsprosjekter er valgfrie. Bruk spadens «Høyderutenett» for kotevisning, målkotelås og fri graving. Terrenget gjenkjennes automatisk som plant når kotehøydene samsvarer. Ønsker du et eget prosjekt, kan du fremdeles velge to hjørner (maks 20 × 20 m). Fysiske masser, stabilitet og eksisterende bygg beskyttes.</p><p style="font-size:12px;color:#bdd7c5">⛰️ Rasvinkler (spillverdier): jord/sand 30°, leire/stein 40°. Fast fjell raser ikke. Hold inne Grav/Fyll for gjentatte spadetak. Større bygninger kan også plasseres på automatisk registrerte, plane flater med stabile rand­skråninger.</p><div id="gradeProjectList" aria-label="Lagrede planeringsprosjekter"></div><p><label for="gradeName">Prosjektnavn: </label><input id="gradeName" type="text" maxlength="48" value="Nytt planeringsområde" style="width:min(250px,90%)"></p><button id="gradeFirst">1. Sett hjørne A</button><button id="gradeSecond">2. Sett hjørne B</button><button id="gradeClearCorners" type="button" disabled>Nullstill hjørner</button><div id="gradeDraftStatus" aria-live="polite"></div><div id="gradeHeights" aria-live="polite">Måler terrengkoter …</div><div id="gradeStats" aria-live="polite">Marker hjørne A og B for å beregne områdets koteverdier.</div><button id="gradeSuggest" type="button" disabled>Bruk foreslått kote</button><p><label for="gradeLevel">Prosjektert kote (m): </label><input id="gradeLevel" type="number" step="0.1" inputmode="decimal"></p><button id="gradeCreate">Opprett nytt prosjekt</button><button id="gradeExtend" type="button">↗ Utvid valgt område</button><button id="gradeComplete">Godkjenn fullført</button><button id="gradeArchive">Arkiver prosjekt</button><button id="gradeReopen">Gjenåpne prosjekt</button><button id="gradeDelete">Slett valgt prosjekt</button><div id="gradeDelta" aria-live="polite"></div><div id="gradeInfo" aria-live="polite">Ingen prosjekt.</div><button id="gradeClose">Lukk ✕</button></section></div><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small id="releaseVersion" data-release="ce114c211f462a1">CE 1.1.4C.2.1.1f.4.6.2A.1 · DIAGNOSTIKK</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="gradeDraftHud" hidden><strong>UTSTIKKING · NYTT OMRÅDE</strong><span id="gradeDraftDetail"></span></div><div id="gradeLive" role="status" aria-live="off" hidden></div><div id="gradeProgressHud" hidden><strong id="gradeProgressLabel">Planering</strong><div id="gradeProgressTrack"><div id="gradeProgressFill"></div></div><small id="gradeProgressDetail"></small></div><div id="terrainGridHud" hidden><strong>⛰️ Terrenghøyder</strong><span id="terrainGridDetail"></span></div><div id="weatherHud">☀ 12:00 · Klart</div><div id="joy"><div id="knob"></div></div><div id="terrainSettingsBackdrop" hidden aria-hidden="true"></div><div id="earthTools"><div class="earthButtons"><button id="earthDig" type="button">Grav</button><button id="earthFill" type="button">Fyll</button></div><div id="earthAvailability" aria-live="polite" style="font-size:11px;line-height:1.3;color:#c9e3d6;margin-top:5px"></div><div id="earthWorkStatus" hidden aria-live="polite"></div>
 <button id="terrainSettingsToggle" type="button" aria-controls="terrainModeControls" aria-expanded="false">⛰️ Koteinnstillinger</button>
 <div id="terrainModeControls">
  <div class="terrain-settings-heading"><strong>⛰️ Terrengkontroll</strong><button id="terrainSettingsClose" type="button" aria-label="Lukk koteinnstillinger">Lukk ✕</button></div>
@@ -434,7 +434,7 @@ body.prefab-building #constructionOverlay{visibility:hidden!important;pointer-ev
   <div class="world-map-options"><label for="worldMapMode">Kartlag</label><select id="worldMapMode"><option value="terrain">Terreng og fjell</option><option value="height">Høydekoter</option><option value="water">Hydrologi</option></select><label><input id="worldMapRivers" type="checkbox" checked> Vis elver</label></div>
   <canvas id="worldMapCanvas" width="512" height="512" aria-label="Kart over terreng, fjellkjeder, elver, innsjøer og hav. Trykk for informasjon om en posisjon."></canvas>
   <div class="world-map-legend"><span>🟩 Land og gress</span><span>⬜ Fjell</span><span>🟦 Innsjø og elv</span><span>🔵 Hav</span><span>🟡 Spiller</span><span>🩵 Fjellvannutløp</span><span>⚪ Fosser</span></div>
-  <div class="world-map-options"><button type="button" id="worldMapTravel" disabled>⚡ Hurtigreis</button><button type="button" id="worldMapObserve">📋 Registrer funn</button><button type="button" id="worldMapExport">⬇ Eksporter logg</button><button type="button" id="lakeQaRun">🔎 Test innsjøbredder</button><button type="button" id="lakeQaLocal">📍 Test området rundt spilleren</button><button type="button" id="shoreRaiseToggle">🧪 Test lokal terrengheving (av)</button><button type="button" id="lakeQaExport" disabled>⬇ Innsjørapport</button></div><p id="worldMapTravelStatus" role="status">Velg et punkt på kartet.</p><p id="lakeQaStatus" role="status" aria-live="polite"></p><p id="worldMapStats" class="world-map-stats"></p><p id="worldMapReadout" role="status">Trykk på kartet for å undersøke kote og terrengtype.</p>
+  <div class="world-map-options"><button type="button" id="worldMapTravel" disabled>⚡ Hurtigreis</button><button type="button" id="worldMapObserve">📋 Registrer funn</button><button type="button" id="worldMapExport">⬇ Eksporter logg</button><button type="button" id="lakeQaRun">🔎 Test innsjøbredder</button><button type="button" id="lakeQaLocal">📍 Test området rundt spilleren</button><button type="button" id="shoreMeshQa">📐 Mål vann- og terrengmesh</button><button type="button" id="shoreRaiseToggle">🧪 Test lokal terrengheving (av)</button><button type="button" id="lakeQaExport" disabled>⬇ Innsjørapport</button></div><p id="worldMapTravelStatus" role="status">Velg et punkt på kartet.</p><p id="lakeQaStatus" role="status" aria-live="polite"></p><p id="worldMapStats" class="world-map-stats"></p><p id="worldMapReadout" role="status">Trykk på kartet for å undersøke kote og terrengtype.</p>
   <p class="world-map-note">Kartlagene bruker terrenggeneratorens data og hydrologinettverk (32 m rutenett). Lokale grave-/fyllendringer er ikke tegnet inn overalt. Fjellvannenes utløp følger nå beregnede nedstrøms ruter. f.4.5.2C bruker nå identisk firetrekant-vifte som synlig terreng (alle LOD), og registrerer meshstatistikk i innsjørapporten. Havmasken er uendret. Hurtigreise gjelder kun testing. Landingspunkter kontrolleres for vann, bratt terreng og hindringer. Eksporter observasjoner i JSON.</p>
  </article>
 </div>
@@ -5187,6 +5187,88 @@ const worldMapCache=new Map();
    ' ekskludert av vannmasken, '+totals.notLoaded+' uten lastet terrengchunk. Eksporter rapporten.';
   console.info('[AFTERFALL local lake mesh QA]',record);
  }
+ // CE f.4.6.2A.1: direct geometric cross-section at PLAYER location.
+ // Tests actual loaded render triangles, not only the hydrology raster.
+ // Double-sided raycast by casting up and down, so triangle winding is
+ // not mistaken for missing geometry. No changes to terrain/water geometry.
+ function shoreMeshQa(){
+  const center={x:+p.x.toFixed(2),z:+p.z.toFixed(2)},radius=96,step=8;
+  const ray=new THREE.Raycaster(),down=new THREE.Vector3(0,-1,0),up=new THREE.Vector3(0,1,0);
+  const origin=new THREE.Vector3(),hitsByType=new Map();
+  const counters={samplePoints:0,loaded:0,unloaded:0,waterPresent:0,dryClassifiedWithWater:0,
+   classifiedWetWithoutWater:0,multipleWaterTypes:0,aboveTerrain:0,terrainRayMiss:0};
+  const records=[],topProblems=[];
+  const rayHeight=(meshes,x,z)=>{
+   if(!meshes.length)return [];
+   // The same geometry can be seen from below or above; merge duplicate hits.
+   const arr=[];
+   for(const direction of [down,up]){
+    origin.set(x-PAD_X,direction===down?1000:-1000,z-PAD_Z);
+    ray.set(origin,direction);ray.near=0;ray.far=2000;
+    for(const hit of ray.intersectObjects(meshes,true)){
+     const h=hit.point.y+PAD_H;
+     if(Number.isFinite(h)&&!arr.some(q=>Math.abs(q-h)<.015))arr.push(h);
+    }
+   }
+   return arr.sort((a,b)=>b-a);
+  };
+  for(let dz=-radius;dz<=radius;dz+=step)for(let dx=-radius;dx<=radius;dx+=step){
+   if(dx*dx+dz*dz>radius*radius)continue;
+   const x=center.x+dx,z=center.z+dz;
+   if(x<2||z<2||x>WORLD-2||z>WORLD-2)continue;
+   counters.samplePoints++;
+   const cx=Math.floor(x/CHUNK),cz=Math.floor(z/CHUNK),chunk=terrainChunks.get(chunkKey(cx,cz));
+   if(!chunk){counters.unloaded++;continue}
+   counters.loaded++;
+   const land=rayHeight([chunk.land],x,z);
+   const river=rayHeight(chunk.water?[chunk.water]:[],x,z);
+   const still=chunk.stillWater||[],lake=rayHeight(still.filter(m=>m.material===lakeMaterial),x,z),
+    sea=rayHeight(still.filter(m=>m.material!==lakeMaterial),x,z);
+   const alpine=rayHeight(chunk.alpineWater||[],x,z);
+   const waterHeights={river,lake,sea,alpine};
+   const types=Object.keys(waterHeights).filter(k=>waterHeights[k].length);
+   const hTerrain=land[0]??null,water=types.length?Math.max(...types.flatMap(k=>waterHeights[k])):null;
+   const body=waterBodyAt(x,z),r=riverSample(x,z);
+   const riverExpected=!!(r&&r.distance<r.width&&ground(x,z)<r.water-PAD_H+.12);
+   const wetExpected=!!body||!!mountainLakeAt(x,z)||riverExpected;
+   const rise=hTerrain!==null&&water!==null?water-hTerrain:null;
+   if(!land.length)counters.terrainRayMiss++;
+   if(types.length)counters.waterPresent++;
+   if(types.length>1)counters.multipleWaterTypes++;
+   if(water!==null&&!wetExpected)counters.dryClassifiedWithWater++;
+   if(water===null&&wetExpected)counters.classifiedWetWithoutWater++;
+   if(rise!==null&&rise>.15)counters.aboveTerrain++;
+   const category=[];
+   if(types.length>1)category.push('overlapping-water-types');
+   if(water!==null&&!wetExpected)category.push('visible-water-classified-dry');
+   if(water===null&&wetExpected)category.push('expected-water-not-visible');
+   if(!land.length)category.push('terrain-mesh-ray-miss');
+   const detail={x:+x.toFixed(2),z:+z.toFixed(2),chunk:[cx,cz],lod:chunk.lod,
+    groundFunction:+ground(x,z).toFixed(3),terrainMesh:hTerrain===null?null:+hTerrain.toFixed(3),
+    waterMesh:water===null?null:+water.toFixed(3),
+    deltaWaterTerrain:rise===null?null:+rise.toFixed(3),
+    wetExpected,hydrology:body?{kind:body.kind,level:body.level,id:body.id??null}:null,
+    riverExpected,riverDistance:r?+r.distance.toFixed(2):null,
+    waterTypes:types,waterHeights,category};
+   // Report only notable points, retain nearest-to-player diagnostics too.
+   if(category.length&&records.length<300)records.push(detail);
+   if(rise!==null&&rise>.15&&topProblems.length<120)topProblems.push(detail);
+   if(dx===0&&dz===0)hitsByType.set('player',detail);
+  }
+  const report={revision:'f.4.6.2A.1',time:new Date().toISOString(),source:'real loaded THREE.BufferGeometry via bidirectional raycasts',
+   player: center,center,radius,step,counters,atPlayer:hitsByType.get('player')||null,
+   anomalies:records,submergedSamples:topProblems,
+   note:'Water above terrain is normal underwater; only visible-water-classified-dry or unexpectedly abrupt shoreline edges indicate possible faults. The hydrology predicate is approximate; compare images and coordinates. Unloaded chunks are excluded. Nothing is modified.'};
+  if(!lakeQaReport)lakeQaReport={revision:'f.4.6.2A.1',localTests:[]};
+  (lakeQaReport.meshGeometryTests||(lakeQaReport.meshGeometryTests=[])).push(report);
+  $('lakeQaExport').disabled=false;
+  $('lakeQaStatus').textContent='3D-geometri: '+counters.loaded+' målte punkter, '+
+   counters.dryClassifiedWithWater+' med synlig vann men klassifisert tørt land, '+
+   counters.multipleWaterTypes+' med flere vanntyper, '+
+   counters.classifiedWetWithoutWater+' forventet våte uten vannmesh. '+
+   'Målingene er lagret i Innsjørapport (JSON).';
+  console.info('[AFTERFALL actual mesh QA]',report);
+ }
  function shoreRaiseRebuild(){
  // updateChunks(true) alone does not regenerate same-LOD chunks.
  for(const [key,chunk] of terrainChunks){disposeChunk(chunk);terrainChunks.delete(key)}
@@ -5231,7 +5313,7 @@ function lakeQaExport(){
   if(!lakeQaReport)return;
   const blob=new Blob([JSON.stringify(lakeQaReport,null,2)],{type:'application/json'}),
    url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download='afterfall-f462a-terrengheving-test-'+new Date().toISOString().slice(0,10)+'.json';
+  a.href=url;a.download='afterfall-f462a1-meshdiagnostikk-'+new Date().toISOString().slice(0,10)+'.json';
   a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  }
 let worldMapSelected=null;
@@ -5444,6 +5526,7 @@ function worldMapClose(){$('worldMapOverlay').hidden=true;worldMapSelected=null;
 $('worldMapClose').onclick=worldMapClose;
 $('lakeQaRun').onclick=lakeQaRun;
  $('lakeQaLocal').onclick=lakeQaLocal;
+ $('shoreMeshQa').onclick=shoreMeshQa;
  $('shoreRaiseToggle').onclick=shoreRaiseToggle;
  $('lakeQaExport').onclick=lakeQaExport;
  $('worldMapTravel').onclick=qaFastTravel;
