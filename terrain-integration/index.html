@@ -3687,7 +3687,7 @@ function createTerrainChunk(cx,cz,lod){
   const underwater=submergedSediment(x,z,y);
   if(underwater){
    grass.copy(underwaterSoilColor(x,z,underwater));
-  }else if(exposure<.55){
+  }else if(exposure<.55||alpineLakeRegion(x,z)){
    const sediment=sedimentDeposit(x,z,y,sl);
    if(sediment>.05){
     const sandColor=new THREE.Color(0xb9a477).lerp(new THREE.Color(0xa18f6c),clamp((.5-noise(x/12,z/12))*.38,0,.32));
@@ -3797,6 +3797,12 @@ $('diagActualMesh').onclick=()=>{
   ' | synkronisering '+(result.preflight.refreshed?'UTFØRT':'IKKE NØDVENDIG')+
   '\\nLastede punkter '+t.loaded+', utenfor lastede chunks '+t.unloaded+
   '\\nVannmesh på hydrologisk tørt punkt '+t.dryClassifiedWithWater+
+  '\\nFjellvann: forventet '+t.alpineExpected+
+  ' | synlig '+t.alpineMeshPresent+
+  ' | manglende '+t.alpineMissing+
+  ' | uten forventet vann '+t.alpineFalseWet+
+  ' | elveoverlapp '+t.alpineRiverOverlap+
+  ' | maks høydeforskjell '+t.alpineMaxRiverLevelDifference.toFixed(2)+' m'+
   '\\nFlere vanntyper '+t.multipleWaterTypes+
   ' | elv/innsjø-overlapp '+t.riverLakeOverlapSamples+
   ' | største nivåforskjell '+t.riverLakeHeightDifferenceMax.toFixed(3)+' m'+
@@ -5630,6 +5636,8 @@ function shoreMeshQa(){
   const counters={samplePoints:0,loaded:0,unloaded:0,waterPresent:0,dryClassifiedWithWater:0,
    classifiedWetWithoutWater:0,multipleWaterTypes:0,nearestCellDryWithLakeMesh:0,
    aboveTerrain:0,terrainRayMiss:0,riverLakeOverlapSamples:0,
+   alpineExpected:0,alpineMeshPresent:0,alpineMissing:0,alpineFalseWet:0,
+   alpineRiverOverlap:0,alpineMaxRiverLevelDifference:0,
    riverLakeHeightDifferenceMax:0,riverExpectedWithoutMesh:0,
    riverBankSamples:0,riverBankAdjusted:0,maxRiverBankLift:0,
    maxRiverBedCut:0,riverBankBelowWater:0,
@@ -5673,8 +5681,18 @@ function shoreMeshQa(){
    const legacyMismatch=lake.length>0&&nearestLake<0;
    if(legacyMismatch)counters.nearestCellDryWithLakeMesh++;
    const body=waterBodyAt(x,z,hTerrain??ground(x,z)),r=riverSample(x,z);
+   const alpineExpected=alpineLakeAt(x,z,hTerrain??ground(x,z));
+   if(alpineExpected)counters.alpineExpected++;
+   if(alpine.length)counters.alpineMeshPresent++;
+   if(alpineExpected&&!alpine.length)counters.alpineMissing++;
+   if(alpine.length&&!alpineExpected)counters.alpineFalseWet++;
+   if(alpine.length&&river.length){
+    counters.alpineRiverOverlap++;
+    const diff=Math.max(...alpine.map(y=>Math.min(...river.map(v=>Math.abs(y-v)))));
+    counters.alpineMaxRiverLevelDifference=Math.max(counters.alpineMaxRiverLevelDifference,diff);
+   }
    const riverExpected=!!(r&&r.distance<r.width&&ground(x,z)<r.water-PAD_H+.12);
-   const wetExpected=!!body||!!mountainLakeAt(x,z)||riverExpected;
+   const wetExpected=!!body||!!alpineExpected||riverExpected;
    const rise=hTerrain!==null&&water!==null?water-hTerrain:null;
    const shore=shorelineBPrimary(x,z);
    const baseline=shore?shoreUnrepairedGround(x,z):null;
@@ -5726,6 +5744,9 @@ function shoreMeshQa(){
     deltaWaterTerrain:rise===null?null:+rise.toFixed(3),
     wetExpected,hydrology:body?{kind:body.kind,level:body.level,id:body.id??null}:null,
     riverExpected,riverDistance:r?+r.distance.toFixed(2):null,
+    alpineExpected:!!alpineExpected,
+    alpineId:alpineLakeRegion(x,z)?.id??null,
+    alpineLevel:alpineLakeRegion(x,z)?.level??null,
     riverLakeHeightDifference:lake.length&&river.length?
      +Math.max(...lake.map(y=>Math.min(...river.map(v=>Math.abs(y-v))))).toFixed(3):null,
     nearestHydrologyLake:nearestLake,nearestCellDryWithLakeMesh:legacyMismatch,
@@ -5767,6 +5788,12 @@ function shoreMeshQa(){
     legacyRaiseExperiment:shoreRaiseExperiment.enabled,
     affectsSavedEarthEdits:false,changesHydrologyGrid:false},
    riverLakeJunctionStats:{...riverGeometryStats},
+   alpineLakeCorrection:{...ALPINE_SHORE_C,
+    expected:counters.alpineExpected,visible:counters.alpineMeshPresent,
+    missing:counters.alpineMissing,falseWet:counters.alpineFalseWet,
+    riverOverlaps:counters.alpineRiverOverlap,
+    largestRiverLevelDifference:counters.alpineMaxRiverLevelDifference,
+    changesSavedTerrain:false,changesHydrology:false},
    riverBankCorrection:{...RIVER_BANK_C,noFixedRaiseCap:true,
     preservesSavedEarthEdits:true,changesRiverRoutes:false,
     sampleCount:counters.riverBankSamples,correctedCount:counters.riverBankAdjusted,
