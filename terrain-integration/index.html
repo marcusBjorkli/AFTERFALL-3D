@@ -628,6 +628,15 @@ function sedimentDeposit(x,z,height,slope){
   shore=Math.max(shore,band*clamp(occupancy*3.2,0,1));
  }
  shore=Math.max(shore,shorelineBSedimentStrength(x,z,height,slope),alpineBeach*.9);
+ // C.3.2.4: connect the fjellvann sediment ring to the true river
+ // cross-section; silt/gravel follows the same outlet approach as bed/water.
+ const mouth=alpineOutletProfile(x,z);
+ if(mouth&&mouth.offset<mouth.halfWidth*2.3){
+  const lateral=1-smoothstepNumber(mouth.halfWidth*.8,
+   mouth.halfWidth*2.3,mouth.offset);
+  const heightBand=1-smoothstepNumber(1,3.2,Math.abs(height-mouth.level));
+  shore=Math.max(shore,lateral*heightBand*mouth.blend*.72);
+ }
  let riverBar=0;
  const r=riverSample(x,z);
  if(r&&r.valley.kind==='floodplain'&&r.distance<r.width*2.2){
@@ -3867,7 +3876,7 @@ $('diagActualMesh').onclick=()=>{
  const selected=q?('\\nVed spilleren: terrengmesh '+(q.terrainMesh??'-')+
   ' m | vannmesh '+(q.waterMesh??'-')+
   ' m | delta '+(q.deltaWaterTerrain??'-')+' m | '+q.waterTypes.join(', ')):'';
- const summary='\\n\\nFAKTISK 3D-MESHTEST f.4.6.2C.3.1 (radius 96 m, 8 m prøver)'+
+ const summary='\\n\\nFAKTISK 3D-MESHTEST f.4.6.2C.3.2 (radius 96 m, 8 m prøver)'+
   '\\nMålingen er '+(result.valid?'GYLDIG':'UGYLDIG – INGEN TERRENGPUNKTER')+
   '\\nSpillerchunk '+result.preflight.playerKey+
   ' | aktive chunks '+result.preflight.activeChunks+
@@ -3875,6 +3884,9 @@ $('diagActualMesh').onclick=()=>{
   ' | synkronisering '+(result.preflight.refreshed?'UTFØRT':'IKKE NØDVENDIG')+
   '\\nLastede punkter '+t.loaded+', utenfor lastede chunks '+t.unloaded+
   '\\nVannmesh på hydrologisk tørt punkt '+t.dryClassifiedWithWater+
+  '\\nFjellvannutløp: kontrollpunkter '+t.alpineOutletSamples+
+  ' | mulige hull '+t.alpineOutletWetGap+
+  ' | største nivåavvik '+t.alpineOutletLevelDeviationMax.toFixed(2)+' m'+
   '\\nFjellvann: forventet '+t.alpineExpected+
   ' | synlig '+t.alpineMeshPresent+
   ' | manglende '+t.alpineMissing+
@@ -5716,6 +5728,7 @@ function shoreMeshQa(){
    aboveTerrain:0,terrainRayMiss:0,riverLakeOverlapSamples:0,
    alpineExpected:0,alpineMeshPresent:0,alpineMissing:0,alpineFalseWet:0,
    alpineRiverOverlap:0,alpineMaxRiverLevelDifference:0,
+   alpineOutletSamples:0,alpineOutletWetGap:0,alpineOutletLevelDeviationMax:0,
    riverLakeHeightDifferenceMax:0,riverExpectedWithoutMesh:0,
    riverBankSamples:0,riverBankAdjusted:0,maxRiverBankLift:0,
    maxRiverBedCut:0,riverBankBelowWater:0,
@@ -5760,6 +5773,22 @@ function shoreMeshQa(){
    if(legacyMismatch)counters.nearestCellDryWithLakeMesh++;
    const body=waterBodyAt(x,z,hTerrain??ground(x,z)),r=riverSample(x,z);
    const alpineExpected=alpineLakeAt(x,z,hTerrain??ground(x,z));
+   const outlet=alpineOutletProfile(x,z,r);
+   if(outlet&&outlet.distance>=ALPINE_SHORE_C.radius&&
+     outlet.blend>.02&&outlet.offset<outlet.halfWidth){
+    counters.alpineOutletSamples++;
+    if(!river.length&&!alpine.length)counters.alpineOutletWetGap++;
+    // Compare surface meshes to the shared transition profile, not
+    // to the unmodified coarse runoff raster.
+    const meshHeight=river.length?river[0]:(alpine.length?alpine[0]:null);
+    if(meshHeight!==null){
+     const expectedHeight=alpineOutletWaterHeight(x,z,
+      Math.max(r.water-PAD_H+.045,(hTerrain??ground(x,z))+.105),
+      hTerrain??ground(x,z))+PAD_H;
+     counters.alpineOutletLevelDeviationMax=Math.max(
+      counters.alpineOutletLevelDeviationMax,Math.abs(meshHeight-expectedHeight));
+    }
+   }
    if(alpineExpected)counters.alpineExpected++;
    if(alpine.length)counters.alpineMeshPresent++;
    if(alpineExpected&&!alpine.length)counters.alpineMissing++;
@@ -5854,7 +5883,7 @@ function shoreMeshQa(){
    atPlayer.bankSlopeNorthSouth=+((ground(center.x,center.z+2)-ground(center.x,center.z-2))/4).toFixed(3);
    atPlayer.bankSlopeMagnitude=+Math.hypot(atPlayer.bankSlopeEastWest,atPlayer.bankSlopeNorthSouth).toFixed(3);
   }
-  const report={revision:'f.4.6.2C.3.1',time:new Date().toISOString(),source:'real loaded THREE.BufferGeometry via bidirectional raycasts',
+  const report={revision:'f.4.6.2C.3.2',time:new Date().toISOString(),source:'real loaded THREE.BufferGeometry via bidirectional raycasts',
    player:center,center,radius,step,valid,
    failure:valid?null:'Ingen lastede prøvepunkter: geometriske nullverdier er ugyldige.',
    preflight:{...preflight,missingKeys:Array.from(missingKeys)},
@@ -5866,6 +5895,11 @@ function shoreMeshQa(){
     legacyRaiseExperiment:shoreRaiseExperiment.enabled,
     affectsSavedEarthEdits:false,changesHydrologyGrid:false},
    riverLakeJunctionStats:{...riverGeometryStats},
+   alpineJunctionProfile:{...ALPINE_JUNCTION_C,
+    samples:counters.alpineOutletSamples,
+    possibleWaterGaps:counters.alpineOutletWetGap,
+    largestLevelDeviation:counters.alpineOutletLevelDeviationMax,
+    changesHydrology:false,preservesSavedEarthworks:true},
    alpineLakeCorrection:{...ALPINE_SHORE_C,
     expected:counters.alpineExpected,visible:counters.alpineMeshPresent,
     missing:counters.alpineMissing,falseWet:counters.alpineFalseWet,
@@ -5879,7 +5913,7 @@ function shoreMeshQa(){
     maximumBankLift:counters.maxRiverBankLift,maximumBedCut:counters.maxRiverBedCut},
    anomalies:records,submergedSamples:topProblems,
    note:'Read-only QA. A water surface above underwater terrain is normal. Shared interpolated hydrology classification is used; nearestCellDryWithLakeMesh counts historical raster/mesh differences, not necessarily geometry errors. Compare terrainBaseline and terrainRiseSinceBaseline with correction on/off. 0.055 m lake visual surface offset is intentional.'};
-  if(!lakeQaReport)lakeQaReport={revision:'f.4.6.2C.3.1',localTests:[]};
+  if(!lakeQaReport)lakeQaReport={revision:'f.4.6.2C.3.2',localTests:[]};
   (lakeQaReport.meshGeometryTests||(lakeQaReport.meshGeometryTests=[])).push(report);
   $('lakeQaExport').disabled=false;
   $('lakeQaStatus').textContent=valid?('3D-geometri: '+counters.loaded+' målte punkter, '+
@@ -5944,7 +5978,7 @@ function lakeQaExport(){
   if(!lakeQaReport)return;
   const blob=new Blob([JSON.stringify(lakeQaReport,null,2)],{type:'application/json'}),
    url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download='afterfall-f462c31-fjellvann-'+new Date().toISOString().slice(0,10)+'.json';
+  a.href=url;a.download='afterfall-f462c32-utlop-'+new Date().toISOString().slice(0,10)+'.json';
   a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  }
 let worldMapSelected=null;
