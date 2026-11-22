@@ -2277,7 +2277,7 @@ function initInventoryUI(){
  selectTool(inventoryState.selectedTool);
 }
 
-let vegetationAssets=null,atmosphereSun=null,atmosphereHemi=null,weatherRain=null,weatherMoon=null,weatherSun=null,weatherState={elapsed:0,day:0,kind:'klart',wind:0},weatherWaterBase=null;let scene,camera,renderer,clock,riverMeshes=[],riverPaths=[],riverSegments=[],riverBuckets=new Map(),terrainChunks=new Map(),terrainMaterial=null,waterMaterial=null,seaMaterial=null,lakeMaterial=null,waterTime={value:0},p={x:288,z:301,yaw:Math.PI,pitch:0,seconds:0},joy={x:0,y:0},paused=false,lookPointer=null,lookLastX=0,lookLastY=0;
+let vegetationAssets=null,atmosphereSun=null,atmosphereHemi=null,weatherRain=null,weatherMoon=null,weatherSun=null,weatherState={elapsed:0,day:0,kind:'klart',wind:0},weatherWaterBase=null;let scene,camera,renderer,clock,riverMeshes=[],riverPaths=[],riverSegments=[],riverBuckets=new Map(),terrainChunks=new Map(),terrainMaterial=null,waterMaterial=null,cascadeMaterial=null,seaMaterial=null,lakeMaterial=null,waterTime={value:0},p={x:288,z:301,yaw:Math.PI,pitch:0,seconds:0},joy={x:0,y:0},paused=false,lookPointer=null,lookLastX=0,lookLastY=0;
 
 function noise(x,z){let a=Math.floor(x),b=Math.floor(z),u=x-a,v=z-b;u=u*u*(3-2*u);v=v*v*(3-2*v);return (hash(a,b)*(1-u)+hash(a+1,b)*u)*(1-v)+(hash(a,b+1)*(1-u)+hash(a+1,b+1)*u)*v}
 function fbm(x,z){let sum=0,amp=.55,freq=1,total=0;for(let i=0;i<4;i++){sum+=noise(x*freq,z*freq)*amp;total+=amp;freq*=2.03;amp*=.48}return sum/total}
@@ -2673,10 +2673,10 @@ function rebuildRiverJoinCache(){
 // eller selvkryssende firkantpolygon triangulert med en ubetinget vifte.
 // Nå valideres begge endesnittene, og hvert segment klippes som to triangler.
 // Den hydrologiske senterlinjen og vannstanden endres ikke.
-const riverGeometryStats={segments:0,repaired:0,rejected:0,triangles:0};
+const riverGeometryStats={segments:0,repaired:0,rejected:0,triangles:0,foamTriangles:0};
 function riverCross(a,b,c){return (b.x-a.x)*(c.z-a.z)-(b.z-a.z)*(c.x-a.x)}
 function buildChunkRivers(cx,cz,lod){
- const x0=cx*64,z0=cz*64,x1=x0+64,z1=z0+64,verts=[],idx=[];
+ const x0=cx*64,z0=cz*64,x1=x0+64,z1=z0+64,verts=[],idx=[],foamVerts=[],foamIdx=[];
  // f.4.4.1: Sample the same four-triangle fan as createTerrainChunk,
  // using each terrain chunk's actual LOD.
  const step=lod===0?1:lod===1?2:4,side=64/step;
@@ -2738,6 +2738,20 @@ function buildChunkRivers(cx,cz,lod){
    idx.push(base,base+j,base+j+1);riverGeometryStats.triangles++;
   }
  }
+ // Foam crests follow the rendered, LOD-specific terrain mesh; all
+ // faces in a chunk share one lightweight material and one draw call.
+ function emitFoam(tri){
+  const poly=clipPoly(tri,x0,z0,x1,z1);
+  if(poly.length<3)return;
+  const first=foamVerts.length/3;
+  for(const p of poly){
+   foamVerts.push(p.x-PAD_X,renderedLand(p.x,p.z)+.166,p.z-PAD_Z);
+  }
+  for(let k=1;k<poly.length-1;k++){
+   if(Math.abs(riverCross(poly[0],poly[k],poly[k+1]))<1e-8)continue;
+   foamIdx.push(first,first+k,first+k+1);riverGeometryStats.foamTriangles++;
+  }
+ }
  for(const seg of relevant){
   const a=seg.a,b=seg.b,dx=b.x-a.x,dz=b.z-a.z,len=Math.hypot(dx,dz);
   if(len<.001)continue;
@@ -2777,10 +2791,35 @@ function buildChunkRivers(cx,cz,lod){
    emit([l0,r0,r1],alpine);
    emit([l0,r1,l1],alpine);
   }
+  // Rapids and waterfalls are based on the original mountain gradient;
+  // neither a decorative constant-angle river nor a separate terrain model.
+  if(alpine&&seg.flowKind!=='stream'){
+   const spacing=seg.flowKind==='waterfall'?2.8:6.3;
+   const half=(riverWidthAt(a)+riverWidthAt(b))*.25;
+   const bandWidth=half*(seg.flowKind==='waterfall'?.81:.67);
+   const bandLength=seg.flowKind==='waterfall'?.40:.27;
+   const position=(d,side)=>({x:a.x+dx*(d/len)+nx*bandWidth*side,
+    z:a.z+dz*(d/len)+nz*bandWidth*side});
+   for(let d=spacing*.5;d<len-.75;d+=spacing){
+    const d0=Math.max(0,d-bandLength*.5),d1=Math.min(len,d+bandLength*.5);
+    const left0=position(d0,-1),right0=position(d0,1);
+    const left1=position(d1,-1),right1=position(d1,1);
+    emitFoam([left0,right0,right1]);
+    emitFoam([left0,right1,left1]);
+   }
+  }
  }
  if(!idx.length)return null;
  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));geo.setIndex(idx);geo.computeVertexNormals();
- const mesh=new THREE.Mesh(geo,waterMaterial);mesh.renderOrder=2;scene.add(mesh);return mesh;
+ const mesh=new THREE.Mesh(geo,waterMaterial);mesh.renderOrder=2;
+ if(foamIdx.length&&cascadeMaterial){
+  const fg=new THREE.BufferGeometry();
+  fg.setAttribute('position',new THREE.Float32BufferAttribute(foamVerts,3));
+  fg.setIndex(foamIdx);fg.computeVertexNormals();
+  const foam=new THREE.Mesh(fg,cascadeMaterial);
+  foam.name='Fosseskum og stryk';foam.renderOrder=4;mesh.add(foam);
+ }
+ scene.add(mesh);return mesh;
 }
 // Klipp et triangel mot vannstandskoten. Alle høyder samples fra den samme
 // deterministiske høydefunksjonen, slik at kantpunkter er like i nabochunks.
@@ -3077,7 +3116,7 @@ function createTerrainChunk(cx,cz,lod){
  harvestNodes.set(chunkKey(cx,cz),plants.nodes.concat(ore.nodes));
  return {cx,cz,lod,land,water,stillWater,alpineWater,vegetation:plants.meshes,oreMeshes:ore.meshes};
 }
-function disposeChunk(c){harvestNodes.delete(chunkKey(c.cx,c.cz));for(const mesh of c.oreMeshes||[]){scene.remove(mesh)}for(const mesh of c.vegetation||[])scene.remove(mesh);scene.remove(c.land);c.land.geometry.dispose();if(c.water){scene.remove(c.water);c.water.geometry.dispose()}for(let m of c.stillWater||[]){scene.remove(m);m.geometry.dispose()}for(let m of c.alpineWater||[]){scene.remove(m);m.geometry.dispose()}}
+function disposeChunk(c){harvestNodes.delete(chunkKey(c.cx,c.cz));for(const mesh of c.oreMeshes||[]){scene.remove(mesh)}for(const mesh of c.vegetation||[])scene.remove(mesh);scene.remove(c.land);c.land.geometry.dispose();if(c.water){for(const child of c.water.children||[])child.geometry?.dispose();scene.remove(c.water);c.water.geometry.dispose()}for(let m of c.stillWater||[]){scene.remove(m);m.geometry.dispose()}for(let m of c.alpineWater||[]){scene.remove(m);m.geometry.dispose()}}
 const CHUNK=64,ACTIVE_RADIUS=3;
 function updateChunks(force=false){let px=clamp(Math.floor(p.x/CHUNK),0,63),pz=clamp(Math.floor(p.z/CHUNK),0,63),desired=new Map();
  for(let dz=-ACTIVE_RADIUS;dz<=ACTIVE_RADIUS;dz++)for(let dx=-ACTIVE_RADIUS;dx<=ACTIVE_RADIUS;dx++){let cx=px+dx,cz=pz+dz;if(cx<0||cz<0||cx>63||cz>63)continue;let distance=Math.max(Math.abs(dx),Math.abs(dz)),lod=distance<=1?0:distance<=2?1:2;desired.set(chunkKey(cx,cz),{cx,cz,lod})}
@@ -3176,6 +3215,7 @@ function buildWorld(){scene=new THREE.Scene();scene.background=new THREE.Color(0
 buildHydrology();buildGlobalHydrology();buildAlpineOutlets();rebuildRiverIndex();rebuildRiverJoinCache();initVegetation();initHarvest();
 terrainMaterial=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,side:THREE.DoubleSide});
 waterMaterial=animateWaterMaterial(new THREE.MeshStandardMaterial({color:0x367b99,roughness:.22,metalness:.06,transparent:true,opacity:.87,side:THREE.DoubleSide,depthWrite:false}),1.55,.085);
+cascadeMaterial=new THREE.MeshBasicMaterial({color:0xc6e7e8,transparent:true,opacity:.72,side:THREE.DoubleSide,depthWrite:false});
 seaMaterial=animateWaterMaterial(new THREE.MeshStandardMaterial({color:0x246c91,roughness:.3,transparent:true,opacity:.91,side:THREE.DoubleSide,depthWrite:false}),.48,.045);
 lakeMaterial=animateWaterMaterial(new THREE.MeshStandardMaterial({color:0x3687a3,roughness:.26,transparent:true,opacity:.91,side:THREE.DoubleSide,depthWrite:false}),.28,.035);
 updateChunks(true);
