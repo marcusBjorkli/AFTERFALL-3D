@@ -433,9 +433,9 @@ body.prefab-building #constructionOverlay{visibility:hidden!important;pointer-ev
   <header class="world-map-header"><div><h2 id="worldMapTitle">🗺️ Verdenskart</h2><small>4096 × 4096 m · nord opp · øst til høyre</small></div><button type="button" id="worldMapClose">Tilbake til meny</button></header>
   <div class="world-map-options"><label for="worldMapMode">Kartlag</label><select id="worldMapMode"><option value="terrain">Terreng og fjell</option><option value="height">Høydekoter</option><option value="water">Hydrologi</option></select><label><input id="worldMapRivers" type="checkbox" checked> Vis elver</label></div>
   <canvas id="worldMapCanvas" width="512" height="512" aria-label="Kart over terreng, fjellkjeder, elver, innsjøer og hav. Trykk for informasjon om en posisjon."></canvas>
-  <div class="world-map-legend"><span>🟩 Land og gress</span><span>⬜ Fjell</span><span>🟦 Innsjø og elv</span><span>🔵 Hav</span><span>🟡 Spiller</span></div>
+  <div class="world-map-legend"><span>🟩 Land og gress</span><span>⬜ Fjell</span><span>🟦 Innsjø og elv</span><span>🔵 Hav</span><span>🟡 Spiller</span><span>🩵 Fjellvannutløp</span></div>
   <p id="worldMapStats" class="world-map-stats"></p><p id="worldMapReadout" role="status">Trykk på kartet for å undersøke kote og terrengtype.</p>
-  <p class="world-map-note">Kartlagene bruker terrenggeneratorens data og hydrologinettverk (32 m rutenett). Lokale grave-/fyllendringer er ikke tegnet inn overalt. Fjellvann er markert, men sammenhengende utløp til lavlandsinnsjøer er foreløpig ikke implementert.</p>
+  <p class="world-map-note">Kartlagene bruker terrenggeneratorens data og hydrologinettverk (32 m rutenett). Lokale grave-/fyllendringer er ikke tegnet inn overalt. Fjellvannenes utløp følger nå beregnede nedstrøms ruter. Fossedetaljer og fullstendig kontinuerlig vanngeometri kommer i f.4.5.</p>
  </article>
 </div>
 <div id="newGameDialog" hidden role="presentation"><article role="dialog" aria-modal="true" aria-labelledby="newGameTitle">
@@ -4811,11 +4811,17 @@ function worldMapDetails(x,z){
  let type=sea?'Hav':alpine?'Fjellvann':li>=0&&hydroLakes[li]?.active?'Innsjø':rise>6?'Fjell / høyland':'Land';
  if(river&&river.distance<river.width*1.1)type='Elv / elvedal';
  const extra=river&&river.distance<river.width*1.8?' · Elv: bredde '+river.width.toFixed(1)+' m, vannkote '+river.water.toFixed(1)+' m':'';
+ const nearOutlet=alpineOutlets.map(o=>({
+  o,d:Math.min(...o.points.map(v=>Math.hypot(v.x-x,v.z-z)))
+ })).sort((a,b)=>a.d-b.d)[0];
+ const outletText=nearOutlet&&nearOutlet.d<42?
+  ' · Fjellvannutløp '+(nearOutlet.o.id+1)+' til '+nearOutlet.o.destination.type+
+  ' · Nedstrøms rute '+Math.round(nearOutlet.o.length)+' m':'';
  const site=gradingProjects.find(q=>x>=q.x0&&x<=q.x1&&z>=q.z0&&z<=q.z1);
  const siteInfo=site?' · Byggegrunn: '+site.name+(site.legacyTerrainAnchor?' (eldre kote vernet)':site.legacyTerrainReview?' (krever gjennomgang)':''):'';
 
  $('worldMapReadout').textContent='X '+x.toFixed(0)+' m · Z '+z.toFixed(0)+' m · Terrengkote '+h.toFixed(1)+' m · '+type+
-  (rise>6?' · Fjellbidrag '+rise.toFixed(1)+' m':'')+extra+siteInfo;
+  (rise>6?' · Fjellbidrag '+rise.toFixed(1)+' m':'')+extra+siteInfo+outletText;
 }
 function worldMapDraw(){
  if($('worldMapOverlay').hidden||!hydroHeight)return;
@@ -4832,6 +4838,21 @@ function worldMapDraw(){
   ctx.strokeStyle='#083c5e';ctx.lineWidth=2.8;ctx.beginPath();
   for(const seg of riverSegments){const a=point(seg.a.x,seg.a.z),b=point(seg.b.x,seg.b.z);ctx.moveTo(...a);ctx.lineTo(...b)}
   ctx.stroke();ctx.strokeStyle='#7ddaf3';ctx.lineWidth=1.4;ctx.stroke();
+ }
+ // Fjellvannenes nedstrøms ruter i lys turkis – samme punkter som
+ // selve elvegeometrien, ikke et dekorativt kartlag.
+ if($('worldMapRivers').checked){
+  ctx.strokeStyle='#c1f5ff';ctx.lineWidth=2.5;ctx.setLineDash([5,3]);
+  for(const outlet of alpineOutlets){
+   ctx.beginPath();
+   outlet.points.forEach((p,i)=>{const xy=point(p.x,p.z);
+    if(!i)ctx.moveTo(...xy);else ctx.lineTo(...xy);});
+   ctx.stroke();
+   const [ex,ez]=point(outlet.destination.x,outlet.destination.z);
+   ctx.beginPath();ctx.arc(ex,ez,3,0,Math.PI*2);
+   ctx.fillStyle='#c1f5ff';ctx.fill();
+  }
+  ctx.setLineDash([]);
  }
  for(const cap of MOUNTAIN_PLATEAUS){
   if(!cap.hasLake)continue;
@@ -4859,7 +4880,9 @@ function worldMapDraw(){
  const qa=worldTerrainQuality();
  $('worldMapStats').textContent='Fjellmassiver: '+MOUNTAIN_NETWORKS.length+' · Sidekjeder: '+MOUNTAIN_NETWORKS.reduce((n,c)=>n+c.arms.length,0)+' · Elvestrekninger: '+riverSegments.length+' · Innsjøer: '+activeLakes+
   ' · Fjellvann: '+MOUNTAIN_PLATEAUS.filter(v=>v.hasLake).length+
-  ' · Hav: '+(hasOcean?'Ja':'Nei')+' · Spiller X '+p.x.toFixed(0)+', Z '+p.z.toFixed(0)+
+  ' · Hav: '+(hasOcean?'Ja':'Nei')+
+  ' · Fjellvannutløp: '+alpineOutlets.map(o=>(o.id+1)+'→'+o.destination.type).join(', ')+
+  ' · Spiller X '+p.x.toFixed(0)+', Z '+p.z.toFixed(0)+
   ' · Kotevernede eldre byggeflater: '+qa.protectedSites+' · Eldre prosjekter til kontroll: '+qa.review+
   ' · Hydrologitest: '+qa.risingRivers+' stigende, '+qa.invalidRivers+' ugyldige elvestrekninger'+
   ' · Bratte terrengkanter (32 m rutenett, > 1,5 m/m): '+qa.verySteep+
