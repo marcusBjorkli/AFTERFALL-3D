@@ -2703,7 +2703,11 @@ function buildChunkRivers(cx,cz,lod){
  function clipRiverToTerrain(poly){
   if(poly.length<3)return [];
   const out=[];
-  const above=v=>ground(v.x,v.z)+PAD_H-v.y+.08;
+  // f.4.5: test visibility against the land mesh the player actually
+  // sees, not against ground() at a different LOD. Allow only a shallow
+  // <=0.75 m raster mismatch to be covered by water, never a deep
+  // artificial cut through a mountain.
+  const above=v=>renderedLand(v.x,v.z)+PAD_H-v.y+.08-.75;
   for(let i=0;i<poly.length;i++){
    const a=poly[i],b=poly[(i+1)%poly.length],fa=above(a),fb=above(b);
    const insideA=fa<=0,insideB=fb<=0;
@@ -2730,7 +2734,9 @@ function buildChunkRivers(cx,cz,lod){
   if(cut.length<3)return;
   const base=verts.length/3;
   for(const v of cut){
-   const y=alpine?renderedLand(v.x,v.z)+.105:v.y-PAD_H+.045;
+   const visibleBed=renderedLand(v.x,v.z);
+   const rawWater=v.y-PAD_H+.045;
+   const y=alpine?visibleBed+.105:Math.max(rawWater,visibleBed+.095);
    verts.push(v.x-PAD_X,y,v.z-PAD_Z);
   }
   for(let j=1;j<cut.length-1;j++){
