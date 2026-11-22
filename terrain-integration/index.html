@@ -1925,7 +1925,7 @@ const MOUNTAIN_PLATEAUS=[
  {x:1790,z:2410,radius:60,outer:137,hasLake:true,dir:-1,index:2,top:null},
  {x:2400,z:2440,radius:52,outer:124,hasLake:false,dir:1,index:3,top:null},
  {x:3000,z:1110,radius:57,outer:133,hasLake:true,dir:1,index:4,top:null},
- {x:3010,z:1270,radius:51,outer:126,hasLake:false,dir:-1,index:5,top:null},
+ {x:2670,z:850,radius:51,outer:126,hasLake:false,dir:-1,index:5,top:null},
  {x:2740,z:2780,radius:54,outer:129,hasLake:true,dir:1,index:6,top:null},
  {x:1280,z:2890,radius:53,outer:127,hasLake:false,dir:-1,index:7,top:null}
 ];
@@ -4728,7 +4728,7 @@ function worldMapDraw(){
  ctx.fillStyle='#f9ffff';ctx.font='bold 12px sans-serif';ctx.fillText('N ↑',12,19);
  if(worldMapSelected){const [x,z]=point(worldMapSelected.x,worldMapSelected.z);ctx.beginPath();ctx.arc(x,z,7,0,Math.PI*2);ctx.strokeStyle='#ffffff';ctx.lineWidth=1.4;ctx.stroke();}
  const activeLakes=hydroLakes.filter(v=>v.active).length,hasOcean=hydroOcean.some(v=>v===1);
- $('worldMapStats').textContent='Elvestrekninger: '+riverSegments.length+' · Innsjøer: '+activeLakes+
+ $('worldMapStats').textContent='Fjellmassiver: '+MOUNTAIN_NETWORKS.length+' · Sidekjeder: '+MOUNTAIN_NETWORKS.reduce((n,c)=>n+c.arms.length,0)+' · Elvestrekninger: '+riverSegments.length+' · Innsjøer: '+activeLakes+
   ' · Fjellvann: '+MOUNTAIN_PLATEAUS.filter(v=>v.hasLake).length+
   ' · Hav: '+(hasOcean?'Ja':'Nei')+' · Spiller X '+p.x.toFixed(0)+', Z '+p.z.toFixed(0);
 }
