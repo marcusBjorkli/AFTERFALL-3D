@@ -2686,10 +2686,16 @@ function waterMaskMembership(x,z,key){
  return !m?0:key==='sea'?m.sea:m.lakes.get(Number(key.slice(5)))||0;
 }
 function waterBodyAt(x,z,terrainHeight=null){
+ // C.3.1: Alpine lakes participate in the same wet-ground classification
+ // used by materials, earthworks, vegetation and diagnostic QA. Do not
+ // call ground() from here: terrain generation may call this function.
+ const alpine=alpineLakeRegion(x,z);
+ const h=Number.isFinite(terrainHeight)?terrainHeight+PAD_H:hydrologySourceElevation(x,z);
+ if(alpine&&alpine.distance<alpine.radius&&h<alpine.level-.04)
+  return {kind:'alpine',id:alpine.id,cap:alpine.cap,
+   level:alpine.level,occupancy:1};
  const m=waterMaskWeights(x,z);
  if(!m)return null;
- // Never call ground() here: drySurfaceAt() also calls this function.
- const h=Number.isFinite(terrainHeight)?terrainHeight+PAD_H:hydrologySourceElevation(x,z);
  if(m.sea>=.5&&h<-.04)return {kind:'sea',level:0,occupancy:m.sea};
  let best=null;
  for(const [id,occupancy] of m.lakes){
