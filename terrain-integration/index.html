@@ -4962,7 +4962,7 @@ const worldMapCache=new Map();
   const meshes=[];
   for(const chunk of terrainChunks.values())for(const mesh of chunk.stillWater||[])
    if(mesh.material===lakeMaterial)meshes.push(mesh);
-  const totals={samples:0,lakeBelowTerrain:0,waterMeshPresent:0,missingWaterMesh:0,notLoaded:0};
+  const totals={samples:0,lakeBelowTerrain:0,waterMeshPresent:0,missingWaterMesh:0,maskExcluded:0,notLoaded:0};
   const hits=[],missing=[];
   for(let dz=-radius;dz<=radius;dz+=step)for(let dx=-radius;dx<=radius;dx+=step){
    if(dx*dx+dz*dz>radius*radius)continue;
@@ -4982,7 +4982,16 @@ const worldMapCache=new Map();
    const terrain=ground(x,z);
    for(const lakeId of ids){
     const lake=hydroLakes[lakeId],mask=lakeQaMask(x,z,lakeId);
-    if(mask<LAKE_SHORE_THRESHOLD||terrain>lake.level-.15)continue;
+    if(terrain>lake.level-.15)continue;
+    if(mask>0&&mask<LAKE_SHORE_THRESHOLD){
+     totals.maskExcluded++;
+     if(missing.length<180)missing.push({x:+x.toFixed(1),z:+z.toFixed(1),
+       lakeId,waterLevel:+lake.level.toFixed(2),ground:+terrain.toFixed(2),
+       mask:+mask.toFixed(3),chunk:[cx,cz],lod:chunk.lod,
+       category:'below-lake-level-but-outside-membership-mask'});
+     continue;
+    }
+    if(mask<LAKE_SHORE_THRESHOLD)continue;
     totals.lakeBelowTerrain++;
     // Test the exact loaded water triangle with a downward ray at world X/Z.
     raycaster.set(new THREE.Vector3(x-PAD_X,lake.level-PAD_H+5,z-PAD_Z),new THREE.Vector3(0,-1,0));
@@ -5001,13 +5010,14 @@ const worldMapCache=new Map();
   }
   const record={revision:LAKE_SHORE_REVISION,method:'local loaded lake mesh raycast',
    center,radius,step,totals,missing,loadedLakeMeshes:meshes.length,
-   caveat:'Only samples current loaded chunks and inferred mask+terrain water. Does not detect a gap beyond the membership mask.'};
+   caveat:'Samples only loaded chunks; mask exclusions and actual missing water triangles are distinct. Not a direct width measurement.'};
   if(!lakeQaReport)lakeQaReport={revision:LAKE_SHORE_REVISION,localTests:[],totals:null};
   (lakeQaReport.localTests||(lakeQaReport.localTests=[])).push(record);
   $('lakeQaExport').disabled=false;
   $('lakeQaStatus').textContent='Lokal 3D-test ved X '+center.x.toFixed(0)+', Z '+center.z.toFixed(0)+
    ': '+totals.lakeBelowTerrain+' forventede vannprøver, '+totals.missingWaterMesh+
-   ' uten synlig innsjømesh, '+totals.notLoaded+' uten lastet terrengchunk. Eksporter rapporten.';
+   ' uten synlig innsjømesh, '+totals.maskExcluded+
+   ' ekskludert av vannmasken, '+totals.notLoaded+' uten lastet terrengchunk. Eksporter rapporten.';
   console.info('[AFTERFALL local lake mesh QA]',record);
  }
  function lakeQaExport(){
