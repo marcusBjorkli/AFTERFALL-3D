@@ -411,7 +411,7 @@ body.prefab-building #constructionOverlay{visibility:hidden!important;pointer-ev
 </div>
 <div id="buildingStoreRows"></div><p id="buildingStoreFeedback" role="status" aria-live="polite"></p>
 <p class="building-store-help">Alle materialer oppbevares separat for denne bygningen. Ferdige lagerskur beholder innholdet når spillet lagres.</p>
-</article></div><div id="constructionHud" hidden aria-label="Materialbehov ved byggeplass"></div><div id="constructionOverlay" hidden><div id="constructionBar"><strong id="constructionBarTitle">Byggeplass</strong><button id="constructionClose" type="button">Avbryt / tilbake</button></div><iframe id="constructionFrame" title="AFTERFALL konstruksjonseditor" allow="fullscreen"></iframe></div><div id="sitePickHud" hidden><strong>🏗️ Velg byggeplass</strong><p id="sitePickStatus" role="status">Sikt mot ønsket byggegrunn.</p><div id="sitePickRotation" class="site-pick-rotation" hidden><button id="sitePickRotateLeft" type="button">↶ 90°</button><span id="sitePickAngle" role="status">0°</span><button id="sitePickRotateRight" type="button">↷ 90°</button></div><div><button id="sitePickConfirm" type="button">Bekreft plassering</button><button id="sitePickCancel" type="button">Avbryt</button></div><small>Forhåndsvisning: 3 × 3 m. Rotasjon og ferdigtegninger følger i C.2.1.1e–f.</small></div><div id="prefabStatus" hidden role="dialog" aria-modal="true" aria-labelledby="prefabStatusTitle"><h2 id="prefabStatusTitle">🏗️ Byggeprosjekt</h2><p id="prefabStatusText" role="status">Oppretter byggeplan …</p><button id="prefabStatusCancel" type="button">Avbryt</button></div><div id="constructionInfo" hidden><article><h2 id="constructionInfoTitle">Byggeplass</h2><div id="constructionInfoBody"></div><button id="constructionInfoClose" type="button">Lukk</button></article></div><div id="gradeOverlay" role="presentation"><section id="gradePanel" role="dialog" aria-modal="true" aria-label="Terrengplanering"><h2>📐 Planering · CE 1.1.4C.2.1.1</h2><p>Manuelle planeringsprosjekter er valgfrie. Bruk spadens «Høyderutenett» for kotevisning, målkotelås og fri graving. Terrenget gjenkjennes automatisk som plant når kotehøydene samsvarer. Ønsker du et eget prosjekt, kan du fremdeles velge to hjørner (maks 20 × 20 m). Fysiske masser, stabilitet og eksisterende bygg beskyttes.</p><p style="font-size:12px;color:#bdd7c5">⛰️ Rasvinkler (spillverdier): jord/sand 30°, leire/stein 40°. Fast fjell raser ikke. Hold inne Grav/Fyll for gjentatte spadetak. Større bygninger kan også plasseres på automatisk registrerte, plane flater med stabile rand­skråninger.</p><div id="gradeProjectList" aria-label="Lagrede planeringsprosjekter"></div><p><label for="gradeName">Prosjektnavn: </label><input id="gradeName" type="text" maxlength="48" value="Nytt planeringsområde" style="width:min(250px,90%)"></p><button id="gradeFirst">1. Sett hjørne A</button><button id="gradeSecond">2. Sett hjørne B</button><button id="gradeClearCorners" type="button" disabled>Nullstill hjørner</button><div id="gradeDraftStatus" aria-live="polite"></div><div id="gradeHeights" aria-live="polite">Måler terrengkoter …</div><div id="gradeStats" aria-live="polite">Marker hjørne A og B for å beregne områdets koteverdier.</div><button id="gradeSuggest" type="button" disabled>Bruk foreslått kote</button><p><label for="gradeLevel">Prosjektert kote (m): </label><input id="gradeLevel" type="number" step="0.1" inputmode="decimal"></p><button id="gradeCreate">Opprett nytt prosjekt</button><button id="gradeExtend" type="button">↗ Utvid valgt område</button><button id="gradeComplete">Godkjenn fullført</button><button id="gradeArchive">Arkiver prosjekt</button><button id="gradeReopen">Gjenåpne prosjekt</button><button id="gradeDelete">Slett valgt prosjekt</button><div id="gradeDelta" aria-live="polite"></div><div id="gradeInfo" aria-live="polite">Ingen prosjekt.</div><button id="gradeClose">Lukk ✕</button></section></div><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small id="releaseVersion" data-release="ce114c211f431">CE 1.1.4C.2.1.1f.4.3.1 · OVERLEVELSESKONSTRUKSJONER</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="gradeDraftHud" hidden><strong>UTSTIKKING · NYTT OMRÅDE</strong><span id="gradeDraftDetail"></span></div><div id="gradeLive" role="status" aria-live="off" hidden></div><div id="gradeProgressHud" hidden><strong id="gradeProgressLabel">Planering</strong><div id="gradeProgressTrack"><div id="gradeProgressFill"></div></div><small id="gradeProgressDetail"></small></div><div id="terrainGridHud" hidden><strong>⛰️ Terrenghøyder</strong><span id="terrainGridDetail"></span></div><div id="weatherHud">☀ 12:00 · Klart</div><div id="joy"><div id="knob"></div></div><div id="terrainSettingsBackdrop" hidden aria-hidden="true"></div><div id="earthTools"><div class="earthButtons"><button id="earthDig" type="button">Grav</button><button id="earthFill" type="button">Fyll</button></div><div id="earthAvailability" aria-live="polite" style="font-size:11px;line-height:1.3;color:#c9e3d6;margin-top:5px"></div><div id="earthWorkStatus" hidden aria-live="polite"></div>
+</article></div><div id="constructionHud" hidden aria-label="Materialbehov ved byggeplass"></div><div id="constructionOverlay" hidden><div id="constructionBar"><strong id="constructionBarTitle">Byggeplass</strong><button id="constructionClose" type="button">Avbryt / tilbake</button></div><iframe id="constructionFrame" title="AFTERFALL konstruksjonseditor" allow="fullscreen"></iframe></div><div id="sitePickHud" hidden><strong>🏗️ Velg byggeplass</strong><p id="sitePickStatus" role="status">Sikt mot ønsket byggegrunn.</p><div id="sitePickRotation" class="site-pick-rotation" hidden><button id="sitePickRotateLeft" type="button">↶ 90°</button><span id="sitePickAngle" role="status">0°</span><button id="sitePickRotateRight" type="button">↷ 90°</button></div><div><button id="sitePickConfirm" type="button">Bekreft plassering</button><button id="sitePickCancel" type="button">Avbryt</button></div><small>Forhåndsvisning: 3 × 3 m. Rotasjon og ferdigtegninger følger i C.2.1.1e–f.</small></div><div id="prefabStatus" hidden role="dialog" aria-modal="true" aria-labelledby="prefabStatusTitle"><h2 id="prefabStatusTitle">🏗️ Byggeprosjekt</h2><p id="prefabStatusText" role="status">Oppretter byggeplan …</p><button id="prefabStatusCancel" type="button">Avbryt</button></div><div id="constructionInfo" hidden><article><h2 id="constructionInfoTitle">Byggeplass</h2><div id="constructionInfoBody"></div><button id="constructionInfoClose" type="button">Lukk</button></article></div><div id="gradeOverlay" role="presentation"><section id="gradePanel" role="dialog" aria-modal="true" aria-label="Terrengplanering"><h2>📐 Planering · CE 1.1.4C.2.1.1</h2><p>Manuelle planeringsprosjekter er valgfrie. Bruk spadens «Høyderutenett» for kotevisning, målkotelås og fri graving. Terrenget gjenkjennes automatisk som plant når kotehøydene samsvarer. Ønsker du et eget prosjekt, kan du fremdeles velge to hjørner (maks 20 × 20 m). Fysiske masser, stabilitet og eksisterende bygg beskyttes.</p><p style="font-size:12px;color:#bdd7c5">⛰️ Rasvinkler (spillverdier): jord/sand 30°, leire/stein 40°. Fast fjell raser ikke. Hold inne Grav/Fyll for gjentatte spadetak. Større bygninger kan også plasseres på automatisk registrerte, plane flater med stabile rand­skråninger.</p><div id="gradeProjectList" aria-label="Lagrede planeringsprosjekter"></div><p><label for="gradeName">Prosjektnavn: </label><input id="gradeName" type="text" maxlength="48" value="Nytt planeringsområde" style="width:min(250px,90%)"></p><button id="gradeFirst">1. Sett hjørne A</button><button id="gradeSecond">2. Sett hjørne B</button><button id="gradeClearCorners" type="button" disabled>Nullstill hjørner</button><div id="gradeDraftStatus" aria-live="polite"></div><div id="gradeHeights" aria-live="polite">Måler terrengkoter …</div><div id="gradeStats" aria-live="polite">Marker hjørne A og B for å beregne områdets koteverdier.</div><button id="gradeSuggest" type="button" disabled>Bruk foreslått kote</button><p><label for="gradeLevel">Prosjektert kote (m): </label><input id="gradeLevel" type="number" step="0.1" inputmode="decimal"></p><button id="gradeCreate">Opprett nytt prosjekt</button><button id="gradeExtend" type="button">↗ Utvid valgt område</button><button id="gradeComplete">Godkjenn fullført</button><button id="gradeArchive">Arkiver prosjekt</button><button id="gradeReopen">Gjenåpne prosjekt</button><button id="gradeDelete">Slett valgt prosjekt</button><div id="gradeDelta" aria-live="polite"></div><div id="gradeInfo" aria-live="polite">Ingen prosjekt.</div><button id="gradeClose">Lukk ✕</button></section></div><div id="hud"><div><b>☢ AFTERFALL 3D</b><br><small id="releaseVersion" data-release="ce114c211f432">CE 1.1.4C.2.1.1f.4.3.2 · OVERLEVELSESKONSTRUKSJONER</small></div><div><button id="menu">☰ Meny</button></div></div><div id="status">Laster 3D-motor …</div><div id="cross">+</div><div id="gradeDraftHud" hidden><strong>UTSTIKKING · NYTT OMRÅDE</strong><span id="gradeDraftDetail"></span></div><div id="gradeLive" role="status" aria-live="off" hidden></div><div id="gradeProgressHud" hidden><strong id="gradeProgressLabel">Planering</strong><div id="gradeProgressTrack"><div id="gradeProgressFill"></div></div><small id="gradeProgressDetail"></small></div><div id="terrainGridHud" hidden><strong>⛰️ Terrenghøyder</strong><span id="terrainGridDetail"></span></div><div id="weatherHud">☀ 12:00 · Klart</div><div id="joy"><div id="knob"></div></div><div id="terrainSettingsBackdrop" hidden aria-hidden="true"></div><div id="earthTools"><div class="earthButtons"><button id="earthDig" type="button">Grav</button><button id="earthFill" type="button">Fyll</button></div><div id="earthAvailability" aria-live="polite" style="font-size:11px;line-height:1.3;color:#c9e3d6;margin-top:5px"></div><div id="earthWorkStatus" hidden aria-live="polite"></div>
 <button id="terrainSettingsToggle" type="button" aria-controls="terrainModeControls" aria-expanded="false">⛰️ Koteinnstillinger</button>
 <div id="terrainModeControls">
  <div class="terrain-settings-heading"><strong>⛰️ Terrengkontroll</strong><button id="terrainSettingsClose" type="button" aria-label="Lukk koteinnstillinger">Lukk ✕</button></div>
@@ -1833,64 +1833,111 @@ function harvestCandidateAllowed(x,z){
  */
 // Noise is evaluated while creating fixed mountain feature locations.
 const hash=(x,z)=>{let n=Math.sin(x*127.1+z*311.7+SEED*.017)*43758.5453;return n-Math.floor(n)};
-const MOUNTAIN_CHAINS=Object.freeze([
- {z:620,trend:.115,phase:.4,width:135,peak:87},
- {z:1480,trend:-.09,phase:1.6,width:170,peak:105},
- {z:2440,trend:.075,phase:2.8,width:155,peak:94},
- {z:3440,trend:-.10,phase:3.7,width:185,peak:112}
-]);
+
+/* CE 1.1.4C.2.1.1f.4.3.2
+ * Hierarchical mountain networks, finite ridges and forks, highland hubs,
+ * domain warping and independent local peaks. No river/lake dependencies.
+ * One shared, deterministic terrain heightfield, not a second rock mesh.
+ */
+const MOUNTAIN_NETWORKS=[
+ {name:'Nordvestmassivet',peak:126,
+  main:[[330,875,62,.12],[715,750,170,.78],[1120,1010,230,1],[1520,1210,188,.91],[1900,1460,136,.63],[2180,1800,54,.10]],
+  arms:[
+   [[1120,1010,149,.82],[1330,710,117,.63],[1700,540,43,.09]],
+   [[1520,1210,147,.83],[1710,1750,113,.62],[2150,2240,48,.10]]
+  ]},
+ {name:'Sentralhøylandet',peak:158,
+  main:[[410,3270,52,.10],[845,3040,173,.74],[1390,2780,247,1],[1870,2420,270,1],[2460,2440,230,.93],[3020,2200,175,.74],[3650,2570,48,.08]],
+  arms:[
+   [[1870,2420,176,.84],[1570,2050,123,.65],[1500,1620,52,.10]],
+   [[2460,2440,174,.85],[2690,2860,106,.54],[2890,3320,36,.08]]
+  ]},
+ {name:'Østlige fjellmassiv',peak:137,
+  main:[[3600,345,54,.08],[3330,670,154,.72],[2980,1070,221,1],[3280,1570,177,.89],[3030,2040,133,.60],[2670,2300,57,.12]],
+  arms:[
+   [[2980,1070,164,.85],[2550,840,103,.59],[2260,510,42,.09]],
+   [[3280,1570,144,.79],[3620,1610,93,.52],[3900,1750,35,.08]]
+  ]}
+];
+const MOUNTAIN_RIDGE_SEGMENTS=MOUNTAIN_NETWORKS.flatMap((network,index)=>{
+ const paths=[network.main,...network.arms];
+ return paths.flatMap((path,arm)=>path.slice(1).map((b,i)=>{
+  const a=path[i],margin=Math.max(a[2],b[2])+245;
+  return {x0:a[0],z0:a[1],x1:b[0],z1:b[1],r0:a[2],r1:b[2],
+   power0:a[3]*network.peak,power1:b[3]*network.peak,arm:arm>0,index,
+   minX:Math.min(a[0],b[0])-margin,maxX:Math.max(a[0],b[0])+margin,
+   minZ:Math.min(a[1],b[1])-margin,maxZ:Math.max(a[1],b[1])+margin};
+ }));
+});
+const MOUNTAIN_MASSIFS=[
+ {x:1090,z:1040,rx:470,rz:365,peak:53},
+ {x:1880,z:2410,rx:615,rz:410,peak:70},
+ {x:3010,z:1120,rx:440,rz:550,peak:63},
+ {x:2840,z:2420,rx:410,rz:330,peak:38}
+];
+function mountainWarp(x,z){
+ return {x:x+(noise(x/490+61,z/490-11)-.5)*310+
+                (noise(x/210-23,z/210+85)-.5)*67,
+         z:z+(noise(x/525-41,z/525+26)-.5)*310+
+                (noise(x/230+79,z/230-39)-.5)*67};
+}
 function mountainRise(x,z){
  if(x<1||z<1||x>WORLD-1||z>WORLD-1)return 0;
- // Near the original starting clearing all legacy game saves remain unchanged.
  const start=Math.hypot(x-PAD_X,z-PAD_Z);
- if(start<90)return 0;
- let rise=0;
- for(let k=0;k<MOUNTAIN_CHAINS.length;k++){
-  const c=MOUNTAIN_CHAINS[k];
-  const center=c.z+(x-2048)*c.trend+
-   Math.sin(x/195+c.phase)*68+
-   (noise(x/280+11*k,91+k*13)-.5)*116;
-  const normalized=Math.abs(z-center)/c.width;
-  if(normalized>=1)continue;
-  // Smooth foot of the mountain: no edge seam or clipping plane.
-  const t=1-normalized,flank=t*t*(3-2*t);
-  const ridge=Math.pow(1-Math.abs(2*noise(x/125+k*37,z/125+k*51)-1),.65);
-  const broad=.55+.45*noise(x/360+21*k,z/360-14*k);
-  const saw=1-Math.abs(2*noise(x/44+36*k,z/44-17*k)-1);
-  const fine=(noise(x/15+74*k,z/15-33*k)-.5)*.15;
-  const candidate=c.peak*flank*(.69+.19*ridge+.12*saw+fine)*broad;
-  if(candidate>rise)rise=candidate;
+ if(start<=90)return 0;
+ const coast=clamp((coastX(z)-x-12)/240,0,1);
+ if(coast<=0)return 0;
+ const pos=mountainWarp(x,z),wx=pos.x,wz=pos.z;
+ let major=0,minor=0;
+ for(const seg of MOUNTAIN_RIDGE_SEGMENTS){
+  if(x<seg.minX||x>seg.maxX||z<seg.minZ||z>seg.maxZ)continue;
+  const vx=seg.x1-seg.x0,vz=seg.z1-seg.z0;
+  const t=clamp(((wx-seg.x0)*vx+(wz-seg.z0)*vz)/(vx*vx+vz*vz),0,1);
+  const radius=seg.r0+(seg.r1-seg.r0)*t;
+  const d=Math.hypot(wx-seg.x0-vx*t,wz-seg.z0-vz*t)/radius;
+  if(d>=1)continue;
+  const u=1-d,mask=u*u*(3-2*u);
+  const v=(seg.power0+(seg.power1-seg.power0)*t)*mask;
+  if(seg.arm)minor=Math.max(minor,v);else major=Math.max(major,v);
  }
- if(rise<=.001)return 0;
- // f.4.1: Mountain geometry must NOT depend on old river/lake masks.
- // The former 25 m river falloff created artificial vertical-sided trenches.
- // Rivers are temporarily clipped to the shared terrain surface below.
- // Re-routing water using the complete mountain heightfield is f.4.2.
- const startBlend=Math.min(1,(start-90)/65);
- rise*=startBlend*startBlend*(3-2*startBlend);
- return Math.max(0,rise);
+ let highland=0;
+ for(const hub of MOUNTAIN_MASSIFS){
+  const d=Math.hypot((wx-hub.x)/hub.rx,(wz-hub.z)/hub.rz);
+  if(d>=1)continue;
+  const u=1-d;
+  highland=Math.max(highland,hub.peak*u*u*(3-2*u));
+ }
+ if(major+minor+highland<=.02)return 0;
+ const spine=Math.max(major,minor)+.20*Math.min(major,minor);
+ const continental=.73+.27*fbm(wx/650+13,wz/650-29);
+ const ridgeDetail=.82+.18*(1-Math.abs(2*noise(wx/86+21,wz/86-37)-1));
+ const fine=.95+.10*noise(wx/29-91,wz/29+28);
+ const blended=(spine*ridgeDetail+highland*.72)*continental*fine;
+ const enter=clamp((start-90)/80,0,1),shore=coast*coast*(3-2*coast);
+ return Math.max(0,blended*enter*enter*(3-2*enter)*shore);
 }
-
-/* CE 1.1.4C.2.1.1f.3 – peaked ridges, grassy high plateaus and alpine basins.
- * All land elevations remain in ONE shared terrain height field.
- * Lakes have separate horizontal water surfaces, but their basins are carved
- * into that same land mesh. Erosion channels are terrain displacement too.
+/* Plateau basins and peaks follow the networks rather than four parallel
+ * strips. Four alpine lakes are retained pending true outlets in f.4.4.
  */
-const MOUNTAIN_PLATEAUS=MOUNTAIN_CHAINS.flatMap((chain,idx)=>[875,2630].map((x,n)=>{
- const z=chain.z+(x-2048)*chain.trend+Math.sin(x/195+chain.phase)*68+
-  (noise(x/280+11*idx,91+idx*13)-.5)*116+(n?22:-18);
- return {x,z,radius:52+(idx%3)*5,outer:132,hasLake:n===0,dir:(idx%2?1:-1),top:null,index:idx*2+n};
-}));
-const MOUNTAIN_SPIRES=MOUNTAIN_CHAINS.flatMap((chain,idx)=>
- Array.from({length:9},(_,i)=>{
-  const x=275+i*440+noise(idx*7+i+31,idx+53)*85;
-  const z=chain.z+(x-2048)*chain.trend+Math.sin(x/195+chain.phase)*68+
-    (noise(x/280+11*idx,91+idx*13)-.5)*116+
-    (noise(idx*19+i+35,idx+10)-.5)*70;
-  return {x,z,radius:29+noise(idx*9+i+77,idx+16)*19,
-   peak:34+noise(idx*7+i+41,idx+82)*55,index:idx*9+i};
- }).filter(peak=>MOUNTAIN_PLATEAUS.every(cap=>Math.hypot(cap.x-peak.x,cap.z-peak.z)>cap.outer+peak.radius*.75))
-);
+const MOUNTAIN_PLATEAUS=[
+ {x:1000,z:1040,radius:56,outer:132,hasLake:true,dir:1,index:0,top:null},
+ {x:1570,z:1250,radius:50,outer:128,hasLake:false,dir:-1,index:1,top:null},
+ {x:1790,z:2410,radius:60,outer:137,hasLake:true,dir:-1,index:2,top:null},
+ {x:2400,z:2440,radius:52,outer:124,hasLake:false,dir:1,index:3,top:null},
+ {x:3000,z:1110,radius:57,outer:133,hasLake:true,dir:1,index:4,top:null},
+ {x:3290,z:1580,radius:51,outer:126,hasLake:false,dir:-1,index:5,top:null},
+ {x:2740,z:2780,radius:54,outer:129,hasLake:true,dir:1,index:6,top:null},
+ {x:1280,z:2890,radius:53,outer:127,hasLake:false,dir:-1,index:7,top:null}
+];
+const MOUNTAIN_SPIRES=MOUNTAIN_NETWORKS.flatMap((net,index)=>{
+ const sites=net.main.slice(1,-1).concat(net.arms.flatMap(arm=>arm.slice(1,-1)));
+ return sites.flatMap((node,k)=>[0,1].map(n=>{
+  const x=node[0]+(noise(index*19+k*4+n+15,81)-.5)*190;
+  const z=node[1]+(noise(index*31+k*4+n+11,117)-.5)*190;
+  return {x,z,radius:27+noise(index*7+k*3+n+17,71)*18,
+   peak:30+noise(index*11+k*3+n+43,93)*55,index:index*100+k*2+n};
+ })).filter(peak=>MOUNTAIN_PLATEAUS.every(cap=>Math.hypot(cap.x-peak.x,cap.z-peak.z)>cap.outer+peak.radius*.75));
+});
 function smoothMountainEdge(a,b,v){
  const t=clamp((v-a)/(b-a),0,1);return t*t*(3-2*t);
 }
