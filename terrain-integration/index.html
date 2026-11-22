@@ -435,7 +435,7 @@ body.prefab-building #constructionOverlay{visibility:hidden!important;pointer-ev
   <canvas id="worldMapCanvas" width="512" height="512" aria-label="Kart over terreng, fjellkjeder, elver, innsjøer og hav. Trykk for informasjon om en posisjon."></canvas>
   <div class="world-map-legend"><span>🟩 Land og gress</span><span>⬜ Fjell</span><span>🟦 Innsjø og elv</span><span>🔵 Hav</span><span>🟡 Spiller</span><span>🩵 Fjellvannutløp</span><span>⚪ Fosser</span></div>
   <div class="world-map-options"><button type="button" id="worldMapTravel" disabled>⚡ Hurtigreis</button><button type="button" id="worldMapObserve">📋 Registrer funn</button><button type="button" id="worldMapExport">⬇ Eksporter logg</button><button type="button" id="lakeQaRun">🔎 Test innsjøbredder</button><button type="button" id="lakeQaExport" disabled>⬇ Innsjørapport</button></div><p id="worldMapTravelStatus" role="status">Velg et punkt på kartet.</p><p id="lakeQaStatus" role="status" aria-live="polite"></p><p id="worldMapStats" class="world-map-stats"></p><p id="worldMapReadout" role="status">Trykk på kartet for å undersøke kote og terrengtype.</p>
-  <p class="world-map-note">Kartlagene bruker terrenggeneratorens data og hydrologinettverk (32 m rutenett). Lokale grave-/fyllendringer er ikke tegnet inn overalt. Fjellvannenes utløp følger nå beregnede nedstrøms ruter. Hurtigreise gjelder kun testing. Landingspunkter kontrolleres for vann, bratt terreng og hindringer. Eksporter observasjoner i JSON.</p>
+  <p class="world-map-note">Kartlagene bruker terrenggeneratorens data og hydrologinettverk (32 m rutenett). Lokale grave-/fyllendringer er ikke tegnet inn overalt. Fjellvannenes utløp følger nå beregnede nedstrøms ruter. f.4.5.2B utvider innsjømasken kontrollert (fra 0,50 til 0,25), men lar havet være uendret. Hurtigreise gjelder kun testing. Landingspunkter kontrolleres for vann, bratt terreng og hindringer. Eksporter observasjoner i JSON.</p>
  </article>
 </div>
 <div id="newGameDialog" hidden role="presentation"><article role="dialog" aria-modal="true" aria-labelledby="newGameTitle">
@@ -502,6 +502,9 @@ const EARTH_KEY='afterfall_ce113_preview_earth',EARTH_LIMIT=12000;
 const earthEdits=new Map(),earthFillLayers=new Map(),earthSlideMass=new Map(); // L per material and grid node
 const gradingProjects=[];
 const TERRAIN_GENERATION_VERSION='ce114c211f45';
+// f.4.5.2B: rendering-only revision, deliberately leaving world save keys intact.
+const LAKE_SHORE_REVISION='f.4.5.2B';
+const LAKE_SHORE_THRESHOLD=.25; // previous .50; does not change sea or hydrology
 const legacyTerrainAnchors=[];
 const constructionPlans=new Map();let constructionGroup=null,constructionSession=null,constructionBusy=false,constructionOpen=false,constructionInfoOpen=false,constructionLastRefresh=0;
 let constructionCollisionIndex=createConstructionCollision([]),constructionDoors=[];
@@ -2908,7 +2911,10 @@ function buildChunkStillWater(cx,cz,lod){
    const id=ids[n],belongs=key==='sea'?hydroOcean[id]:hydroLakeId[id]===Number(key.slice(5));
    if(belongs)occupancy+=weights[n];
   }
-  const result=.5-occupancy;maskCache.set(cacheKey,result);return result;
+  // Preserve ocean rendering. Relax only lake membership inside the existing
+  // hydrology cells; clipping to actual land height remains mandatory.
+  const threshold=key==='sea'?.5:LAKE_SHORE_THRESHOLD;
+  const result=threshold-occupancy;maskCache.set(cacheKey,result);return result;
  }
  function clipField(poly,field){
   if(poly.length<3)return [];
@@ -2928,7 +2934,12 @@ function buildChunkStillWater(cx,cz,lod){
   if(!bucket){bucket={verts:[],indices:[]};buckets.set(key,bucket)}
   const base=bucket.verts.length/3;
   for(const p of poly)bucket.verts.push(p.x-PAD_X,level-PAD_H+.055,p.z-PAD_Z);
-  for(let k=1;k<poly.length-1;k++)bucket.indices.push(base,base+k,base+k+1);
+  // Guard against degenerate and non-finite clipped triangles.
+  for(let k=1;k<poly.length-1;k++){
+   const a=poly[0],b=poly[k],c=poly[k+1];
+   const cross=(b.x-a.x)*(c.z-a.z)-(b.z-a.z)*(c.x-a.x);
+   if(Number.isFinite(cross)&&Math.abs(cross)>1e-7)bucket.indices.push(base,base+k,base+k+1);
+  }
  }
  function tile(x,z,size,key,level){
   const a={x,z},b={x:x+size,z},c={x,z:z+size},d={x:x+size,z:z+size};
@@ -4866,12 +4877,14 @@ const worldMapCache=new Map();
  function lakeQaRun(){
   const report={version:TERRAIN_GENERATION_VERSION,timestamp:new Date().toISOString(),
     method:'32m lake ownership boundary versus ground-level contour; 4m normal samples',
-    sampleSpacingM:4,lakes:[],hotspots:[],totals:{lakes:0,boundaryEdges:0,samples:0,maskExclusion:0,wetMaskAboveGround:0}};
+    shorelineRevision:LAKE_SHORE_REVISION,baselineThreshold:.5,correctedThreshold:LAKE_SHORE_THRESHOLD,
+    warning:'Candidate coverage proxy, not measured 3D mesh gap widths. Identical points may be sampled more than once.',
+    sampleSpacingM:4,lakes:[],hotspots:[],totals:{lakes:0,boundaryEdges:0,samples:0,maskExclusion:0,remainingMaskExclusion:0,improvedSamples:0,wetMaskAboveGround:0}};
   const top=[];
   for(const lake of hydroLakes){
    if(!lake.active)continue;
    const row={lakeId:lake.id,level:+lake.level.toFixed(3),boundaryEdges:0,samples:0,
-    maskExclusion:0,wetMaskAboveGround:0,maxMissingDepth:0,hotspots:[]};
+    maskExclusion:0,remainingMaskExclusion:0,improvedSamples:0,wetMaskAboveGround:0,maxMissingDepth:0,hotspots:[]};
    const members=new Set(lake.members);
    for(const id of lake.members){
     const i=id%HY_N,j=Math.floor(id/HY_N);
@@ -4888,12 +4901,16 @@ const worldMapCache=new Map();
        if(px<1||pz<1||px>=WORLD-1||pz>=WORLD-1)continue;
        const mask=lakeQaMask(px,pz,lake.id),terrain=ground(px,pz);
        const below=lake.level-terrain,maskExcluded=mask<.5&&below>.15;
+       const newlyCovered=maskExcluded&&mask>=LAKE_SHORE_THRESHOLD;
+       const remaining=maskExcluded&&!newlyCovered;
        const above=mask>=.5&&below<-.15;
+       if(newlyCovered)row.improvedSamples++;
+       if(remaining)row.remainingMaskExclusion++;
        row.samples++;
        if(maskExcluded){
         row.maskExclusion++;
         row.maxMissingDepth=Math.max(row.maxMissingDepth,below);
-        if(row.hotspots.length<35)row.hotspots.push({x:+px.toFixed(1),z:+pz.toFixed(1),
+        if(remaining&&row.hotspots.length<35)row.hotspots.push({x:+px.toFixed(1),z:+pz.toFixed(1),
           lakeId:lake.id,level:row.level,ground:+terrain.toFixed(2),
           missingDepth:+below.toFixed(2),occupancy:+mask.toFixed(3),kind:'mask-exclusion'});
        }
@@ -4906,14 +4923,17 @@ const worldMapCache=new Map();
    report.lakes.push(row);top.push(...row.hotspots);
    report.totals.lakes++;report.totals.boundaryEdges+=row.boundaryEdges;
    report.totals.samples+=row.samples;report.totals.maskExclusion+=row.maskExclusion;
+   report.totals.remainingMaskExclusion+=row.remainingMaskExclusion;
+   report.totals.improvedSamples+=row.improvedSamples;
    report.totals.wetMaskAboveGround+=row.wetMaskAboveGround;
   }
   report.hotspots=top.sort((a,b)=>b.missingDepth-a.missingDepth).slice(0,150);
   lakeQaReport=report;
   const t=report.totals;
   $('lakeQaStatus').textContent='Innsjøtest: '+t.lakes+' innsjøer, '+t.samples+
-   ' prøver, '+t.maskExclusion+' mulig manglende vanndekning ved maskekant, '+
-   t.wetMaskAboveGround+' maskeprøver over vannkoten. Røde punkter = kontrollsteder, ikke bekreftede hull.';
+   ' prøver, '+t.maskExclusion+' opprinnelige maskekandidater, '+
+   t.improvedSamples+' dekkes av ny maske, '+t.remainingMaskExclusion+
+   ' gjenstår; '+t.wetMaskAboveGround+' maskeprøver over vannkoten. Røde punkter = gjenværende kandidater.';
   $('lakeQaExport').disabled=false;worldMapDraw();
   console.info('[AFTERFALL lake QA]',report);
  }
@@ -4921,7 +4941,7 @@ const worldMapCache=new Map();
   if(!lakeQaReport)return;
   const blob=new Blob([JSON.stringify(lakeQaReport,null,2)],{type:'application/json'}),
    url=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=url;a.download='afterfall-f452a-innsjo-test-'+new Date().toISOString().slice(0,10)+'.json';
+  a.href=url;a.download='afterfall-f452b-innsjo-test-'+new Date().toISOString().slice(0,10)+'.json';
   a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
  }
 let worldMapSelected=null;
@@ -5095,7 +5115,7 @@ function worldMapDraw(){
  ctx.beginPath();ctx.arc(px,pz,6,0,Math.PI*2);ctx.fillStyle='#f8d36d';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#162117';ctx.stroke();
  ctx.fillStyle='#f9ffff';ctx.font='bold 12px sans-serif';ctx.fillText('N ↑',12,19);
  if(worldMapSelected){const [x,z]=point(worldMapSelected.x,worldMapSelected.z);ctx.beginPath();ctx.arc(x,z,7,0,Math.PI*2);ctx.strokeStyle='#ffffff';ctx.lineWidth=1.4;ctx.stroke();}
- // Diagnostics: red = lake-mask exclusion despite terrain below water level.
+ // Diagnostics: red = remaining lake-mask exclusions after f.4.5.2B.
  if(lakeQaReport){
   ctx.fillStyle='#fa4545';ctx.strokeStyle='#ffdddd';ctx.lineWidth=.6;
   for(const candidate of lakeQaReport.hotspots){
