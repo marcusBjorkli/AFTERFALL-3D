@@ -3135,8 +3135,10 @@ function buildChunkRivers(cx,cz,lod){
   if(len<.001)continue;
   const alpine=Number.isInteger(seg.alpineSource);
   const nx=-dz/len,nz=dx/len;
-  const aLake=junctionLakeAt(a.x,a.z),bLake=junctionLakeAt(b.x,b.z);
-  const joinCandidate=!!(aLake&&aLake.share>.035||bLake&&bLake.share>.035);
+  const aLake=junctionLakeAt(a.x,a.z),bLake=junctionLakeAt(b.x,b.z),
+   midLake=junctionLakeAt((a.x+b.x)*.5,(a.z+b.z)*.5);
+  const joinCandidate=!!(aLake&&aLake.share>.035||
+   bLake&&bLake.share>.035||midLake&&midLake.share>.035);
   // Subdivide more finely at river-to-lake intersections, matching the
   // fine 1 m shoreline triangulation; inland river tessellation is unchanged.
   const parts=Math.max(1,Math.ceil(len/(alpine||joinCandidate?1:4))),
@@ -3622,6 +3624,9 @@ $('diagActualMesh').onclick=()=>{
   '\\nLastede punkter '+t.loaded+', utenfor lastede chunks '+t.unloaded+
   '\\nVannmesh på hydrologisk tørt punkt '+t.dryClassifiedWithWater+
   '\\nFlere vanntyper '+t.multipleWaterTypes+
+  ' | elv/innsjø-overlapp '+t.riverLakeOverlapSamples+
+  ' | største nivåforskjell '+t.riverLakeHeightDifferenceMax.toFixed(3)+' m'+
+  '\\nForventet elv uten elv- eller innsjømesh '+t.riverExpectedWithoutMesh+
   '\\nHydrologisk vått uten vannmesh '+t.classifiedWetWithoutWater+
   '\\nTerrengmesh uten treff '+t.terrainRayMiss+
   '\\nInnsjømesh på gammel tørr hydrocelle '+t.nearestCellDryWithLakeMesh+
@@ -5446,7 +5451,9 @@ function shoreMeshQa(){
   const origin=new THREE.Vector3(),hitsByType=new Map();
   const counters={samplePoints:0,loaded:0,unloaded:0,waterPresent:0,dryClassifiedWithWater:0,
    classifiedWetWithoutWater:0,multipleWaterTypes:0,nearestCellDryWithLakeMesh:0,
-   aboveTerrain:0,terrainRayMiss:0,shoreContourSamples:0,shoreContourBelowWater:0,
+   aboveTerrain:0,terrainRayMiss:0,riverLakeOverlapSamples:0,
+   riverLakeHeightDifferenceMax:0,riverExpectedWithoutMesh:0,
+   shoreContourSamples:0,shoreContourBelowWater:0,
    correctedShoreSamples:0,maxShoreLift:0,steepCorrectedBankSamples:0};
   const records=[],topProblems=[],missingKeys=new Set();
   const rayHeight=(meshes,x,z)=>{
@@ -5506,6 +5513,12 @@ function shoreMeshQa(){
    if(!land.length)counters.terrainRayMiss++;
    if(types.length)counters.waterPresent++;
    if(types.length>1)counters.multipleWaterTypes++;
+   if(lake.length&&river.length){
+    counters.riverLakeOverlapSamples++;
+    const diff=Math.max(...lake.map(y=>Math.min(...river.map(v=>Math.abs(y-v)))));
+    counters.riverLakeHeightDifferenceMax=Math.max(counters.riverLakeHeightDifferenceMax,diff);
+   }
+   if(riverExpected&&!river.length&&!lake.length)counters.riverExpectedWithoutMesh++;
    if(water!==null&&!wetExpected)counters.dryClassifiedWithWater++;
    if(water===null&&wetExpected)counters.classifiedWetWithoutWater++;
    if(rise!==null&&rise>.15)counters.aboveTerrain++;
@@ -5520,6 +5533,8 @@ function shoreMeshQa(){
     deltaWaterTerrain:rise===null?null:+rise.toFixed(3),
     wetExpected,hydrology:body?{kind:body.kind,level:body.level,id:body.id??null}:null,
     riverExpected,riverDistance:r?+r.distance.toFixed(2):null,
+    riverLakeHeightDifference:lake.length&&river.length?
+     +Math.max(...lake.map(y=>Math.min(...river.map(v=>Math.abs(y-v))))).toFixed(3):null,
     nearestHydrologyLake:nearestLake,nearestCellDryWithLakeMesh:legacyMismatch,
     lakeMaskOccupancy:body?.kind==='lake'?+waterMaskMembership(x,z,'lake:'+body.id).toFixed(4):
       +(shorelineBPrimary(x,z)?.occupancy||0).toFixed(4),
