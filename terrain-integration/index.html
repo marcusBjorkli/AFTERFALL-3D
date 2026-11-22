@@ -367,7 +367,25 @@ body.prefab-building #constructionOverlay{visibility:hidden!important;pointer-ev
 #prefabStatus[hidden]{display:none!important}
 #prefabStatus h2{font-size:19px}#prefabStatus p{max-width:min(460px,90vw);line-height:1.5}
 #prefabStatus button{min-height:44px}
-#sitePickHud .site-pick-rotation{display:flex;gap:8px;align-items:center;margin:8px 0}#sitePickHud .site-pick-rotation[hidden]{display:none!important}#sitePickHud .site-pick-rotation button{flex:1}#sitePickAngle{min-width:44px;text-align:center}</style></head><body><button id="gradeToggle" type="button">📐 Planering</button><button id="constructionToggle" type="button" hidden>Bygg</button><button id="constructionDoorToggle" type="button" hidden>🚪 Åpne dør</button><button id="buildingStoreToggle" type="button" hidden>📦 Åpne lager</button>
+#sitePickHud .site-pick-rotation{display:flex;gap:8px;align-items:center;margin:8px 0}#sitePickHud .site-pick-rotation[hidden]{display:none!important}#sitePickHud .site-pick-rotation button{flex:1}#sitePickAngle{min-width:44px;text-align:center}
+/* CE 1.1.4C.2.1.1f.4.3.1 – world geography and hydrology atlas */
+#worldMapOverlay[hidden]{display:none!important}
+#worldMapOverlay{position:fixed;inset:0;z-index:125;display:grid;place-items:center;background:#071710f1;padding:calc(8px + env(safe-area-inset-top)) 10px calc(8px + env(safe-area-inset-bottom));color:#ecf4ec}
+#worldMapOverlay article{box-sizing:border-box;width:min(710px,100%);max-height:100%;overflow-y:auto;border-radius:14px;background:#162b24;border:1px solid #749889;padding:clamp(9px,2vw,18px);overscroll-behavior:contain}
+.world-map-header{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:9px}
+.world-map-header h2{font-size:19px;margin:0}
+.world-map-header small{display:block;color:#b9d3c3;font-size:11px;margin-top:3px}
+#worldMapClose{min-height:44px;white-space:normal;font-size:12px}
+.world-map-options{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.world-map-options select{min-height:40px;color:#eef8f4;background:#213e34;border:1px solid #769e8b;border-radius:6px;max-width:100%}
+.world-map-options label{font-size:12px}
+#worldMapCanvas{display:block;width:min(100%,min(560px,60dvh));height:auto;aspect-ratio:1/1;object-fit:contain;touch-action:manipulation;border:1px solid #a0b5a9;border-radius:4px;cursor:crosshair;margin:0 auto}
+.world-map-legend{display:flex;justify-content:center;flex-wrap:wrap;column-gap:11px;row-gap:4px;margin-top:10px;font-size:11px}
+.world-map-stats,#worldMapReadout,.world-map-note{font-size:12px;line-height:1.4;margin:9px 0 0}
+#worldMapReadout{background:#234137;border-radius:7px;padding:8px;min-height:30px}
+.world-map-note{color:#b7c9bc;font-size:11px}
+@media(max-width:500px){#worldMapOverlay article{padding:10px}.world-map-header h2{font-size:16px}#worldMapCanvas{width:min(100%,50dvh)}.world-map-options{gap:5px}}
+</style></head><body><button id="gradeToggle" type="button">📐 Planering</button><button id="constructionToggle" type="button" hidden>Bygg</button><button id="constructionDoorToggle" type="button" hidden>🚪 Åpne dør</button><button id="buildingStoreToggle" type="button" hidden>📦 Åpne lager</button>
 <button id="survivalToggle" type="button" hidden>🛠 Småbygg</button><button id="survivalInteract" type="button" hidden>Bruk konstruksjon</button>
 <div id="needsHud" aria-label="Overlevelsesstatus">🍽️ Mat 100 % · 🔥 Varme 100 %</div>
 <div id="smallPlacementHud" hidden role="group" aria-label="Forhåndsvisning av småbygg">
@@ -402,7 +420,7 @@ body.prefab-building #constructionOverlay{visibility:hidden!important;pointer-ev
  <button id="terrainUseAim" type="button">↳ Bruk kote ved siktekors</button>
  <label class="terrain-lock"><input id="terrainLock" type="checkbox"/> 🔒 Lås grave-/fylledybde</label>
  <div id="terrainReadout" role="status" aria-live="off">Rutenettet følger Marcus. Sikt for å velge målkote.</div>
-</div></div><button id="pileToggle" type="button" aria-controls="pileControls" aria-expanded="false">📦 Åpne haug</button><div id="pileHint" hidden aria-live="off"></div><div id="pileOverlay" class="af-modal-overlay" role="presentation"><div id="pileControls" role="dialog" aria-modal="true" aria-labelledby="pileTitle"><div class="pileHead"><h2 id="pileTitle">Masselager</h2><button id="pileClose" type="button">Lukk ✕</button></div><p id="pileInfo"></p><p id="pileCarry"></p><label for="pileAmount">Overføringsmengde</label><input id="pileAmount" type="number" min="0" step="any" value="10" inputmode="decimal"><div class="pileButtons"><button id="pileTake" type="button">Ta</button><button id="pileTakeMax" type="button">Ta maks</button><button id="pileDrop" type="button">Legg fra</button><button id="pileMove" type="button">Flytt haug</button></div><div id="pileFeedback" role="status"></div></div></div><div id="loadHud">Last: 0 / 300 kg</div><div id="sawOverlay" role="dialog" aria-modal="true" aria-label="Trebearbeiding"><div id="sawCard"><button id="sawClose">Lukk ✕</button><h2>🪚 Trebearbeiding</h2><label for="sawRecipe">Produkt</label><select id="sawRecipe"><option value="planks">Tømmer → planker</option><option value="firewood">Tømmer → ved</option><option value="battens">Planke → lekter</option></select><label for="sawCount">Antall råenheter (1–10)</label><input id="sawCount" type="number" min="1" max="10" value="1" inputmode="numeric"><div id="sawInfo"></div><button id="sawCraft">🪚 Sag materialer</button><button id="sawStation">🪵 Plasser sagbukk (4 pinner)</button></div></div><div id="toolHud" aria-label="Verktøylinje"><button data-tool="shovel" title="Spade">🪏<span>Spade</span></button><button data-tool="pickaxe" title="Hakke">⛏️<span>Hakke</span></button><button data-tool="axe" title="Øks">🪓<span>Øks</span></button><button data-tool="saw" title="Sag">🪚<span>Sag</span></button><button data-tool="hammer" title="Hammer">🔨<span>Hammer</span></button></div><button id="inventoryToggle">🎒 Inventar</button><button id="useTool">Bruk verktøy</button><div id="toolToast" role="status"></div><div id="inventoryPanel"><article><header><h2>🎒 Inventar</h2><button id="inventoryClose">Lukk ✕</button></header><p class="inventory-summary" id="inventorySummary"></p><p id="inventoryToolInfo"></p><table><thead><tr><th>Ressurs</th><th>Antall</th><th>Masse</th><th>Volum</th><th>Lager</th></tr></thead><tbody id="inventoryRows"></tbody></table><p><small>Masselagre, bærekapasitet, graving, oppfylling og bergbryting er aktivert. Saging og trebearbeiding er aktivert. Bygging og materiallevering er aktivert ved godkjente byggeplasser. Inventaret og verktøyvalget lagres lokalt.</small></p></article></div><div id="panel"><article><h2>AFTERFALL 3D · CE 1.1.4C.2.1.1a–c</h2><p>Mobilkontroller C.2.1.1: Med spaden aktiv ligger Grav og Fyll nederst til høyre. Hold inne knappen for gjentatte spadetak. Trykk «⛰️ Koteinnstillinger» for å vise eller endre målkote, høyderutenett og gravedybdestopp; lukk panelet for å grave videre. Plane flater registreres automatisk uten obligatorisk planeringsprosjekt. Småbygg, lager, håndverk og konstruksjonseditoren fungerer som før.</p><p>Verdensfrø 206414. Havnivå = kote 0,00 m. 4096 × 4096 m logisk verden, 64 m chunks, dynamisk lasting. Globalt dreneringsnett, sammenkoblede lokale og globale elvesenterlinjer, variabel elvebredde, finere strandlinjer med terrengtilpasset klipping, hav ved kote 0 og lett shaderbasert vannanimasjon. Dette er en ny hydrologisk testmodell, ikke identisk med elvenettet i 0.4-serien.</p><button id="resume">Fortsett</button><button id="menuBuild" type="button">🏗️ Bygg</button><button id="menuDiag" type="button">🔬 Diagnose</button><button id="menuInventory" type="button">🎒 Inventar</button><button id="save">Lagre</button><button id="load">Last inn</button>
+</div></div><button id="pileToggle" type="button" aria-controls="pileControls" aria-expanded="false">📦 Åpne haug</button><div id="pileHint" hidden aria-live="off"></div><div id="pileOverlay" class="af-modal-overlay" role="presentation"><div id="pileControls" role="dialog" aria-modal="true" aria-labelledby="pileTitle"><div class="pileHead"><h2 id="pileTitle">Masselager</h2><button id="pileClose" type="button">Lukk ✕</button></div><p id="pileInfo"></p><p id="pileCarry"></p><label for="pileAmount">Overføringsmengde</label><input id="pileAmount" type="number" min="0" step="any" value="10" inputmode="decimal"><div class="pileButtons"><button id="pileTake" type="button">Ta</button><button id="pileTakeMax" type="button">Ta maks</button><button id="pileDrop" type="button">Legg fra</button><button id="pileMove" type="button">Flytt haug</button></div><div id="pileFeedback" role="status"></div></div></div><div id="loadHud">Last: 0 / 300 kg</div><div id="sawOverlay" role="dialog" aria-modal="true" aria-label="Trebearbeiding"><div id="sawCard"><button id="sawClose">Lukk ✕</button><h2>🪚 Trebearbeiding</h2><label for="sawRecipe">Produkt</label><select id="sawRecipe"><option value="planks">Tømmer → planker</option><option value="firewood">Tømmer → ved</option><option value="battens">Planke → lekter</option></select><label for="sawCount">Antall råenheter (1–10)</label><input id="sawCount" type="number" min="1" max="10" value="1" inputmode="numeric"><div id="sawInfo"></div><button id="sawCraft">🪚 Sag materialer</button><button id="sawStation">🪵 Plasser sagbukk (4 pinner)</button></div></div><div id="toolHud" aria-label="Verktøylinje"><button data-tool="shovel" title="Spade">🪏<span>Spade</span></button><button data-tool="pickaxe" title="Hakke">⛏️<span>Hakke</span></button><button data-tool="axe" title="Øks">🪓<span>Øks</span></button><button data-tool="saw" title="Sag">🪚<span>Sag</span></button><button data-tool="hammer" title="Hammer">🔨<span>Hammer</span></button></div><button id="inventoryToggle">🎒 Inventar</button><button id="useTool">Bruk verktøy</button><div id="toolToast" role="status"></div><div id="inventoryPanel"><article><header><h2>🎒 Inventar</h2><button id="inventoryClose">Lukk ✕</button></header><p class="inventory-summary" id="inventorySummary"></p><p id="inventoryToolInfo"></p><table><thead><tr><th>Ressurs</th><th>Antall</th><th>Masse</th><th>Volum</th><th>Lager</th></tr></thead><tbody id="inventoryRows"></tbody></table><p><small>Masselagre, bærekapasitet, graving, oppfylling og bergbryting er aktivert. Saging og trebearbeiding er aktivert. Bygging og materiallevering er aktivert ved godkjente byggeplasser. Inventaret og verktøyvalget lagres lokalt.</small></p></article></div><div id="panel"><article><h2>AFTERFALL 3D · CE 1.1.4C.2.1.1a–c</h2><p>Mobilkontroller C.2.1.1: Med spaden aktiv ligger Grav og Fyll nederst til høyre. Hold inne knappen for gjentatte spadetak. Trykk «⛰️ Koteinnstillinger» for å vise eller endre målkote, høyderutenett og gravedybdestopp; lukk panelet for å grave videre. Plane flater registreres automatisk uten obligatorisk planeringsprosjekt. Småbygg, lager, håndverk og konstruksjonseditoren fungerer som før.</p><p>Verdensfrø 206414. Havnivå = kote 0,00 m. 4096 × 4096 m logisk verden, 64 m chunks, dynamisk lasting. Globalt dreneringsnett, sammenkoblede lokale og globale elvesenterlinjer, variabel elvebredde, finere strandlinjer med terrengtilpasset klipping, hav ved kote 0 og lett shaderbasert vannanimasjon. Dette er en ny hydrologisk testmodell, ikke identisk med elvenettet i 0.4-serien.</p><button id="resume">Fortsett</button><button id="menuBuild" type="button">🏗️ Bygg</button><button id="menuDiag" type="button">🔬 Diagnose</button><button id="menuMap" type="button">🗺️ Verdenskart</button><button id="menuInventory" type="button">🎒 Inventar</button><button id="save">Lagre</button><button id="load">Last inn</button>
 <hr style="border:0;border-top:1px solid #ffffff30;margin:14px 0"/>
 <h3 style="margin:8px 0;font-size:16px">Spillverdener</h3>
 <p id="saveSlotStatus" role="status" aria-live="polite">Kontrollerer lagrede spill …</p>
@@ -410,6 +428,16 @@ body.prefab-building #constructionOverlay{visibility:hidden!important;pointer-ev
 <button id="switchGame" type="button" disabled>↔ Bytt til forrige spill</button>
 <p><small>Den nåværende verdenen sikkerhetskopieres før et nytt spill starter. Du kan bytte tilbake uten å miste bygninger, inventar eller terrengarbeid.</small></p>
 <p><small>Ingen endringer i v0.4.7.2 eller originalhistorien.</small></p></article></div>
+<div id="worldMapOverlay" hidden role="presentation">
+ <article role="dialog" aria-modal="true" aria-labelledby="worldMapTitle">
+  <header class="world-map-header"><div><h2 id="worldMapTitle">🗺️ Verdenskart</h2><small>4096 × 4096 m · nord opp · øst til høyre</small></div><button type="button" id="worldMapClose">Tilbake til meny</button></header>
+  <div class="world-map-options"><label for="worldMapMode">Kartlag</label><select id="worldMapMode"><option value="terrain">Terreng og fjell</option><option value="height">Høydekoter</option><option value="water">Hydrologi</option></select><label><input id="worldMapRivers" type="checkbox" checked> Vis elver</label></div>
+  <canvas id="worldMapCanvas" width="512" height="512" aria-label="Kart over terreng, fjellkjeder, elver, innsjøer og hav. Trykk for informasjon om en posisjon."></canvas>
+  <div class="world-map-legend"><span>🟩 Land og gress</span><span>⬜ Fjell</span><span>🟦 Innsjø og elv</span><span>🔵 Hav</span><span>🟡 Spiller</span></div>
+  <p id="worldMapStats" class="world-map-stats"></p><p id="worldMapReadout" role="status">Trykk på kartet for å undersøke kote og terrengtype.</p>
+  <p class="world-map-note">Kartlagene bruker terrenggeneratorens data og hydrologinettverk (32 m rutenett). Lokale grave-/fyllendringer er ikke tegnet inn overalt. Fjellvann er markert, men sammenhengende utløp til lavlandsinnsjøer er foreløpig ikke implementert.</p>
+ </article>
+</div>
 <div id="newGameDialog" hidden role="presentation"><article role="dialog" aria-modal="true" aria-labelledby="newGameTitle">
 <h2 id="newGameTitle">Nytt spill</h2><p id="newGameDescription"></p><p id="newGameFeedback" role="status" aria-live="polite"></p>
 <div class="save-slot-actions"><button id="newGameCancel" type="button">Avbryt</button><button id="newGameConfirm" type="button">Bekreft</button></div>
@@ -4573,8 +4601,105 @@ const gameSlotMenu=installGameSlots({
  getWorldSnapshot:worldSnapshot,getPlayer:()=>p,getWeatherElapsed:()=>weatherState.elapsed,
  reload:()=>location.reload()
 });
-const panel=$('panel');function showPanel(on){if(on){gameSlotMenu.refresh();if(constructionSitePick)constructionSitePickCancel();if(smallPlacement)survivalPlaceCancel();if(activeGrade())$('gradeLevel').value=activeGrade().level.toFixed(1);if(pileMenuOpen)setPileMenu(false);if($('diagOverlay').classList.contains('show'))diagOpen(false)}paused=on||inventoryOpen;panel.classList.toggle('show',on);joyEnd()}$('menuBuild').onclick=()=>{showPanel(false);survivalOpenMenu('build','drawings');};$('menuDiag').onclick=()=>{showPanel(false);diagOpen(true);};$('menuInventory').onclick=()=>{showPanel(false);showInventory(true);};$('menu').onclick=()=>showPanel(true);$('resume').onclick=()=>showPanel(false);$('save').onclick=save;$('load').onclick=()=>{load();showPanel(false)};
+// CE 1.1.4C.2.1.1f.4.3.1 – accessible in-game world atlas.
+// The atlas reads the actual fixed hydrology raster and mountain features.
+// It has no writes to saved state and does not generate a second terrain model.
+const worldMapCache=new Map();
+let worldMapSelected=null;
+function worldMapPalette(h,sea,lake,mountain,mode){
+ if(sea)return [27,88,125];
+ if(lake)return [42,129,164];
+ const e=clamp((h-5)/160,0,1),rock=clamp(mountain/28,0,1);
+ if(mode==='water')return rock>.25?[97,106,99]:[76,111,77];
+ if(mode==='height'){
+  const band=Math.floor(Math.max(0,h)/20),t=clamp((h%20)/20,0,1);
+  const low=Math.max(0,65+Math.min(9,band)*9),shade=t<.10?-.18:0;
+  return [clamp(low*(.88+shade),0,255),clamp((139+band*7)*(1+shade),0,255),clamp(68+band*8,0,255)];
+ }
+ const grass=[60+e*38,111-e*27,65+e*16];
+ const stone=[101+e*50,106+e*44,105+e*43];
+ return grass.map((v,i)=>Math.round(v*(1-rock)+stone[i]*rock));
+}
+function worldMapRaster(mode){
+ if(worldMapCache.has(mode))return worldMapCache.get(mode);
+ const raster=document.createElement('canvas');raster.width=HY_N;raster.height=HY_N;
+ const context=raster.getContext('2d'),data=context.createImageData(HY_N,HY_N);
+ for(let j=0;j<HY_N;j++)for(let i=0;i<HY_N;i++){
+  const id=hydId(i,j),x=i*HY_STEP,z=j*HY_STEP,h=hydroHeight[id]-PAD_H;
+  const sea=!!hydroOcean[id]&&h<.35,li=hydroLakeId[id];
+  const lake=li>=0&&hydroLakes[li]?.active&&h<hydroLakes[li].level-.04;
+  const mountain=mountainRise(x,z);
+  const c=worldMapPalette(h,sea,lake,mountain,mode),offset=id*4;
+  data.data[offset]=c[0];data.data[offset+1]=c[1];data.data[offset+2]=c[2];data.data[offset+3]=255;
+ }
+ context.putImageData(data,0,0);worldMapCache.set(mode,raster);return raster;
+}
+function worldMapDetails(x,z){
+ x=clamp(x,0,WORLD);z=clamp(z,0,WORLD);
+ const ix=clamp(Math.round(x/HY_STEP),0,HY_N-1),iz=clamp(Math.round(z/HY_STEP),0,HY_N-1),id=hydId(ix,iz);
+ const h=ground(x,z),rise=mountainRise(x,z),li=hydroLakeId[id],alpine=mountainLakeAt(x,z),river=riverSample(x,z);
+ const sea=!!hydroOcean[id]&&hydroHeight[id]<.35;
+ let type=sea?'Hav':alpine?'Fjellvann':li>=0&&hydroLakes[li]?.active?'Innsjø':rise>6?'Fjell / høyland':'Land';
+ if(river&&river.distance<river.width*1.1)type='Elv / elvedal';
+ const extra=river&&river.distance<river.width*1.8?' · Elv: bredde '+river.width.toFixed(1)+' m, vannkote '+river.water.toFixed(1)+' m':'';
+ $('worldMapReadout').textContent='X '+x.toFixed(0)+' m · Z '+z.toFixed(0)+' m · Terrengkote '+h.toFixed(1)+' m · '+type+
+  (rise>6?' · Fjellbidrag '+rise.toFixed(1)+' m':'')+extra;
+}
+function worldMapDraw(){
+ if($('worldMapOverlay').hidden||!hydroHeight)return;
+ const canvas=$('worldMapCanvas'),ctx=canvas.getContext('2d'),n=canvas.width;
+ const mode=$('worldMapMode').value;
+ ctx.clearRect(0,0,n,n);
+ ctx.imageSmoothingEnabled=true;ctx.drawImage(worldMapRaster(mode),0,0,n,n);
+ const point=(x,z)=>[x*n/WORLD,z*n/WORLD];
+ // Horizontal and vertical 512 m reference lines.
+ ctx.lineWidth=.6;ctx.strokeStyle='#ebf8e633';ctx.beginPath();
+ for(let d=512;d<WORLD;d+=512){const v=d*n/WORLD;ctx.moveTo(v,0);ctx.lineTo(v,n);ctx.moveTo(0,v);ctx.lineTo(n,v)}
+ ctx.stroke();
+ if($('worldMapRivers').checked){
+  ctx.strokeStyle='#083c5e';ctx.lineWidth=2.8;ctx.beginPath();
+  for(const seg of riverSegments){const a=point(seg.a.x,seg.a.z),b=point(seg.b.x,seg.b.z);ctx.moveTo(...a);ctx.lineTo(...b)}
+  ctx.stroke();ctx.strokeStyle='#7ddaf3';ctx.lineWidth=1.4;ctx.stroke();
+ }
+ for(const cap of MOUNTAIN_PLATEAUS){
+  if(!cap.hasLake)continue;
+  const [cx,cz]=point(cap.x,cap.z),rad=26*n/WORLD;
+  ctx.beginPath();ctx.arc(cx,cz,Math.max(rad,2.5),0,Math.PI*2);
+  ctx.fillStyle='#2b95cb';ctx.fill();ctx.strokeStyle='#cff6ff';ctx.lineWidth=.8;ctx.stroke();
+ }
+ // Important geographic points: summit groups (small pale triangles).
+ ctx.fillStyle='#d3d4c6';
+ for(const peak of MOUNTAIN_SPIRES){const [x,z]=point(peak.x,peak.z);ctx.beginPath();ctx.moveTo(x,z-2.7);ctx.lineTo(x-2,z+1.8);ctx.lineTo(x+2,z+1.8);ctx.closePath();ctx.fill();}
+ const [sx,sz]=point(PAD_X,PAD_Z);
+ ctx.strokeStyle='#f8f3e3';ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(sx-5,sz);ctx.lineTo(sx+5,sz);ctx.moveTo(sx,sz-5);ctx.lineTo(sx,sz+5);ctx.stroke();
+ const [px,pz]=point(p.x,p.z);
+ ctx.beginPath();ctx.arc(px,pz,6,0,Math.PI*2);ctx.fillStyle='#f8d36d';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#162117';ctx.stroke();
+ ctx.fillStyle='#f9ffff';ctx.font='bold 12px sans-serif';ctx.fillText('N ↑',12,19);
+ if(worldMapSelected){const [x,z]=point(worldMapSelected.x,worldMapSelected.z);ctx.beginPath();ctx.arc(x,z,7,0,Math.PI*2);ctx.strokeStyle='#ffffff';ctx.lineWidth=1.4;ctx.stroke();}
+ const activeLakes=hydroLakes.filter(v=>v.active).length,hasOcean=hydroOcean.some(v=>v===1);
+ $('worldMapStats').textContent='Elvestrekninger: '+riverSegments.length+' · Innsjøer: '+activeLakes+
+  ' · Fjellvann: '+MOUNTAIN_PLATEAUS.filter(v=>v.hasLake).length+
+  ' · Hav: '+(hasOcean?'Ja':'Nei')+' · Spiller X '+p.x.toFixed(0)+', Z '+p.z.toFixed(0);
+}
+function worldMapOpen(){
+ $('worldMapOverlay').hidden=false;worldMapSelected={x:p.x,z:p.z};
+ worldMapDetails(p.x,p.z);
+ requestAnimationFrame(worldMapDraw);
+}
+function worldMapClose(){$('worldMapOverlay').hidden=true;worldMapSelected=null;}
+$('worldMapClose').onclick=worldMapClose;
+$('worldMapMode').onchange=worldMapDraw;
+$('worldMapRivers').onchange=worldMapDraw;
+$('worldMapCanvas').addEventListener('pointerdown',e=>{
+ const rect=e.currentTarget.getBoundingClientRect();
+ worldMapSelected={x:clamp((e.clientX-rect.left)/rect.width*WORLD,0,WORLD),
+ z:clamp((e.clientY-rect.top)/rect.height*WORLD,0,WORLD)};
+ worldMapDetails(worldMapSelected.x,worldMapSelected.z);worldMapDraw();
+});
+
+const panel=$('panel');function showPanel(on){if(on){gameSlotMenu.refresh();if(constructionSitePick)constructionSitePickCancel();if(smallPlacement)survivalPlaceCancel();if(activeGrade())$('gradeLevel').value=activeGrade().level.toFixed(1);if(pileMenuOpen)setPileMenu(false);if($('diagOverlay').classList.contains('show'))diagOpen(false)}paused=on||inventoryOpen;panel.classList.toggle('show',on);joyEnd()}$('menuBuild').onclick=()=>{showPanel(false);survivalOpenMenu('build','drawings');};$('menuDiag').onclick=()=>{showPanel(false);diagOpen(true);};$('menuMap').onclick=worldMapOpen;$('menuInventory').onclick=()=>{showPanel(false);showInventory(true);};$('menu').onclick=()=>showPanel(true);$('resume').onclick=()=>showPanel(false);$('save').onclick=save;$('load').onclick=()=>{load();showPanel(false)};
 addEventListener('keydown',e=>{
+ if(!$('worldMapOverlay').hidden){if(e.key==='Escape'){e.preventDefault();worldMapClose();}return;}
  if(!$('newGameDialog').hidden){if(e.key==='Escape'){e.preventDefault();gameSlotMenu.close()}return;}
  if(constructionSitePick){
  if(e.key==='Escape'){e.preventDefault();constructionSitePickCancel();}
