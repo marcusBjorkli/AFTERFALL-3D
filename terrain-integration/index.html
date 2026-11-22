@@ -434,7 +434,7 @@ body.prefab-building #constructionOverlay{visibility:hidden!important;pointer-ev
   <div class="world-map-options"><label for="worldMapMode">Kartlag</label><select id="worldMapMode"><option value="terrain">Terreng og fjell</option><option value="height">Høydekoter</option><option value="water">Hydrologi</option></select><label><input id="worldMapRivers" type="checkbox" checked> Vis elver</label></div>
   <canvas id="worldMapCanvas" width="512" height="512" aria-label="Kart over terreng, fjellkjeder, elver, innsjøer og hav. Trykk for informasjon om en posisjon."></canvas>
   <div class="world-map-legend"><span>🟩 Land og gress</span><span>⬜ Fjell</span><span>🟦 Innsjø og elv</span><span>🔵 Hav</span><span>🟡 Spiller</span><span>🩵 Fjellvannutløp</span><span>⚪ Fosser</span></div>
-  <div class="world-map-options"><button type="button" id="worldMapTravel" disabled>⚡ Hurtigreis</button><button type="button" id="worldMapObserve">📋 Registrer funn</button><button type="button" id="worldMapExport">⬇ Eksporter logg</button><button type="button" id="lakeQaRun">🔎 Test innsjøbredder</button><button type="button" id="lakeQaLocal">📍 Test området rundt spilleren</button><button type="button" id="shoreMeshQa">📐 Mål vann- og terrengmesh</button><button type="button" id="shoreRaiseToggle">🧪 Test lokal terrengheving (av)</button><button type="button" id="lakeQaExport" disabled>⬇ Innsjørapport</button></div><p id="worldMapTravelStatus" role="status">Velg et punkt på kartet.</p><p id="lakeQaStatus" role="status" aria-live="polite"></p><p id="worldMapStats" class="world-map-stats"></p><p id="worldMapReadout" role="status">Trykk på kartet for å undersøke kote og terrengtype.</p>
+  <div class="world-map-options"><button type="button" id="worldMapTravel" disabled>⚡ Hurtigreis</button><button type="button" id="worldMapObserve">📋 Registrer funn</button><button type="button" id="worldMapExport">⬇ Eksporter logg</button><button type="button" id="lakeQaRun">🔎 Test innsjøbredder</button><button type="button" id="lakeQaLocal">📍 Test området rundt spilleren</button><button type="button" id="shoreMeshQa">📐 Mål vann- og terrengmesh</button><button type="button" id="shoreRaiseToggle">🧪 Test lokal terrengheving (av)</button><button type="button" id="shoreBCompare">🏖️ Strandkorrigering f.4.6.2B (på)</button><button type="button" id="lakeQaExport" disabled>⬇ Innsjørapport</button></div><p id="worldMapTravelStatus" role="status">Velg et punkt på kartet.</p><p id="lakeQaStatus" role="status" aria-live="polite"></p><p id="worldMapStats" class="world-map-stats"></p><p id="worldMapReadout" role="status">Trykk på kartet for å undersøke kote og terrengtype.</p>
   <p class="world-map-note">Kartlagene bruker terrenggeneratorens data og hydrologinettverk (32 m rutenett). Lokale grave-/fyllendringer er ikke tegnet inn overalt. Fjellvannenes utløp følger nå beregnede nedstrøms ruter. f.4.5.2C bruker nå identisk firetrekant-vifte som synlig terreng (alle LOD), og registrerer meshstatistikk i innsjørapporten. Havmasken er uendret. Hurtigreise gjelder kun testing. Landingspunkter kontrolleres for vann, bratt terreng og hindringer. Eksporter observasjoner i JSON.</p>
  </article>
 </div>
@@ -3402,9 +3402,9 @@ function diagTriangleContains(px,pz,ax,az,bx,bz,cx,cz){const v0x=cx-ax,v0z=cz-az
 // Bygg 2D celleindeks for faktiske vanntriangler; kun aktivert ved eksplisitt diagnostisk skanning.
 function diagIndex(meshes,x0,z0){const cells=new Map(),step=8;for(const [mesh,kind] of meshes){const pos=mesh.geometry.getAttribute('position'),ind=mesh.geometry.getIndex();if(!pos||!ind)continue;for(let i=0;i+2<ind.count;i+=3){const ids=[ind.getX(i),ind.getX(i+1),ind.getX(i+2)],v=ids.map(k=>[pos.getX(k)+PAD_X,pos.getZ(k)+PAD_Z]);const minx=Math.min(...v.map(a=>a[0])),maxx=Math.max(...v.map(a=>a[0])),minz=Math.min(...v.map(a=>a[1])),maxz=Math.max(...v.map(a=>a[1]));for(let j=Math.floor((minz-z0)/step);j<=Math.floor((maxz-z0)/step);j++)for(let k=Math.floor((minx-x0)/step);k<=Math.floor((maxx-x0)/step);k++){if(k<0||j<0||k>=24||j>=24)continue;const key=k+','+j;let arr=cells.get(key);if(!arr){arr=[];cells.set(key,arr)}arr.push({v,kind})}}}return cells}
 function diagMarker(x,z,color){const y=ground(x,z)+.32,geo=new THREE.PlaneGeometry(3.4,3.4);geo.rotateX(-Math.PI/2);const mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity:.85,depthTest:false,depthWrite:false,side:THREE.DoubleSide});const mesh=new THREE.Mesh(geo,mat);mesh.position.set(x-PAD_X,y,z-PAD_Z);mesh.renderOrder=15;mesh.userData.diagOwnMaterial=true;diagAdd(mesh)}
-function diagScan(){const centerX=Math.floor(p.x/64),centerZ=Math.floor(p.z/64),cx=Math.max(0,centerX-1),cz=Math.max(0,centerZ-1),x0=cx*64,z0=cz*64,near=[];for(const c of terrainChunks.values())if(c.cx>=cx&&c.cx<cx+3&&c.cz>=cz&&c.cz<cz+3){if(c.water)near.push([c.water,'river']);for(const m of c.stillWater)near.push([m,diagMeshKind(m,c)])}const index=diagIndex(near,x0,z0),step=8;let missing=0,overlap=0,samples=0,water=0;for(let j=0;j<24;j++)for(let i=0;i<24;i++){const x=x0+i*step+step/2,z=z0+j*step+step/2;if(x>=WORLD||z>=WORLD)continue;const arr=index.get(i+','+j)||[],kinds=new Set();for(const t of arr)if(diagTriangleContains(x,z,t.v[0][0],t.v[0][1],t.v[1][0],t.v[1][1],t.v[2][0],t.v[2][1]))kinds.add(t.kind);const body=waterBodyAt(x,z),river=riverSample(x,z),riverExpected=river&&river.distance<river.width*.77,expected=!!body||!!riverExpected;if(expected)water++;samples++;if(expected&&!kinds.size){missing++;if(diag.coverage)diagMarker(x,z,0xff4141)}if(kinds.size>1){overlap++;if(diag.coverage)diagMarker(x,z,0xe050fa)}}return {missing,overlap,samples,expected:water,nearMeshes:near.length,area:[x0,z0,x0+192,z0+192]}}
+function diagScan(){const centerX=Math.floor(p.x/64),centerZ=Math.floor(p.z/64),cx=Math.max(0,centerX-1),cz=Math.max(0,centerZ-1),x0=cx*64,z0=cz*64,near=[];for(const c of terrainChunks.values())if(c.cx>=cx&&c.cx<cx+3&&c.cz>=cz&&c.cz<cz+3){if(c.water)near.push([c.water,'river']);for(const m of c.stillWater)near.push([m,diagMeshKind(m,c)])}const index=diagIndex(near,x0,z0),step=8;let missing=0,overlap=0,samples=0,water=0;for(let j=0;j<24;j++)for(let i=0;i<24;i++){const x=x0+i*step+step/2,z=z0+j*step+step/2;if(x>=WORLD||z>=WORLD)continue;const arr=index.get(i+','+j)||[],kinds=new Set();for(const t of arr)if(diagTriangleContains(x,z,t.v[0][0],t.v[0][1],t.v[1][0],t.v[1][1],t.v[2][0],t.v[2][1]))kinds.add(t.kind);const body=waterBodyAt(x,z,ground(x,z)),river=riverSample(x,z),riverExpected=river&&river.distance<river.width*.77,expected=!!body||!!riverExpected;if(expected)water++;samples++;if(expected&&!kinds.size){missing++;if(diag.coverage)diagMarker(x,z,0xff4141)}if(kinds.size>1){overlap++;if(diag.coverage)diagMarker(x,z,0xe050fa)}}return {missing,overlap,samples,expected:water,nearMeshes:near.length,area:[x0,z0,x0+192,z0+192]}}
 function diagRefresh(runScan=false){if(!scene)return;diagClear();if(!diag.on)return;let riverCount=0,lakeCount=0,seaCount=0,riverTriangles=0,stillTriangles=0;for(const c of terrainChunks.values()){if(diag.chunks)diagChunkGrid(c);const meshes=[];if(c.water)meshes.push(c.water);meshes.push(...c.stillWater);for(const mesh of meshes){const kind=diagMeshKind(mesh,c),triangles=mesh.geometry.getIndex()?.count/3||0;if(kind==='river'){riverCount++;riverTriangles+=triangles}else if(kind==='sea'){seaCount++;stillTriangles+=triangles}else{lakeCount++;stillTriangles+=triangles}if(diag.colors){diag.materials.set(mesh,mesh.material);mesh.material=diagMats[kind]}if(diag.edges)diagWaterEdges(mesh);if(diag.shore&&kind!=='river')diagShoreSegments(mesh)}}
- const hi=clamp(Math.round(p.x/HY_STEP),0,HY_N-1),hj=clamp(Math.round(p.z/HY_STEP),0,HY_N-1),id=hydId(hi,hj),lake=hydroLakeId[id],r=riverSample(p.x,p.z),body=waterBodyAt(p.x,p.z);let report=`AFTERFALL 3D ${$('releaseVersion').textContent.trim()} · hydrologisk oversikt (ikke 3D-meshtest)\nSeed ${SEED} | X ${p.x.toFixed(1)} Z ${p.z.toFixed(1)}\nChunk ${Math.floor(p.x/64)},${Math.floor(p.z/64)} | aktive ${terrainChunks.size}\nHydroraster ${hi},${hj} (id ${id}) | kote ${hydroHeight[id].toFixed(2)} m\nHavcelle ${!!hydroOcean[id]} | innsjø-ID ${lake} | innsjøkote ${lake>=0?hydroLakes[lake].level.toFixed(2):'-'}\nwaterBodyAt ${body?body.kind+' @ '+body.level.toFixed(2):'ingen'}\nElv nærmest ${r?r.distance.toFixed(2)+' m fra senterlinje, bredde '+r.width.toFixed(2)+' m':'ingen'}\nTerrengkote ${(ground(p.x,p.z)+PAD_H).toFixed(2)} m\nAktive mesher: elv ${riverCount}, innsjø ${lakeCount}, hav ${seaCount}\nTrekanter: elv ${riverTriangles}, innsjø/hav ${stillTriangles}\nElvegeometri siden oppstart: delsegmenter ${riverGeometryStats.segments}, reparerte ${riverGeometryStats.repaired}, avviste degenererte ${riverGeometryStats.rejected}`;
+ const hi=clamp(Math.round(p.x/HY_STEP),0,HY_N-1),hj=clamp(Math.round(p.z/HY_STEP),0,HY_N-1),id=hydId(hi,hj),lake=hydroLakeId[id],r=riverSample(p.x,p.z),body=waterBodyAt(p.x,p.z,ground(p.x,p.z));let report=`AFTERFALL 3D ${$('releaseVersion').textContent.trim()} · hydrologisk oversikt (ikke 3D-meshtest)\nSeed ${SEED} | X ${p.x.toFixed(1)} Z ${p.z.toFixed(1)}\nChunk ${Math.floor(p.x/64)},${Math.floor(p.z/64)} | aktive ${terrainChunks.size}\nHydroraster ${hi},${hj} (id ${id}) | kote ${hydroHeight[id].toFixed(2)} m\nHavcelle ${!!hydroOcean[id]} | innsjø-ID ${lake} | innsjøkote ${lake>=0?hydroLakes[lake].level.toFixed(2):'-'}\nwaterBodyAt ${body?body.kind+' @ '+body.level.toFixed(2):'ingen'}\nElv nærmest ${r?r.distance.toFixed(2)+' m fra senterlinje, bredde '+r.width.toFixed(2)+' m':'ingen'}\nTerrengkote ${(ground(p.x,p.z)+PAD_H).toFixed(2)} m\nAktive mesher: elv ${riverCount}, innsjø ${lakeCount}, hav ${seaCount}\nTrekanter: elv ${riverTriangles}, innsjø/hav ${stillTriangles}\nElvegeometri siden oppstart: delsegmenter ${riverGeometryStats.segments}, reparerte ${riverGeometryStats.repaired}, avviste degenererte ${riverGeometryStats.rejected}`;
  if(runScan||diag.coverage){const v=diagScan();report+=`\nDiagnostisk 192×192 m område: ${v.area.join(', ')}\nPrøvepunkter ${v.samples} | forventet vått ${v.expected}\nMulig manglende dekning ${v.missing} | overlapp mellom vanntyper ${v.overlap}\nMerk: 8 m prøvepunkter, forventning bruker waterBodyAt/riverSample; falske positiver mulige.`}
  diag.lastReport=report;$('diagStats').textContent=report}
 // DIAG.1: Menyens synlighet er uavhengig av diagnoseobjektenes levetid.
@@ -5299,7 +5299,7 @@ const worldMapCache=new Map();
    const waterHeights={river,lake,sea,alpine};
    const types=Object.keys(waterHeights).filter(k=>waterHeights[k].length);
    const hTerrain=land[0]??null,water=types.length?Math.max(...types.flatMap(k=>waterHeights[k])):null;
-   const body=waterBodyAt(x,z),r=riverSample(x,z);
+   const body=waterBodyAt(x,z,ground(x,z)),r=riverSample(x,z);
    const riverExpected=!!(r&&r.distance<r.width&&ground(x,z)<r.water-PAD_H+.12);
    const wetExpected=!!body||!!mountainLakeAt(x,z)||riverExpected;
    const rise=hTerrain!==null&&water!==null?water-hTerrain:null;
@@ -5351,6 +5351,15 @@ const worldMapCache=new Map();
  // updateChunks(true) alone does not regenerate same-LOD chunks.
  for(const [key,chunk] of terrainChunks){disposeChunk(chunk);terrainChunks.delete(key)}
  updateChunks(true);updateCamera();
+}
+function shoreBCompare(){
+ SHORE_B.enabled=!SHORE_B.enabled;
+ shoreRaiseRebuild();
+ $('shoreBCompare').textContent=SHORE_B.enabled?
+  '🏖️ Strandkorrigering f.4.6.2B (på)':'🏖️ Strandkorrigering f.4.6.2B (av)';
+ $('lakeQaStatus').textContent='Strandkorrigering '+(SHORE_B.enabled?'PÅ':'AV')+
+  ' · Innsjø 18 rundt X '+SHORE_B.x+', Z '+SHORE_B.z+
+  ' · Felles vannklassifisering er alltid aktiv. Kjør 3D-meshtesten før/etter.';
 }
 function shoreRaiseToggle(){
  const e=shoreRaiseExperiment;
@@ -5410,7 +5419,7 @@ let worldMapSelected=null;
   const safe=(a,b)=>{
    if(a<2||b<2||a>WORLD-2||b>WORLD-2)return false;
    const h=ground(a,b),r=riverSample(a,b);
-   return Number.isFinite(h)&&h>.15&&!waterBodyAt(a,b)&&!mountainLakeAt(a,b)
+   return Number.isFinite(h)&&h>.15&&!waterBodyAt(a,b,h)&&!mountainLakeAt(a,b)
     &&(!r||r.distance>=r.width+2)&&!collides(a-PAD_X,b-PAD_Z)
     &&Math.abs(ground(a+1,b)-h)<1.4&&Math.abs(ground(a-1,b)-h)<1.4
     &&Math.abs(ground(a,b+1)-h)<1.4&&Math.abs(ground(a,b-1)-h)<1.4;
@@ -5485,7 +5494,7 @@ function worldTerrainQuality(){
   protectedSites=legacyTerrainAnchors.filter(q=>q.status!=='active').length;
  const wetProtected=legacyTerrainAnchors.filter(q=>{
   const x=(q.x0+q.x1)*.5,z=(q.z0+q.z1)*.5;
-  const water=waterBodyAt(x,z)||mountainLakeAt(x,z);
+  const water=waterBodyAt(x,z,ground(x,z))||mountainLakeAt(x,z);
   return !!(water&&Number.isFinite(water.level)&&water.level>q.level+.15);
  }).length;
  worldTerrainQA={...edges,risingRivers,invalidRivers,underTerrain,review,protectedSites,wetProtected};
@@ -5494,9 +5503,10 @@ function worldTerrainQuality(){
 function worldMapDetails(x,z){
  x=clamp(x,0,WORLD);z=clamp(z,0,WORLD);
  const ix=clamp(Math.round(x/HY_STEP),0,HY_N-1),iz=clamp(Math.round(z/HY_STEP),0,HY_N-1),id=hydId(ix,iz);
- const h=ground(x,z),rise=mountainRise(x,z),li=hydroLakeId[id],alpine=mountainLakeAt(x,z),river=riverSample(x,z);
- const sea=!!hydroOcean[id]&&hydroHeight[id]<.35;
- let type=sea?'Hav':alpine?'Fjellvann':li>=0&&hydroLakes[li]?.active?'Innsjø':rise>6?'Fjell / høyland':'Land';
+ const h=ground(x,z),rise=mountainRise(x,z),body=waterBodyAt(x,z,h),
+  alpine=mountainLakeAt(x,z),river=riverSample(x,z);
+ let type=body?.kind==='sea'?'Hav':alpine?'Fjellvann':
+  body?.kind==='lake'?'Innsjø':rise>6?'Fjell / høyland':'Land';
  if(river&&river.distance<river.width*1.1)type='Elv / elvedal';
  const extra=river&&river.distance<river.width*1.8?' · Elv: bredde '+river.width.toFixed(1)+' m, vannkote '+river.water.toFixed(1)+' m':'';
  const nearOutlet=alpineOutlets.map(o=>({
@@ -5568,7 +5578,7 @@ function worldMapDraw(){
  // Diagnostics: red = remaining lake-mask exclusions after f.4.5.2B.
  if(lakeQaReport){
   ctx.fillStyle='#fa4545';ctx.strokeStyle='#ffdddd';ctx.lineWidth=.6;
-  for(const candidate of lakeQaReport.hotspots){
+  for(const candidate of lakeQaReport.hotspots||[]){
    const [x,z]=point(candidate.x,candidate.z);
    ctx.beginPath();ctx.arc(x,z,3.2,0,Math.PI*2);ctx.fill();ctx.stroke();
   }
@@ -5606,6 +5616,7 @@ $('lakeQaRun').onclick=lakeQaRun;
  $('lakeQaLocal').onclick=lakeQaLocal;
  $('shoreMeshQa').onclick=shoreMeshQa;
  $('shoreRaiseToggle').onclick=shoreRaiseToggle;
+ $('shoreBCompare').onclick=shoreBCompare;
  $('lakeQaExport').onclick=lakeQaExport;
  $('worldMapTravel').onclick=qaFastTravel;
  $('worldMapObserve').onclick=()=>{$('worldMapTravelStatus').textContent='Observasjon registrert: '+qaLog('observation','Manuell inspeksjon')+' loggposter.';};
