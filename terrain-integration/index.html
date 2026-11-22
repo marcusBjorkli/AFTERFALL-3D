@@ -435,7 +435,7 @@ body.prefab-building #constructionOverlay{visibility:hidden!important;pointer-ev
   <canvas id="worldMapCanvas" width="512" height="512" aria-label="Kart over terreng, fjellkjeder, elver, innsjøer og hav. Trykk for informasjon om en posisjon."></canvas>
   <div class="world-map-legend"><span>🟩 Land og gress</span><span>⬜ Fjell</span><span>🟦 Innsjø og elv</span><span>🔵 Hav</span><span>🟡 Spiller</span><span>🩵 Fjellvannutløp</span><span>⚪ Fosser</span></div>
   <div class="world-map-options"><button type="button" id="worldMapTravel" disabled>⚡ Hurtigreis</button><button type="button" id="worldMapObserve">📋 Registrer funn</button><button type="button" id="worldMapExport">⬇ Eksporter logg</button><button type="button" id="lakeQaRun">🔎 Test innsjøbredder</button><button type="button" id="lakeQaExport" disabled>⬇ Innsjørapport</button></div><p id="worldMapTravelStatus" role="status">Velg et punkt på kartet.</p><p id="lakeQaStatus" role="status" aria-live="polite"></p><p id="worldMapStats" class="world-map-stats"></p><p id="worldMapReadout" role="status">Trykk på kartet for å undersøke kote og terrengtype.</p>
-  <p class="world-map-note">Kartlagene bruker terrenggeneratorens data og hydrologinettverk (32 m rutenett). Lokale grave-/fyllendringer er ikke tegnet inn overalt. Fjellvannenes utløp følger nå beregnede nedstrøms ruter. f.4.5.2B utvider innsjømasken kontrollert (fra 0,50 til 0,25), men lar havet være uendret. Hurtigreise gjelder kun testing. Landingspunkter kontrolleres for vann, bratt terreng og hindringer. Eksporter observasjoner i JSON.</p>
+  <p class="world-map-note">Kartlagene bruker terrenggeneratorens data og hydrologinettverk (32 m rutenett). Lokale grave-/fyllendringer er ikke tegnet inn overalt. Fjellvannenes utløp følger nå beregnede nedstrøms ruter. f.4.5.2C bruker nå identisk firetrekant-vifte som synlig terreng (alle LOD), og registrerer meshstatistikk i innsjørapporten. Havmasken er uendret. Hurtigreise gjelder kun testing. Landingspunkter kontrolleres for vann, bratt terreng og hindringer. Eksporter observasjoner i JSON.</p>
  </article>
 </div>
 <div id="newGameDialog" hidden role="presentation"><article role="dialog" aria-modal="true" aria-labelledby="newGameTitle">
@@ -503,7 +503,7 @@ const earthEdits=new Map(),earthFillLayers=new Map(),earthSlideMass=new Map(); /
 const gradingProjects=[];
 const TERRAIN_GENERATION_VERSION='ce114c211f45';
 // f.4.5.2B: rendering-only revision, deliberately leaving world save keys intact.
-const LAKE_SHORE_REVISION='f.4.5.2B';
+const LAKE_SHORE_REVISION='f.4.5.2C';
 const LAKE_SHORE_THRESHOLD=.25; // previous .50; does not change sea or hydrology
 const legacyTerrainAnchors=[];
 const constructionPlans=new Map();let constructionGroup=null,constructionSession=null,constructionBusy=false,constructionOpen=false,constructionInfoOpen=false,constructionLastRefresh=0;
@@ -2882,21 +2882,26 @@ function clipWaterTriangle(triangle,level){
 // v0.6.4.2: Vannpolygoner klippes mot den FAKTISKE LOD-meshen.
 // Polygonene deles på 1 m ved strandlinjer, og både hydromaske og
 // landmesh evalueres på samme globale koordinater i hver chunk.
-function buildChunkStillWater(cx,cz,lod){
+const lakeMeshQaStats={chunks:0,shoreTiles:0,trianglesEmitted:0,trianglesRejected:0,clippedByMask:0,clippedByTerrain:0};
+ function buildChunkStillWater(cx,cz,lod){
  // Match the ACTUAL terrain chunk resolution and triangle topology at each LOD.
  // The previous 48/24/12 water height grid differed from 64/32/16 land meshes
  // and produced floating or clipped rectangular-looking shoreline edges.
  const x0=cx*64,z0=cz*64,COARSE=4,FINE=1,SEG=lod===0?64:lod===1?32:16;
  const buckets=new Map(),heightCache=new Map(),maskCache=new Map();
+ const shorelineQA={chunks:1,shoreTiles:0,trianglesEmitted:0,trianglesRejected:0,clippedByMask:0,clippedByTerrain:0};
  const terrainStep=64/SEG;
  const terrainVertices=new Float64Array((SEG+1)*(SEG+1));
  for(let j=0;j<=SEG;j++)for(let i=0;i<=SEG;i++)terrainVertices[j*(SEG+1)+i]=ground(x0+i*terrainStep,z0+j*terrainStep)+PAD_H;
- // Samme triangulering som createTerrainChunk: [a,c,b] og [b,c,d].
+ // f.4.5.2C: createTerrainChunk uses a FOUR-TRIANGLE FAN around
+ // each cell centre, NOT the former two-triangle diagonal approximation.
+ // Use exactly the same fan sampler as river geometry / collision.
+ // Matching the visible land mesh prevents a false shoreline intersection.
  function landHeight(x,z){
   const u=clamp((x-x0)/terrainStep,0,SEG-1e-9),v=clamp((z-z0)/terrainStep,0,SEG-1e-9);
   const i=Math.floor(u),j=Math.floor(v),tx=u-i,tz=v-j,k=j*(SEG+1)+i;
-  const a=terrainVertices[k],b=terrainVertices[k+1],c=terrainVertices[k+SEG+1],d=terrainVertices[k+SEG+2];
-  return tx+tz<=1?a+(b-a)*tx+(c-a)*tz:d+(c-d)*(1-tx)+(b-d)*(1-tz);
+  return fanHeight(terrainVertices[k],terrainVertices[k+SEG+1],
+   terrainVertices[k+SEG+2],terrainVertices[k+1],tx,tz);
  }
  const h=(x,z)=>{const k=x.toFixed(5)+','+z.toFixed(5);if(!heightCache.has(k))heightCache.set(k,landHeight(x,z));return heightCache.get(k)};
  function region(x,z,key){
@@ -2928,8 +2933,9 @@ function buildChunkStillWater(cx,cz,lod){
  }
  function emitTriangle(tri,key,level){
   let poly=clipField(tri,p=>region(p.x,p.z,key));
+  if(poly.length<3){if(key!=='sea')shorelineQA.clippedByMask++;return}
   poly=clipField(poly,p=>h(p.x,p.z)-level);
-  if(poly.length<3)return;
+  if(poly.length<3){if(key!=='sea')shorelineQA.clippedByTerrain++;return}
   let bucket=buckets.get(key);
   if(!bucket){bucket={verts:[],indices:[]};buckets.set(key,bucket)}
   const base=bucket.verts.length/3;
@@ -2938,7 +2944,10 @@ function buildChunkStillWater(cx,cz,lod){
   for(let k=1;k<poly.length-1;k++){
    const a=poly[0],b=poly[k],c=poly[k+1];
    const cross=(b.x-a.x)*(c.z-a.z)-(b.z-a.z)*(c.x-a.x);
-   if(Number.isFinite(cross)&&Math.abs(cross)>1e-7)bucket.indices.push(base,base+k,base+k+1);
+   if(Number.isFinite(cross)&&Math.abs(cross)>1e-7){
+    bucket.indices.push(base,base+k,base+k+1);
+    if(key!=='sea')shorelineQA.trianglesEmitted++;
+   }else if(key!=='sea')shorelineQA.trianglesRejected++;
   }
  }
  function tile(x,z,size,key,level){
@@ -2970,7 +2979,8 @@ function buildChunkStillWater(cx,cz,lod){
    const shore=(Math.min(...r)<=0&&Math.max(...r)>=0)||(Math.min(...t)<=0&&Math.max(...t)>=0);
    // Del også når midtprøver avviker fra hjørner: bilineær maske
    // og LOD-trekanter kan ellers skjære gjennom et grovt polygon.
-   if(shore){for(let dz=0;dz<4;dz++)for(let dx=0;dx<4;dx++)tile(x+dx,z+dz,FINE,key,level)}
+   if(shore){if(key!=='sea')shorelineQA.shoreTiles++;
+    for(let dz=0;dz<4;dz++)for(let dx=0;dx<4;dx++)tile(x+dx,z+dz,FINE,key,level)}
    else tile(x,z,COARSE,key,level);
   }
  }
@@ -2979,6 +2989,10 @@ function buildChunkStillWater(cx,cz,lod){
   if(!bucket.indices.length)continue;
   const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(bucket.verts,3));geo.setIndex(bucket.indices);geo.computeVertexNormals();
   const mesh=new THREE.Mesh(geo,key==='sea'?seaMaterial:lakeMaterial);mesh.renderOrder=3;scene.add(mesh);meshes.push(mesh);
+ }
+ // Observational counters; do not mutate hydrology, landscape or save data.
+ if(lakeMeshQaStats){
+  for(const key of Object.keys(shorelineQA))lakeMeshQaStats[key]+=shorelineQA[key];
  }
  return meshes;
 }
@@ -4878,6 +4892,8 @@ const worldMapCache=new Map();
   const report={version:TERRAIN_GENERATION_VERSION,timestamp:new Date().toISOString(),
     method:'32m lake ownership boundary versus ground-level contour; 4m normal samples',
     shorelineRevision:LAKE_SHORE_REVISION,baselineThreshold:.5,correctedThreshold:LAKE_SHORE_THRESHOLD,
+    meshTopology:'terrain four-triangle centre fan (same as visible terrain)',
+    loadedChunkMeshCounters:{...lakeMeshQaStats},
     warning:'Candidate coverage proxy, not measured 3D mesh gap widths. Identical points may be sampled more than once.',
     sampleSpacingM:4,lakes:[],hotspots:[],totals:{lakes:0,boundaryEdges:0,samples:0,maskExclusion:0,remainingMaskExclusion:0,improvedSamples:0,wetMaskAboveGround:0}};
   const top=[];
