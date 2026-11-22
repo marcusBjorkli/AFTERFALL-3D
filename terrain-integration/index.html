@@ -2726,7 +2726,7 @@ function historicDrySurfaceWet(x,z){
  const source=hydrologySourceElevation(x,z);
  if(hydroOcean[idx]&&source<.35)return true;
  const li=hydroLakeId[idx];
- return li>=0&&hydroLakes[li]?.active&&source<hydroLakes[li].level-.04;
+ return li>=0&&source<hydroLakes[li].level-.04;
 }
 function drySurfaceAt(x,z,height,river=null){
  if(height>=DRY_LAND_FLOOR)return height;
@@ -2787,6 +2787,14 @@ function shorelineBAdjustment(x,z,base){
  if(earthEdits.has(earthKey(x,z))||earthFillLayers.has(earthKey(x,z)))return 0;
  if(legacyTerrainAnchors.some(q=>x>=q.x0-3&&x<=q.x1+3&&z>=q.z0-3&&z<=q.z1+3))return 0;
  if(gradingProjects.some(q=>x>=q.x0-3&&x<=q.x1+3&&z>=q.z0-3&&z<=q.z1+3))return 0;
+ // Do not shift the ground under any separately placed small construction
+ // or its nearby stockpile. This protection is local, not a world reset.
+ for(const q of survivalStructures.values()){
+  const buffer=(SURVIVAL_DEFS[q.type]?.r||1)+3;
+  if(Math.hypot(q.x-x,q.z-z)<buffer)return 0;
+ }
+ for(const q of sawStations.values())if(Math.hypot(q.x-x,q.z-z)<4)return 0;
+ for(const q of piles.values())if(Math.hypot(q.x-x,q.z-z)<4)return 0;
  const lake=hydroLakes[e.lakeId];if(!lake?.active)return 0;
  // Avoid all core lake cells: only the former dry raster shoreline is shaped.
  const i=clamp(Math.round(x/HY_STEP),0,HY_N-1),j=clamp(Math.round(z/HY_STEP),0,HY_N-1);
