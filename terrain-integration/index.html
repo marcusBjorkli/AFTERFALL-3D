@@ -1618,8 +1618,11 @@ function applyWorldSnapshot(data){
  for(const q of gradingProjects){
   if(constructionPlans.has(q.id))continue;
   const legacy=q.schemaVersion!==GRADE_SCHEMA.version||(!q.autoFlat&&Math.abs(q.level-dmRound(q.level))>DM_EPS);
-  q.level=q.autoFlat?quantizeTarget(q.level):dmRound(q.level);q.schemaVersion=GRADE_SCHEMA.version;
-  if(legacy&&q.status!=='active')q.status='active';
+  // The old site's approved elevation remains authoritative. Never round
+  // it again during the compatibility migration.
+  if(!q.legacyTerrainAnchor)q.level=q.autoFlat?quantizeTarget(q.level):dmRound(q.level);
+  q.schemaVersion=GRADE_SCHEMA.version;
+  if(legacy&&!q.legacyTerrainAnchor&&q.status!=='active')q.status='active';
  }
  activeGradeId=gradingProjects.some(q=>q.id===data.activeGradeId&&q.status==='active')?data.activeGradeId:(gradingProjects.find(q=>q.status==='active')?.id||null);
  for(const q of data.sawStations||[])if(q&&typeof q.id==='string'&&Number.isFinite(q.x)&&Number.isFinite(q.z))sawStations.set(q.id,{id:q.id,x:q.x,z:q.z});
@@ -4727,6 +4730,39 @@ function worldMapRaster(mode){
  }
  context.putImageData(data,0,0);worldMapCache.set(mode,raster);return raster;
 }
+// Read-only QA over the shared pre-incision hydrology raster. No changes to
+// terrain, saved river routes, or existing world edits are made here.
+let worldTerrainQA=null;
+function worldTerrainQuality(){
+ if(worldTerrainQA)return worldTerrainQA;
+ const edges={count:0,verySteep:0,maxSlope:0};
+ for(let z=1;z<HY_N-1;z++)for(let x=1;x<HY_N-1;x++){
+  const idx=hydId(x,z),h=hydroHeight[idx],right=hydroHeight[hydId(x+1,z)],below=hydroHeight[hydId(x,z+1)];
+  for(const v of [right,below]){
+   const slope=Math.abs(v-h)/HY_STEP;
+   if(!Number.isFinite(slope))continue;
+   edges.count++;edges.maxSlope=Math.max(edges.maxSlope,slope);
+   if(slope>1.5)edges.verySteep++;
+  }
+ }
+ let risingRivers=0,invalidRivers=0,underTerrain=0;
+ for(const seg of riverSegments){
+  if(!Number.isFinite(seg.a.water)||!Number.isFinite(seg.b.water)){invalidRivers++;continue;}
+  if(seg.b.water>seg.a.water+1e-4)risingRivers++;
+  const x=(seg.a.x+seg.b.x)*.5,z=(seg.a.z+seg.b.z)*.5;
+  const water=(seg.a.water+seg.b.water)*.5;
+  if(Number.isFinite(x)&&Number.isFinite(z)&&water<ground(x,z)+PAD_H-.1)underTerrain++;
+ }
+ const review=gradingProjects.filter(q=>q.legacyTerrainReview).length,
+  protectedSites=legacyTerrainAnchors.filter(q=>q.status!=='active').length;
+ const wetProtected=legacyTerrainAnchors.filter(q=>{
+  const x=(q.x0+q.x1)*.5,z=(q.z0+q.z1)*.5;
+  const water=waterBodyAt(x,z)||mountainLakeAt(x,z);
+  return !!(water&&Number.isFinite(water.level)&&water.level>q.level+.15);
+ }).length;
+ worldTerrainQA={...edges,risingRivers,invalidRivers,underTerrain,review,protectedSites,wetProtected};
+ return worldTerrainQA;
+}
 function worldMapDetails(x,z){
  x=clamp(x,0,WORLD);z=clamp(z,0,WORLD);
  const ix=clamp(Math.round(x/HY_STEP),0,HY_N-1),iz=clamp(Math.round(z/HY_STEP),0,HY_N-1),id=hydId(ix,iz);
@@ -4735,8 +4771,11 @@ function worldMapDetails(x,z){
  let type=sea?'Hav':alpine?'Fjellvann':li>=0&&hydroLakes[li]?.active?'Innsjø':rise>6?'Fjell / høyland':'Land';
  if(river&&river.distance<river.width*1.1)type='Elv / elvedal';
  const extra=river&&river.distance<river.width*1.8?' · Elv: bredde '+river.width.toFixed(1)+' m, vannkote '+river.water.toFixed(1)+' m':'';
+ const site=gradingProjects.find(q=>x>=q.x0&&x<=q.x1&&z>=q.z0&&z<=q.z1);
+ const siteInfo=site?' · Byggegrunn: '+site.name+(site.legacyTerrainAnchor?' (eldre kote vernet)':site.legacyTerrainReview?' (krever gjennomgang)':''):'';
+
  $('worldMapReadout').textContent='X '+x.toFixed(0)+' m · Z '+z.toFixed(0)+' m · Terrengkote '+h.toFixed(1)+' m · '+type+
-  (rise>6?' · Fjellbidrag '+rise.toFixed(1)+' m':'')+extra;
+  (rise>6?' · Fjellbidrag '+rise.toFixed(1)+' m':'')+extra+siteInfo;
 }
 function worldMapDraw(){
  if($('worldMapOverlay').hidden||!hydroHeight)return;
@@ -4769,10 +4808,22 @@ function worldMapDraw(){
  ctx.beginPath();ctx.arc(px,pz,6,0,Math.PI*2);ctx.fillStyle='#f8d36d';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#162117';ctx.stroke();
  ctx.fillStyle='#f9ffff';ctx.font='bold 12px sans-serif';ctx.fillText('N ↑',12,19);
  if(worldMapSelected){const [x,z]=point(worldMapSelected.x,worldMapSelected.z);ctx.beginPath();ctx.arc(x,z,7,0,Math.PI*2);ctx.strokeStyle='#ffffff';ctx.lineWidth=1.4;ctx.stroke();}
+ // Show old surveyed sites explicitly, distinct from current natural terrain.
+ ctx.lineWidth=2;
+ for(const q of gradingProjects){
+  const [x0,z0]=point(q.x0,q.z0),[x1,z1]=point(q.x1,q.z1);
+  ctx.strokeStyle=q.legacyTerrainAnchor?'#e8cd80':q.legacyTerrainReview?'#fa8671':'#c1f1d5';
+  ctx.strokeRect(x0,z0,Math.max(1,x1-x0),Math.max(1,z1-z0));
+ }
  const activeLakes=hydroLakes.filter(v=>v.active).length,hasOcean=hydroOcean.some(v=>v===1);
+ const qa=worldTerrainQuality();
  $('worldMapStats').textContent='Fjellmassiver: '+MOUNTAIN_NETWORKS.length+' · Sidekjeder: '+MOUNTAIN_NETWORKS.reduce((n,c)=>n+c.arms.length,0)+' · Elvestrekninger: '+riverSegments.length+' · Innsjøer: '+activeLakes+
   ' · Fjellvann: '+MOUNTAIN_PLATEAUS.filter(v=>v.hasLake).length+
-  ' · Hav: '+(hasOcean?'Ja':'Nei')+' · Spiller X '+p.x.toFixed(0)+', Z '+p.z.toFixed(0);
+  ' · Hav: '+(hasOcean?'Ja':'Nei')+' · Spiller X '+p.x.toFixed(0)+', Z '+p.z.toFixed(0)+
+  ' · Kotevernede eldre byggeflater: '+qa.protectedSites+' · Eldre prosjekter til kontroll: '+qa.review+
+  ' · Hydrologitest: '+qa.risingRivers+' stigende, '+qa.invalidRivers+' ugyldige elvestrekninger'+
+  (qa.underTerrain?' · '+qa.underTerrain+' potensielt skjulte elvestrekninger':'')+
+  (qa.wetProtected?' · ⚠ '+qa.wetProtected+' eldre byggeflater kan være oversvømt':'');
 }
 function worldMapOpen(){
  $('worldMapOverlay').hidden=false;worldMapSelected={x:p.x,z:p.z};
