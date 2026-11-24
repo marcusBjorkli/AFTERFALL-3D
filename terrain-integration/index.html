@@ -3099,7 +3099,9 @@ function alpineOutletProfile(x,z,river=null){
  if(!c)return null;
  const cap=c.cap,distance=Math.hypot(x-cap.x,z-cap.z),
   radial=ALPINE_SHORE_C.radius,reach=ALPINE_JUNCTION_C.reach;
- if(distance>=radial+reach||distance<radial-ALPINE_JUNCTION_C.insideReach)return null;
+ // Retain 1 m beyond the join to prevent cracks caused by independent
+ // triangulation at the exact 50 m circle.
+ if(distance>radial+reach+1||distance<radial-ALPINE_JUNCTION_C.insideReach)return null;
  const blend=1-smoothstepNumber(radial,radial+reach,distance);
  const halfWidth=alpineJunctionWidth(cap,distance,c.width);
  return {cap,id:cap.index,level:c.level,water:c.water,distance,blend,
@@ -3461,7 +3463,7 @@ function buildChunkRivers(cx,cz,lod){
   };
   poly=radialClip(poly,ALPINE_SHORE_C.radius-
    ALPINE_JUNCTION_C.connectorOverlap,true);
-  poly=radialClip(poly,ALPINE_SHORE_C.radius+ALPINE_JUNCTION_C.reach,false);
+  poly=radialClip(poly,ALPINE_SHORE_C.radius+ALPINE_JUNCTION_C.reach+1,false);
   if(poly.length<3)return;
   // C.3.6: clip the strip against the SAME channel bank and sampled
   // terrain fan. This prevents a wide, elevated rectangle over dry soil.
@@ -3492,10 +3494,17 @@ function buildChunkRivers(cx,cz,lod){
   for(const v of poly){
    const land=renderedLand(v.x,v.z),d=Math.hypot(v.x-cap.x,v.z-cap.z);
    const stage=alpineOutletWaterHeight(v.x,v.z,land+.105,land);
-   // 8 mm overlap only near lake; fades to zero at the river join.
-   const overlap=.008*(1-smoothstepNumber(ALPINE_SHORE_C.radius+
-    ALPINE_JUNCTION_C.reach-2,ALPINE_SHORE_C.radius+
-    ALPINE_JUNCTION_C.reach,d));
+   // Keep a millimetre-scale overlap over both still water and the
+   // original river; avoid coplanar z-fighting at the shared boundaries.
+   const lip=.008*(1-smoothstepNumber(ALPINE_SHORE_C.radius,
+    ALPINE_SHORE_C.radius+2,d));
+   const tail=.006*smoothstepNumber(ALPINE_SHORE_C.radius+
+    ALPINE_JUNCTION_C.reach-1,ALPINE_SHORE_C.radius+
+    ALPINE_JUNCTION_C.reach,d)*
+    (1-smoothstepNumber(ALPINE_SHORE_C.radius+
+    ALPINE_JUNCTION_C.reach,ALPINE_SHORE_C.radius+
+    ALPINE_JUNCTION_C.reach+1,d));
+   const overlap=lip+tail;
    const y=stage+overlap;
    verts.push(v.x-PAD_X,y,v.z-PAD_Z);
    riverGeometryStats.connectorVertices++;
@@ -3551,10 +3560,21 @@ function buildChunkRivers(cx,cz,lod){
     return [{x:x+ux*width*scale,z:z+uz*width*scale},
       {x:x-ux*width*scale,z:z-uz*width*scale}];
    };
+   // C.3.6: vertex-only clipping of a full-width quad would reject ALL
+   // triangles when both bank vertices are dry. Split each section into
+   // four lateral strips with a submerged centreline vertex.
+   const lateral=(left,right,t)=>({
+    x:left.x+(right.x-left.x)*t,z:left.z+(right.z-left.z)*t
+   });
    for(let j=0;j<parts;j++){
     const [l0,r0]=cross(j/parts),[l1,r1]=cross((j+1)/parts);
-    emitConnector([l0,r0,r1],cap,outlet.lakeLevel);
-    emitConnector([l0,r1,l1],cap,outlet.lakeLevel);
+    for(let band=0;band<4;band++){
+     const t0=band/4,t1=(band+1)/4;
+     const a=lateral(l0,r0,t0),b=lateral(l0,r0,t1),
+      c=lateral(l1,r1,t1),d=lateral(l1,r1,t0);
+     emitConnector([a,b,c],cap,outlet.lakeLevel);
+     emitConnector([a,c,d],cap,outlet.lakeLevel);
+    }
    }
   }
  }
