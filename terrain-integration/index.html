@@ -4031,7 +4031,14 @@ $('diagActualMesh').onclick=()=>{
   '\\nFjellvannutløp: kontrollpunkter '+t.alpineOutletSamples+
   ' | mulige hull '+t.alpineOutletWetGap+
   ' | største nivåavvik '+t.alpineOutletLevelDeviationMax.toFixed(2)+' m'+
-  '\\nFjellvann: forventet '+t.alpineExpected+
+  '\\nDetaljtest fjellvannutløp ID '+(result.fineAlpineJunction.alpineId??'-')+
+  ': '+result.fineAlpineJunction.wetExpected+' punkter i 1 m oppløsning'+
+  ', manglende vann '+result.fineAlpineJunction.missingWater+
+  ', høydeavvik '+result.fineAlpineJunction.heightMismatch+
+  ', største avvik '+result.fineAlpineJunction.maxAbsHeightMismatch.toFixed(2)+' m'+
+  ', terrenggjennomtrengning '+result.fineAlpineJunction.terrainIntrusion+
+  (result.fineAlpineJunction.reason?' ('+result.fineAlpineJunction.reason+')':'')+
+    '\\nFjellvann: forventet '+t.alpineExpected+
   ' | synlig '+t.alpineMeshPresent+
   ' | manglende '+t.alpineMissing+
   ' | uten forventet vann '+t.alpineFalseWet+
@@ -5848,6 +5855,127 @@ const worldMapCache=new Map();
   u=x-ix,v=z-iz;
  return fanHeight(baseNode(ix,iz),baseNode(ix,iz+1),baseNode(ix+1,iz+1),baseNode(ix+1,iz),u,v);
 }
+// C.3.5: detailed read-only QA on the actual loaded 3D meshes around
+// the nearest alpine outlet. A 1 m transverse/longitudinal grid captures
+// sub-8 m seams that the original coarse survey cannot resolve.
+function alpineJunctionFineMeshQa(center,chunkIndex){
+ const nearest=alpineOutlets.filter(alpineJunctionUsable)
+  .map(o=>({outlet:o,cap:MOUNTAIN_PLATEAUS[o.id],
+   distance:Math.hypot(center.x-MOUNTAIN_PLATEAUS[o.id].x,
+    center.z-MOUNTAIN_PLATEAUS[o.id].z)}))
+  .sort((a,b)=>a.distance-b.distance)[0];
+ const result={revision:'f.4.6.2C.3.5',source:'actual loaded THREE.BufferGeometry raycast',
+  stepMeters:1,radiusFromLakeCenter:[ALPINE_SHORE_C.radius-2,
+   ALPINE_SHORE_C.radius+ALPINE_JUNCTION_C.reach+2],
+  referenceBaseline:{revision:'f.4.6.2C.3.4',
+   date:'2026-11-24',center:{x:2721.27,z:2759.07},
+   alpineId:6,coarseStepMeters:8,coarseRiverMissing:5,
+   coarseJunctionLevelDeviation:0.4048776708202837},
+  valid:false,reason:null,alpineId:nearest?.outlet.id??null,
+  center,nearbyLakeDistance:nearest?.distance??null,
+  samples:0,loaded:0,unloaded:0,protected:0,
+  wetExpected:0,missingWater:0,terrainIntrusion:0,
+  heightMismatch:0,maxAbsHeightMismatch:0,
+  multipleRiverStages:0,lakeRiverOverlaps:0,chunkSeamSamples:0,
+  anomalies:[]};
+ if(!nearest||nearest.distance>110){
+  result.reason='Ingen fjellvannutløp innen 110 m fra spillerposisjon';
+  return result;
+ }
+ const cap=nearest.cap,pts=nearest.outlet.points;
+ const ray=new THREE.Raycaster(),down=new THREE.Vector3(0,-1,0),
+  up=new THREE.Vector3(0,1,0),origin=new THREE.Vector3();
+ const heights=(mesh,x,z)=>{
+  if(!mesh)return [];
+  const values=[];
+  for(const direction of [down,up]){
+   origin.set(x-PAD_X,direction===down?1000:-1000,z-PAD_Z);
+   ray.set(origin,direction);ray.near=0;ray.far=2000;
+   for(const hit of ray.intersectObject(mesh,false)){
+    const h=hit.point.y+PAD_H;
+    if(Number.isFinite(h)&&!values.some(v=>Math.abs(v-h)<.008))values.push(h);
+   }
+  }
+  return values.sort((a,b)=>b-a);
+ };
+ const put=(x,z,reason,fields)=>{
+  if(result.anomalies.length>=120)return;
+  result.anomalies.push({x:+x.toFixed(2),z:+z.toFixed(2),
+   kind:reason,...fields});
+ };
+ // Traverse the real outlet polyline; sample 1 m cross sections, then
+ // 1 m lateral offsets along the SAME widths used for water geometry.
+ for(let i=0;i+1<pts.length;i++){
+  const a=pts[i],b=pts[i+1],dx=b.x-a.x,dz=b.z-a.z,
+   len=Math.hypot(dx,dz);
+  if(len<.01)continue;
+  const nx=-dz/len,nz=dx/len,sections=Math.ceil(len);
+  for(let j=0;j<=sections;j++){
+   const t=j/sections,x=a.x+dx*t,z=a.z+dz*t,
+    rad=Math.hypot(x-cap.x,z-cap.z);
+   if(rad<ALPINE_SHORE_C.radius-2||
+      rad>ALPINE_SHORE_C.radius+ALPINE_JUNCTION_C.reach+2)continue;
+   const qCenter=alpineOutletProfile(x,z);
+   if(!qCenter)continue;
+   const lateralSteps=Math.ceil(qCenter.halfWidth*.83);
+   for(let m=-lateralSteps;m<=lateralSteps;m++){
+    const sx=x+nx*m,sz=z+nz*m,q=alpineOutletProfile(sx,sz);
+    if(!q||q.id!==nearest.outlet.id||q.offset>q.halfWidth*.83)continue;
+    result.samples++;
+    const cx=Math.floor(sx/64),cz=Math.floor(sz/64),
+     chunk=chunkIndex.get(chunkKey(cx,cz));
+    if(!chunk){result.unloaded++;continue}
+    result.loaded++;
+    if(Math.min(Math.abs(sx-cx*64),Math.abs(sx-(cx+1)*64),
+      Math.abs(sz-cz*64),Math.abs(sz-(cz+1)*64))<.55)
+     result.chunkSeamSamples++;
+    if(shorelineBProtected(sx,sz)){result.protected++;continue}
+    const land=heights(chunk.land,sx,sz)[0];
+    if(!Number.isFinite(land))continue;
+    const rivers=heights(chunk.water,sx,sz);
+    const alpine=(chunk.alpineWater||[]).flatMap(mesh=>heights(mesh,sx,sz));
+    const observed=[...rivers,...alpine],bed=land-PAD_H;
+    const expected=alpineOutletWaterHeight(sx,sz,bed+.105,bed)+PAD_H;
+    result.wetExpected++;
+    if(!observed.length){
+     result.missingWater++;
+     put(sx,sz,'missing-water',{chunk:[cx,cz],terrain:+land.toFixed(3),
+      expected:+expected.toFixed(3),offset:+q.offset.toFixed(2)});
+     continue;
+    }
+    const nearestY=observed.reduce((p,v)=>
+      Math.abs(v-expected)<Math.abs(p-expected)?v:p,observed[0]);
+    const diff=Math.abs(nearestY-expected);
+    result.maxAbsHeightMismatch=Math.max(result.maxAbsHeightMismatch,diff);
+    if(diff>.12){
+     result.heightMismatch++;
+     put(sx,sz,'water-level-mismatch',{chunk:[cx,cz],
+      observed:+nearestY.toFixed(3),expected:+expected.toFixed(3),
+      delta:+diff.toFixed(3)});
+    }
+    if(land>=nearestY-.02){
+     result.terrainIntrusion++;
+     put(sx,sz,'terrain-in-water',{chunk:[cx,cz],
+      terrain:+land.toFixed(3),water:+nearestY.toFixed(3)});
+    }
+    if(rivers.length>1&&rivers[0]-rivers[rivers.length-1]>.035){
+     result.multipleRiverStages++;
+     put(sx,sz,'duplicate-river-stages',{chunk:[cx,cz],
+      levels:rivers.map(v=>+v.toFixed(3))});
+    }
+    if(rivers.length&&alpine.length&&q.distance>ALPINE_SHORE_C.radius+.8){
+     result.lakeRiverOverlaps++;
+     put(sx,sz,'overlap-outside-lake',{chunk:[cx,cz],
+      river:+rivers[0].toFixed(3),lake:+alpine[0].toFixed(3)});
+    }
+   }
+  }
+ }
+ result.valid=result.loaded>0&&result.wetExpected>0;
+ if(!result.valid)result.reason='Ingen lastede kontrollpunkter langs utløpskanalen';
+ result.maxAbsHeightMismatch=+result.maxAbsHeightMismatch.toFixed(4);
+ return result;
+}
 function shoreMeshQa(){
   const center={x:+p.x.toFixed(2),z:+p.z.toFixed(2)},radius=96,step=8;
   // A missing player chunk makes the entire result invalid. Resynchronise
@@ -6027,11 +6155,12 @@ function shoreMeshQa(){
    atPlayer.bankSlopeNorthSouth=+((ground(center.x,center.z+2)-ground(center.x,center.z-2))/4).toFixed(3);
    atPlayer.bankSlopeMagnitude=+Math.hypot(atPlayer.bankSlopeEastWest,atPlayer.bankSlopeNorthSouth).toFixed(3);
   }
+  const fineAlpineJunction=alpineJunctionFineMeshQa(center,chunkIndex);
   const report={revision:'f.4.6.2C.3.5',time:new Date().toISOString(),source:'real loaded THREE.BufferGeometry via bidirectional raycasts',
    player:center,center,radius,step,valid,
    failure:valid?null:'Ingen lastede prøvepunkter: geometriske nullverdier er ugyldige.',
    preflight:{...preflight,missingKeys:Array.from(missingKeys)},
-   counters,atPlayer,
+   counters,atPlayer,fineAlpineJunction,
    shorelineCorrection:{enabled:SHORE_B.enabled,scope:SHORE_B.scope,method:SHORE_B.method,
     maxRaise:null,waterlineContour:SHORE_B.contour,
     innerLimit:SHORE_B.innerLimit,outerLimit:SHORE_B.outerLimit,
