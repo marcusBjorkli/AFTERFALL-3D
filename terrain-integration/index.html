@@ -6017,7 +6017,10 @@ function alpineJunctionFineMeshQa(center,chunkIndex){
    const lateralSteps=Math.ceil(qCenter.halfWidth*.83);
    for(let m=-lateralSteps;m<=lateralSteps;m++){
     const sx=x+nx*m,sz=z+nz*m,q=alpineOutletProfile(sx,sz);
-    if(!q||q.id!==nearest.outlet.id||q.offset>q.halfWidth*.83)continue;
+    // Sample the actual wetted half-width, not the older full ribbon
+    // footprint. Outer shoulder is dry by design.
+    if(!q||q.id!==nearest.outlet.id||
+       q.offset>alpineJunctionWetRadius(q)*.86)continue;
     result.samples++;
     const cx=Math.floor(sx/64),cz=Math.floor(sz/64),
      chunk=chunkIndex.get(chunkKey(cx,cz));
@@ -6181,7 +6184,13 @@ function shoreMeshQa(){
     const diff=Math.max(...alpine.map(y=>Math.min(...river.map(v=>Math.abs(y-v)))));
     counters.alpineMaxRiverLevelDifference=Math.max(counters.alpineMaxRiverLevelDifference,diff);
    }
-   const riverExpected=!!(r&&r.distance<r.width&&ground(x,z)<r.water-PAD_H+.12);
+   // The original nearest-river width is a corridor descriptor, not
+   // the rendered half-width (.53 alpine / .77 ordinary segments).
+   const qWater=alpineOutletProfile(x,z);
+   const renderedHalfWidth=qWater?alpineJunctionWetRadius(qWater):
+    r?r.width*(Number.isInteger(r.segment?.alpineSource)?.53:.77):0;
+   const riverExpected=!!(r&&r.distance<renderedHalfWidth*.96&&
+    ground(x,z)<r.water-PAD_H+.12);
    const wetExpected=!!body||!!alpineExpected||riverExpected;
    const rise=hTerrain!==null&&water!==null?water-hTerrain:null;
    const shore=shorelineBPrimary(x,z);
