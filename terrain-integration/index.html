@@ -3469,12 +3469,33 @@ function buildChunkRivers(cx,cz,lod){
    if(Math.min(Math.hypot(a.x-cap.x,a.z-cap.z),
       Math.hypot(b.x-cap.x,b.z-cap.z))>reach+len)continue;
    const nx=-dz/len,nz=dx/len,parts=Math.ceil(len/.65);
+   // At a bend, adjoining strips must reuse precisely the same shared
+   // end-cap normal, or their open wedges survive as apparent water gaps.
+   const jointNormal=index=>{
+    const prev=points[Math.max(0,index-1)],p=points[index],
+     next=points[Math.min(points.length-1,index+1)];
+    const u={x:p.x-prev.x,z:p.z-prev.z},
+     v={x:next.x-p.x,z:next.z-p.z};
+    const lu=Math.hypot(u.x,u.z),lv=Math.hypot(v.x,v.z);
+    if(lu<1e-5){u.x=v.x;u.z=v.z}
+    if(lv<1e-5){v.x=u.x;v.z=u.z}
+    const du=Math.hypot(u.x,u.z)||1,dv=Math.hypot(v.x,v.z)||1;
+    const tx=u.x/du+v.x/dv,tz=u.z/du+v.z/dv,l=Math.hypot(tx,tz);
+    return l>.15?{x:-tz/l,z:tx/l}:{x:nx,z:nz};
+   };
+   const aNormal=jointNormal(k),bNormal=jointNormal(k+1);
    const cross=t=>{
     const x=a.x+dx*t,z=a.z+dz*t,
      width=alpineJunctionWidth(cap,Math.hypot(x-cap.x,z-cap.z),
       riverWidthAt(a)*(1-t)+riverWidthAt(b)*t);
-    return [{x:x+nx*width,z:z+nz*width},
-      {x:x-nx*width,z:z-nz*width}];
+    const ox=aNormal.x*(1-t)+bNormal.x*t,
+     oz=aNormal.z*(1-t)+bNormal.z*t,mag=Math.hypot(ox,oz)||1,
+     mx=ox/mag,mz=oz/mag,projected=mx*nx+mz*nz;
+    // Limit extreme miters at hairpins to avoid inverted strip triangles.
+    const scale=projected>.58?Math.min(1.65,1/projected):1;
+    const ux=projected>.58?mx:nx,uz=projected>.58?mz:nz;
+    return [{x:x+ux*width*scale,z:z+uz*width*scale},
+      {x:x-ux*width*scale,z:z-uz*width*scale}];
    };
    for(let j=0;j<parts;j++){
     const [l0,r0]=cross(j/parts),[l1,r1]=cross((j+1)/parts);
