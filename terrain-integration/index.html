@@ -4160,7 +4160,11 @@ $('diagActualMesh').onclick=()=>{
   ', høydeavvik '+result.fineAlpineJunction.heightMismatch+
   ', største avvik '+result.fineAlpineJunction.maxAbsHeightMismatch.toFixed(2)+' m'+
   ', terrenggjennomtrengning '+result.fineAlpineJunction.terrainIntrusion+
-  ', svevende bankpunkter '+result.fineAlpineJunction.suspendedBankSamples+
+  ', dybdevarsler innenfor vannkanten '+result.fineAlpineJunction.suspendedBankSamples+
+  '\\nStrandlinje (egen raycast): '+result.shorelineEdgeControl.probes+
+  ' prøver, mulige hull '+result.shorelineEdgeControl.wetInsideMissing+
+  ', vann utenfor bredd '+result.shorelineEdgeControl.waterOutsideBank+
+  ', maks overskytende nivå '+result.shorelineEdgeControl.maxWaterAboveDryBank.toFixed(3)+' m'+
   (result.fineAlpineJunction.reason?' ('+result.fineAlpineJunction.reason+')':'')+
     '\\nFjellvann: forventet '+t.alpineExpected+
   ' | synlig '+t.alpineMeshPresent+
@@ -6388,11 +6392,12 @@ function shoreMeshQa(){
    atPlayer.bankSlopeMagnitude=+Math.hypot(atPlayer.bankSlopeEastWest,atPlayer.bankSlopeNorthSouth).toFixed(3);
   }
   const fineAlpineJunction=alpineJunctionFineMeshQa(center,chunkIndex);
+  const shorelineEdgeControl=alpineShorelineEdgeQa(center,chunkIndex);
   const report={revision:'f.4.6.2C.3.7',time:new Date().toISOString(),source:'real loaded THREE.BufferGeometry via bidirectional raycasts',
    player:center,center,radius,step,valid,
    failure:valid?null:'Ingen lastede prøvepunkter: geometriske nullverdier er ugyldige.',
    preflight:{...preflight,missingKeys:Array.from(missingKeys)},
-   counters,atPlayer,fineAlpineJunction,
+   counters,atPlayer,fineAlpineJunction,shorelineEdgeControl,
    shorelineCorrection:{enabled:SHORE_B.enabled,scope:SHORE_B.scope,method:SHORE_B.method,
     maxRaise:null,waterlineContour:SHORE_B.contour,
     innerLimit:SHORE_B.innerLimit,outerLimit:SHORE_B.outerLimit,
