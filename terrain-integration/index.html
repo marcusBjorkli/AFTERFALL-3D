@@ -6118,6 +6118,90 @@ function alpineJunctionFineMeshQa(center,chunkIndex){
  result.maxSuspendedBankHeight=+result.maxSuspendedBankHeight.toFixed(4);
  return result;
 }
+// C.3.7: verify the *actual* bank line, independent of depth in the
+// inner river channel. Probe each side of the outlet at two lateral offsets.
+function alpineShorelineEdgeQa(center,chunkIndex){
+ const sorted=alpineOutlets.filter(alpineJunctionUsable).map(outlet=>{
+  const cap=MOUNTAIN_PLATEAUS[outlet.id];
+  return {outlet,cap,distance:Math.hypot(center.x-cap.x,center.z-cap.z)};
+ }).sort((a,b)=>a.distance-b.distance);
+ const nearest=sorted[0];
+ const result={revision:'f.4.6.2C.3.7',alpineId:nearest?.outlet.id??null,
+  valid:false,probes:0,wetInsideMissing:0,waterOutsideBank:0,
+  maxWaterAboveDryBank:0,edgeDepthMax:0,unloaded:0,anomalies:[]};
+ if(!nearest||nearest.distance>110)return result;
+ const cap=nearest.cap,points=nearest.outlet.points;
+ const ray=new THREE.Raycaster();
+ const up=new THREE.Vector3(0,1,0),down=new THREE.Vector3(0,-1,0);
+ const origin=new THREE.Vector3();
+ const meshHeights=(mesh,x,z)=>{
+  if(!mesh)return [];
+  const hits=[];
+  for(const dir of [down,up]){
+   origin.set(x-PAD_X,dir===down?1000:-1000,z-PAD_Z);
+   ray.set(origin,dir);ray.near=0;ray.far=2000;
+   for(const hit of ray.intersectObject(mesh,false)){
+    const y=hit.point.y+PAD_H;
+    if(Number.isFinite(y)&&!hits.some(v=>Math.abs(v-y)<.008))hits.push(y);
+   }
+  }
+  return hits;
+ };
+ for(let i=0;i<points.length-1;i++){
+  const a=points[i],b=points[i+1],dx=b.x-a.x,dz=b.z-a.z,
+   len=Math.hypot(dx,dz);
+  if(len<.01)continue;
+  const nx=-dz/len,nz=dx/len,sections=Math.ceil(len/2);
+  for(let j=0;j<=sections;j++){
+   const t=j/sections,x=a.x+dx*t,z=a.z+dz*t,
+    r=Math.hypot(x-cap.x,z-cap.z);
+   if(r<ALPINE_SHORE_C.radius+2||
+      r>ALPINE_SHORE_C.radius+ALPINE_JUNCTION_C.reach-2)continue;
+   const mid=alpineOutletProfile(x,z);
+   if(!mid||mid.id!==nearest.outlet.id)continue;
+   for(const side of [-1,1])for(const fraction of [.93,1.08]){
+    const offset=alpineJunctionWetRadius(mid)*fraction,
+     px=x+nx*offset*side,pz=z+nz*offset*side;
+    const q=alpineOutletProfile(px,pz);
+    if(!q||q.id!==nearest.outlet.id||shorelineBProtected(px,pz))continue;
+    const edgeFraction=q.offset/alpineJunctionWetRadius(q);
+    const key=chunkKey(Math.floor(px/64),Math.floor(pz/64)),
+     chunk=chunkIndex.get(key);
+    if(!chunk){result.unloaded++;continue}
+    const soil=meshHeights(chunk.land,px,pz)[0];
+    if(!Number.isFinite(soil))continue;
+    const all=[...meshHeights(chunk.water,px,pz),
+     ...(chunk.alpineWater||[]).flatMap(m=>meshHeights(m,px,pz))];
+    const bed=soil-PAD_H;
+    const predicted=alpineOutletWaterHeight(px,pz,bed+.105,bed)+PAD_H;
+    const water=all.length?all.reduce((a,b)=>
+     Math.abs(a-predicted)<Math.abs(b-predicted)?a:b):null;
+    result.probes++;
+    const excess=water===null?null:water-soil;
+    if(excess!==null&&edgeFraction>=.88)
+     result.edgeDepthMax=Math.max(result.edgeDepthMax,excess);
+    let kind=null;
+    if(edgeFraction<=.96&&soil<predicted-.07&&water===null){
+     result.wetInsideMissing++;kind='wet-inside-missing';
+    }
+    if(edgeFraction>=1.04&&excess!==null&&excess>.05){
+     result.waterOutsideBank++;
+     result.maxWaterAboveDryBank=Math.max(result.maxWaterAboveDryBank,excess);
+     kind='water-outside-bank';
+    }
+    if(kind&&result.anomalies.length<100)
+     result.anomalies.push({kind,x:+px.toFixed(2),z:+pz.toFixed(2),
+      chunk:key,edgeFraction:+edgeFraction.toFixed(3),
+      ground:+soil.toFixed(3),water:water===null?null:+water.toFixed(3),
+      predicted:+predicted.toFixed(3)});
+   }
+  }
+ }
+ result.valid=result.probes>0;
+ result.maxWaterAboveDryBank=+result.maxWaterAboveDryBank.toFixed(4);
+ result.edgeDepthMax=+result.edgeDepthMax.toFixed(4);
+ return result;
+}
 function shoreMeshQa(){
   const center={x:+p.x.toFixed(2),z:+p.z.toFixed(2)},radius=96,step=8;
   // A missing player chunk makes the entire result invalid. Resynchronise
