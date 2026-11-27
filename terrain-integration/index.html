@@ -6962,18 +6962,29 @@ function installDiagnosticsBridge(){
      const e=edges.get(k);if(e)e.count++;else edges.set(k,{a,b,count:1,c});
     }
    }
-   const samples=[];let excluded=0;
+   const samples=[];let excluded=0,internal=0,missingTerrain=0;
+   const waterMeshes=[...terrainChunks.values()].flatMap(c=>[c.water,...(c.stillWater||[]),c.alpineWater]).filter(o=>o?.isMesh);
+   const waterAt=(x,z)=>{ray.set(new THREE.Vector3(x,1000,z),down);return ray.intersectObjects(waterMeshes,false).length>0;};
    for(const e of edges.values()){
     if(e.count!==1)continue;
     const m=e.a.clone().add(e.b).multiplyScalar(.5),x=m.x+PAD_X,z=m.z+PAD_Z;
     const q=alpineOutletProfile(x,z);if(!q)continue;
     // Exclude chunk seams and longitudinal lake/river interfaces.
     if(Math.abs(x/CHUNK-Math.round(x/CHUNK))<.0001||Math.abs(z/CHUNK-Math.round(z/CHUNK))<.0001||q.distance<ALPINE_SHORE_C.radius+1||q.distance>ALPINE_SHORE_C.radius+ALPINE_JUNCTION_C.reach-ALPINE_JUNCTION_C.tailMatch){excluded++;continue;}
-    ray.set(new THREE.Vector3(m.x,1000,m.z),down);
-    const hit=ray.intersectObject(e.c.land,false)[0];if(!hit)continue;
-    samples.push({x,z,water:m.y+PAD_H,terrain:hit.point.y+PAD_H,gap:m.y-hit.point.y,length:e.a.distanceTo(e.b)});
+    const dx=e.b.x-e.a.x,dz=e.b.z-e.a.z,len=Math.hypot(dx,dz);
+    if(len<1e-6)continue;
+    const nx=-dz/len,nz=dx/len;
+    const left=waterAt(m.x+nx*.015,m.z+nz*.015),right=waterAt(m.x-nx*.015,m.z-nz*.015);
+    if(left&&right){internal++;continue;}
+    if(!left&&!right){excluded++;continue;}
+    for(const t of [.2,.5,.8]){
+     const p=e.a.clone().lerp(e.b,t);
+     ray.set(new THREE.Vector3(p.x,1000,p.z),down);
+     const hit=ray.intersectObject(e.c.land,false)[0];if(!hit){missingTerrain++;continue;}
+     samples.push({x:p.x+PAD_X,z:p.z+PAD_Z,water:p.y+PAD_H,terrain:hit.point.y+PAD_H,gap:p.y-hit.point.y,length:e.a.distanceTo(e.b),t});
+    }
    }
-   return {method:'quantized unmatched river triangle edges; candidate boundaries, not union topology',excluded,samples,maxGap:Math.max(0,...samples.map(p=>p.gap)),above5cm:samples.filter(p=>p.gap>.05).length};
+   return {method:'unmatched edges with bilateral water ray probes and three samples per edge; approximate union boundary',excluded,internal,missingTerrain,samples,maxGap:Math.max(0,...samples.map(p=>p.gap)),above5cm:samples.filter(p=>p.gap>.05).length,below5cm:samples.filter(p=>p.gap<-.05).length,maxAbsoluteGap:Math.max(0,...samples.map(p=>Math.abs(p.gap)))};
   },
   runMeshTest:()=>{
    if(!terrainReady().ready)throw new Error('Player terrain chunk not ready');
