@@ -3760,38 +3760,35 @@ function buildChunkRivers(cx,cz,lod){
  for(const polys of replacements.values())for(const poly of polys)emitCompactWater(poly,true);
  // Extend lateral edges on their immutable incident plane, then intersect
  // the candidate strip with terrain fans. SAT rejects positive-area overlap.
+ // Construct wet terrain cells on immutable reference planes, rather than
+ // extrapolating narrow strips from individual shoreline edges.
  const added=[],candidates=[];
- for(const e of referenceConnectorEdges.values()){
-  if(e.count!==1)continue;
-  const {a,b,c}=e,dx=b.x-a.x,dz=b.z-a.z,len=Math.hypot(dx,dz);
-  if(len<.05)continue;
-  const mx=(a.x+b.x)/2,mz=(a.z+b.z)/2,q=alpineOutletProfile(mx,mz);
-  if(!q||q.distance<ALPINE_SHORE_C.radius+2||q.distance>ALPINE_SHORE_C.radius+ALPINE_JUNCTION_C.reach-ALPINE_JUNCTION_C.tailMatch||Math.abs(dx*q.nx+dz*q.nz)/len>.55)continue;
-  let nx=-dz/len,nz=dx/len;if((c.x-mx)*nx+(c.z-mz)*nz>0){nx=-nx;nz=-nz;}
-  if((mx-q.cx)*nx+(mz-q.cz)*nz<=0)continue;
-  const pl=plane({v:[a,b,c]});if(!pl)continue;
-  // Extend only to the first dry crossing on the immutable incident plane.
-  // A shared strip width covers both endpoints and the midpoint; exact
-  // terrain-fan clipping then determines the actual shoreline.
-  const at=(p,d)=>({x:p.x+nx*d,y:p.y+(pl.gx*nx+pl.gz*nz)*d,z:p.z+nz*d});
-  const limit=Math.min(4,nx>0?(x1-Math.max(a.x,b.x)-1e-5)/nx:nx<0?(x0-Math.min(a.x,b.x)+1e-5)/nx:Infinity,nz>0?(z1-Math.max(a.z,b.z)-1e-5)/nz:nz<0?(z0-Math.min(a.z,b.z)+1e-5)/nz:Infinity);
-  if(limit<=0)continue;
-  const mid={x:mx,z:mz,y:(a.y+b.y)/2};
-  const reach=p=>{let d=0;while(d<limit){d=Math.min(limit,d+.0625);const v=at(p,d);if(v.y<=renderedLand(v.x,v.z))return d;}return limit;};
-  const width=Math.max(reach(a),reach(b),reach(mid));
-  qa.adaptiveStrips=(qa.adaptiveStrips||0)+1;qa.maxStripWidth=Math.max(qa.maxStripWidth||0,width);
-  const extend=p=>at(p,width);
-  const aa=extend(a),bb=extend(b);
-  if([a,b,aa,bb].some(v=>v.x<=x0||v.x>=x1||v.z<=z0||v.z>=z1))continue;
-  for(const t of [[a,aa,bb],[a,bb,b]])for(const poly of intersect(t)){
-   for(let j=1;j<poly.length-1;j++){
-    const tri=[poly[0],poly[j],poly[j+1]];
-    if(Math.abs(riverCross(...tri))<1e-8)continue;
-    candidates.push({tri,source:[a,b]});
+ for(const f of ref){
+  const pl=plane(f);if(!pl)continue;
+  const center={x:f.v.reduce((s,v)=>s+v.x,0)/3,z:f.v.reduce((s,v)=>s+v.z,0)/3};
+  const q=alpineOutletProfile(center.x,center.z);
+  if(!q||q.distance<ALPINE_SHORE_C.radius+2||q.distance>ALPINE_SHORE_C.radius+ALPINE_JUNCTION_C.reach-ALPINE_JUNCTION_C.tailMatch)continue;
+  if(!f.v.some(v=>boundaryKeys.has(vk(v))))continue;
+  const base=f.v[0],lift=(x,z)=>({x,z,y:base.y+pl.gx*(x-base.x)+pl.gz*(z-base.z)});
+  const ix0=clamp(Math.floor((Math.min(...f.v.map(v=>v.x))-2-x0)/step),0,side-1),ix1=clamp(Math.floor((Math.max(...f.v.map(v=>v.x))+2-x0)/step),0,side-1);
+  const iz0=clamp(Math.floor((Math.min(...f.v.map(v=>v.z))-2-z0)/step),0,side-1),iz1=clamp(Math.floor((Math.max(...f.v.map(v=>v.z))+2-z0)/step),0,side-1);
+  // Restrict longitudinal extrapolation to the reference face's projected
+  // station interval; only the lateral wet domain is reconstructed.
+  const tx=-q.nz,tz=q.nx,station=v=>(v.x-center.x)*tx+(v.z-center.z)*tz;
+  const lo=Math.min(...f.v.map(station)),hi=Math.max(...f.v.map(station));
+  for(let i=ix0;i<=ix1;i++)for(let j=iz0;j<=iz1;j++){
+   const x=x0+i*step,z=z0+j*step;
+   const a=lift(x,z),b=lift(x,z+step),c=lift(x+step,z+step),d=lift(x+step,z);
+   for(const t of [[a,b,c],[a,c,d]]){
+    let poly=cut(t,v=>station(v)-lo);if(poly.length<3)continue;
+    poly=cut(poly,v=>hi-station(v));if(poly.length<3)continue;
+    for(let k=1;k<poly.length-1;k++)for(const wet of intersect([poly[0],poly[k],poly[k+1]])){
+     for(let n=1;n<wet.length-1;n++){const tri=[wet[0],wet[n],wet[n+1]];if(Math.abs(riverCross(...tri))>1e-8)candidates.push({tri,source:f.v});}
+    }
    }
   }
+  qa.domainReferenceFaces=(qa.domainReferenceFaces||0)+1;
  }
-
  // Build a disjoint polygon union by subtracting occupied convex faces.
  // All cuts interpolate on the candidate's original plane.
  const subtract=(poly,tri)=>{
