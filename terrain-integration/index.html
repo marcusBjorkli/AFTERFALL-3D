@@ -5795,7 +5795,8 @@ function gradeInit(){
  gradeRefresh();
 }
 async function init(){await worldInitialize();renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.7));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;document.body.insertBefore(renderer.domElement,document.body.firstChild);camera=new THREE.PerspectiveCamera(73,innerWidth/innerHeight,.08,260);camera.rotation.order='YXZ';clock=new THREE.Clock();buildWorld();gradeInit();constructionInit();buildingStoreInit();survivalInit();earthAvailabilityUpdate();pileMeshRefresh();sawStationsRefresh();initWeather();initInventoryUI();loadHudUpdate();weatherState.elapsed=WEATHER_DAY_SECONDS*.5;load();terrainModeInit();relocatePlayerFromStructure();updateWeather(0);updateCamera();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});$('status').textContent='4 × 4 km · dynamiske terrengchunks, elver, innsjøer og hav aktive · Utforsk, samle ressurser og bygg';animate()}
-function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05);if(!paused){let speed=3.5*(survivalNeeds.hunger<15?.86:1)*(survivalNeeds.warmth<15?.86:1),turnSpeed=2.1,forward=-joy.y,turn=joy.x;p.yaw-=turn*turnSpeed*dt;let fx=-Math.sin(p.yaw),fz=-Math.cos(p.yaw);move(fx*forward*speed*dt,fz*forward*speed*dt);p.seconds+=dt;updateCamera();if((Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4)))updateChunks()}waterTime.value+=dt;updateWeather(paused?0:dt);survivalTick(paused?0:dt);treeRegrowthTick();terrainGridDraw();survivalPlacePreview();constructionSitePickUpdate();renderer.render(scene,camera);if($('gradeOverlay').classList.contains('show')&&performance.now()-gradeLastHud>300){gradeLastHud=performance.now();gradeElevationRefresh()}if(performance.now()-gradeLiveLast>200){gradeLiveLast=performance.now();gradeLiveRefresh()}if(performance.now()-pileFocusLast>100){pileFocusLast=performance.now();pileFocusRefresh()}if(performance.now()-constructionLastRefresh>300){constructionLastRefresh=performance.now();constructionUpdateHud()}if(Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4))earthAvailabilityUpdate();if(toolToastUntil&&performance.now()>toolToastUntil){$('toolToast').style.display='none';toolToastUntil=0}$('status').textContent=`UTENDØRS · X ${p.x.toFixed(1)} · Z ${p.z.toFixed(1)} · ${terrainChunks.size} chunks · ${Math.round(1/Math.max(dt,.01))} FPS`}
+let bridgeViewCamera=null;
+function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.05);if(!paused){let speed=3.5*(survivalNeeds.hunger<15?.86:1)*(survivalNeeds.warmth<15?.86:1),turnSpeed=2.1,forward=-joy.y,turn=joy.x;p.yaw-=turn*turnSpeed*dt;let fx=-Math.sin(p.yaw),fz=-Math.cos(p.yaw);move(fx*forward*speed*dt,fz*forward*speed*dt);p.seconds+=dt;updateCamera();if((Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4)))updateChunks()}waterTime.value+=dt;updateWeather(paused?0:dt);survivalTick(paused?0:dt);treeRegrowthTick();terrainGridDraw();survivalPlacePreview();constructionSitePickUpdate();renderer.render(scene,bridgeViewCamera||camera);if($('gradeOverlay').classList.contains('show')&&performance.now()-gradeLastHud>300){gradeLastHud=performance.now();gradeElevationRefresh()}if(performance.now()-gradeLiveLast>200){gradeLiveLast=performance.now();gradeLiveRefresh()}if(performance.now()-pileFocusLast>100){pileFocusLast=performance.now();pileFocusRefresh()}if(performance.now()-constructionLastRefresh>300){constructionLastRefresh=performance.now();constructionUpdateHud()}if(Math.floor(p.seconds*4)!==Math.floor((p.seconds-dt)*4))earthAvailabilityUpdate();if(toolToastUntil&&performance.now()>toolToastUntil){$('toolToast').style.display='none';toolToastUntil=0}$('status').textContent=`UTENDØRS · X ${p.x.toFixed(1)} · Z ${p.z.toFixed(1)} · ${terrainChunks.size} chunks · ${Math.round(1/Math.max(dt,.01))} FPS`}
 const joyEl=$('joy'),knob=$('knob');function joyMove(e){let r=joyEl.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,len=Math.max(1,Math.hypot(dx,dy)),v=Math.min(1,len/48);joy.x=dx/len*v;joy.y=dy/len*v;knob.style.transform=`translate(${joy.x*44}px,${joy.y*44}px)`}
 joyEl.addEventListener('pointerdown',e=>{e.preventDefault();joyEl.setPointerCapture(e.pointerId);joyMove(e)});joyEl.addEventListener('pointermove',e=>{if(joyEl.hasPointerCapture(e.pointerId))joyMove(e)});function joyEnd(){joy.x=joy.y=0;knob.style.transform='translate(0,0)'}joyEl.addEventListener('pointerup',joyEnd);joyEl.addEventListener('pointercancel',joyEnd);
 document.addEventListener('pointerdown',e=>{
@@ -6754,8 +6755,38 @@ function installDiagnosticsBridge(){
   const key=chunkKey(Math.floor(p.x/CHUNK),Math.floor(p.z/CHUNK));
   return {ready:!!terrainChunks.get(key)?.land,playerChunk:key,activeChunks:terrainChunks.size};
  };
+ const station=Object.freeze({id:'GEO-001',x:2725.93,z:2751.93,datum:126.13055759548618});
+ const views=Object.freeze([
+  {id:'CAM-01',dx:0,dz:0,height:1.72,yaw:0,pitch:0},
+  {id:'CAM-02',dx:0,dz:0,height:1.72,yaw:-90,pitch:0},
+  {id:'CAM-03',dx:0,dz:0,height:1.72,yaw:180,pitch:0},
+  {id:'CAM-04',dx:0,dz:0,height:1.72,yaw:90,pitch:0},
+  {id:'CAM-05',dx:0,dz:0,height:60,yaw:0,pitch:-90},
+  {id:'CAM-06',dx:30,dz:30,height:Math.sqrt(1800),yaw:45,pitch:-45}
+ ]);
+ const viewCamera=new THREE.PerspectiveCamera(73,camera.aspect,.08,260);
+ let activeView=null;
+ const viewInfo=()=>activeView?{id:activeView.id,station:station.id,
+  position:{x:viewCamera.position.x+PAD_X,y:viewCamera.position.y+PAD_H,z:viewCamera.position.z+PAD_Z},
+  yaw:activeView.yaw,pitch:activeView.pitch,fov:viewCamera.fov,aspect:viewCamera.aspect}:null;
  const api={
-  bridgeVersion:'DB 0.3 phase C',
+  bridgeVersion:'DB 0.3 phase E',
+  getCameraPresets:()=>copy({station,views}),
+  getDiagnosticCamera:viewInfo,
+  setDiagnosticCamera:async(id)=>{
+   const v=views.find(q=>q.id===id);
+   if(!v)throw new RangeError('Unknown camera preset');
+   if(Math.hypot(p.x-station.x,p.z-station.z)>.001||!terrainReady().ready)
+    throw new Error('Position player at GEO-001 before selecting camera');
+   paused=true;joyEnd();lookPointer=null;
+   viewCamera.aspect=camera.aspect;viewCamera.updateProjectionMatrix();
+   viewCamera.position.set(station.x+v.dx-PAD_X,station.datum+v.height-PAD_H,station.z+v.dz-PAD_Z);
+   viewCamera.rotation.set(v.pitch*Math.PI/180,v.yaw*Math.PI/180,0,'YXZ');
+   viewCamera.updateMatrixWorld(true);activeView=v;bridgeViewCamera=viewCamera;
+   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+   return viewInfo();
+  },
+  clearDiagnosticCamera:()=>{bridgeViewCamera=null;activeView=null;return true;},
   getVersion:()=>revision,
   getSeed:()=>SEED,
   getPlayerPosition:position,
@@ -6769,14 +6800,14 @@ function installDiagnosticsBridge(){
    throw new Error('Player terrain chunk not ready');
   },
   setPlayerPosition:(x,z)=>{
-   point(x,z);paused=true;joyEnd();lookPointer=null;
+   point(x,z);bridgeViewCamera=null;activeView=null;paused=true;joyEnd();lookPointer=null;
    p.x=x;p.z=z;updateChunks(true);updateCamera();scene.updateMatrixWorld(true);
    return position();
   },
   setCamera:({yaw=0,pitch=0}={})=>{
    if(!Number.isFinite(yaw)||!Number.isFinite(pitch)||Math.abs(pitch)>Math.PI/2)
     throw new RangeError('Invalid camera angles in radians');
-   paused=true;joyEnd();p.yaw=yaw;p.pitch=pitch;updateCamera();
+   bridgeViewCamera=null;activeView=null;paused=true;joyEnd();p.yaw=yaw;p.pitch=pitch;updateCamera();
    return { ...position(),cameraWorld:{x:camera.position.x+PAD_X,y:camera.position.y+PAD_H,z:camera.position.z+PAD_Z},fov:camera.fov };
   },
   getTerrainHeight:(x,z)=>{point(x,z);return {x,z,original:originalGround(x,z)+PAD_H,final:ground(x,z)+PAD_H};},
