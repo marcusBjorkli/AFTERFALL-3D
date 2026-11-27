@@ -31,7 +31,7 @@ async function main(){
  return {revision:a.getVersion(),seed:a.getSeed(),position:a.getPlayerPosition(),terrain:await a.waitForTerrain(),presets:a.getCameraPresets()};
  });
  const s=report.setup;
- if(s.revision!=='f.4.6.2C.3.8.1'||s.seed!==206414||Math.hypot(s.position.x-2725.93,s.position.z-2751.93)>.001||!s.terrain.ready||s.terrain.activeChunks!==49)throw Error('Invalid GEO-001 setup');
+ if(s.revision!=='f.4.6.2C.3.9'||s.seed!==206414||Math.hypot(s.position.x-2725.93,s.position.z-2751.93)>.001||!s.terrain.ready||s.terrain.activeChunks!==49)throw Error('Invalid GEO-001 setup');
  // Measure real loaded geometry before changing the visual presentation.
  const mesh=await page.evaluate(()=>window.AFTERFALL_DIAGNOSTICS.runMeshTest());
  fs.writeFileSync(path.join(out,'geometry-report.json'),JSON.stringify(mesh,null,2));
@@ -111,6 +111,9 @@ async function main(){
  const waterHits=profiles.profiles.flatMap(p=>p.points).filter(q=>q.water.length).length;
  report.wideProfiles={valid:wide.profiles.length===21&&wideSummary.every(p=>p.valid&&p.overlap),points:wide.profiles.reduce((n,p)=>n+p.points.length,0),maxArtificialDepth:Math.max(...wideSummary.map(p=>p.maxArtificialDepth)),profiles:wideSummary};
  report.waterComparison={referenceC37:2108,referenceC38:1988,current:waterHits,deltaFromC38:waterHits-1988};
+ report.waterComparison.referenceC381=1962;
+ report.waterComparison.deltaFromC381=waterHits-1962;
+ report.comparison.previousC381={maxDitchDepth:.1062,maxSuspendedBankHeight:.2815,suspendedBankSamples:12,riverExpectedWithoutMesh:4,alpineOutletWetGap:2};
  report.comparison.previousC38={maxDitchDepth:.4149,maxSuspendedBankHeight:.2815,suspendedBankSamples:12,riverExpectedWithoutMesh:4,alpineOutletWetGap:2};
  report.comparison.accepted=report.comparison.accepted&&report.wideProfiles.valid&&report.wideProfiles.maxArtificialDepth<=.05;
  fs.writeFileSync(path.join(out,'before-after.json'),JSON.stringify({...report.comparison,wideProfiles:report.wideProfiles,waterComparison:report.waterComparison},null,2));
