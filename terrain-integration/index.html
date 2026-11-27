@@ -6740,5 +6740,58 @@ addEventListener('keydown',e=>{
  if(pileMenuOpen){if(e.key==='Escape'){e.preventDefault();setPileMenu(false);}return;}
  if(e.key==='Escape'&&$('diagOverlay').classList.contains('show')){e.preventDefault();diagOpen(false);return;}
  if(constructionOpen||constructionInfoOpen){if(e.key==='Escape'&&!constructionBusy){if(constructionInfoOpen)$('constructionInfoClose').click();else $('constructionClose').click();}return;}if(e.key==='Escape'){showPanel(!paused);return;}if(paused)return;if(e.key==='ArrowLeft')p.yaw+=.08;if(e.key==='ArrowRight')p.yaw-=.08;if(e.key==='w'||e.key==='ArrowUp')joy.y=-1;if(e.key==='s'||e.key==='ArrowDown')joy.y=1;if(e.key==='a')joy.x=-1;if(e.key==='d')joy.x=1});addEventListener('keyup',e=>{if(['w','s','a','d','ArrowUp','ArrowDown'].includes(e.key))joyEnd()});
-init().catch(err=>{$('error').style.display='grid';$('errText').textContent=String(err);console.error(err)})
+// DB 0.3 phase C: opt-in diagnostic interface; no terrain generation changes.
+function installDiagnosticsBridge(){
+ if(new URLSearchParams(location.search).get('diagnostics')!=='1')return;
+ const revision='f.4.6.2C.3.7';
+ const copy=value=>JSON.parse(JSON.stringify(value));
+ const point=(x,z)=>{
+  if(!Number.isFinite(x)||!Number.isFinite(z)||x<1||z<1||x>WORLD-1||z>WORLD-1)
+   throw new RangeError('Coordinates outside diagnostic world bounds');
+ };
+ const position=()=>({x:p.x,z:p.z,yaw:p.yaw,pitch:p.pitch||0});
+ const terrainReady=()=>{
+  const key=chunkKey(Math.floor(p.x/CHUNK),Math.floor(p.z/CHUNK));
+  return {ready:!!terrainChunks.get(key)?.land,playerChunk:key,activeChunks:terrainChunks.size};
+ };
+ const api={
+  bridgeVersion:'DB 0.3 phase C',
+  getVersion:()=>revision,
+  getSeed:()=>SEED,
+  getPlayerPosition:position,
+  getTerrainStatus:terrainReady,
+  waitForTerrain:async(timeoutMs=30000)=>{
+   if(!Number.isFinite(timeoutMs)||timeoutMs<0||timeoutMs>120000)throw new RangeError('Invalid timeout');
+   const end=performance.now()+timeoutMs;
+   do{const status=terrainReady();if(status.ready)return status;
+    await new Promise(resolve=>setTimeout(resolve,100));
+   }while(performance.now()<end);
+   throw new Error('Player terrain chunk not ready');
+  },
+  setPlayerPosition:(x,z)=>{
+   point(x,z);paused=true;joyEnd();lookPointer=null;
+   p.x=x;p.z=z;updateChunks(true);updateCamera();scene.updateMatrixWorld(true);
+   return position();
+  },
+  setCamera:({yaw=0,pitch=0}={})=>{
+   if(!Number.isFinite(yaw)||!Number.isFinite(pitch)||Math.abs(pitch)>Math.PI/2)
+    throw new RangeError('Invalid camera angles in radians');
+   paused=true;joyEnd();p.yaw=yaw;p.pitch=pitch;updateCamera();
+   return { ...position(),cameraWorld:{x:camera.position.x+PAD_X,y:camera.position.y+PAD_H,z:camera.position.z+PAD_Z},fov:camera.fov };
+  },
+  getTerrainHeight:(x,z)=>{point(x,z);return {x,z,original:originalGround(x,z)+PAD_H,final:ground(x,z)+PAD_H};},
+  getWaterHeight:(x,z)=>{
+   point(x,z);const body=waterBodyAt(x,z,ground(x,z)),river=riverSample(x,z);
+   return {x,z,body:body?{kind:body.kind,id:body.id??null,level:body.level}:null,
+    river:river?{distance:river.distance,width:river.width,level:river.water}:null};
+  },
+  runMeshTest:()=>{
+   if(!terrainReady().ready)throw new Error('Player terrain chunk not ready');
+   return copy(shoreMeshQa());
+  },
+  exportReport:()=>lakeQaReport?copy(lakeQaReport):null
+ };
+ Object.defineProperty(window,'AFTERFALL_DIAGNOSTICS',{value:Object.freeze(api),writable:false,configurable:false});
+}
+init().then(installDiagnosticsBridge).catch(err=>{$('error').style.display='grid';$('errText').textContent=String(err);console.error(err)})
 </script></body></html>
