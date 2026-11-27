@@ -31,7 +31,7 @@ async function main(){
  return {revision:a.getVersion(),seed:a.getSeed(),position:a.getPlayerPosition(),terrain:await a.waitForTerrain(),presets:a.getCameraPresets()};
  });
  const s=report.setup;
- if(s.revision!=='f.4.6.2C.3.9C.4'||s.seed!==206414||Math.hypot(s.position.x-2725.93,s.position.z-2751.93)>.001||!s.terrain.ready||s.terrain.activeChunks!==49)throw Error('Invalid GEO-001 setup');
+ if(s.revision!=='f.4.6.2C.3.9C.5'||s.seed!==206414||Math.hypot(s.position.x-2725.93,s.position.z-2751.93)>.001||!s.terrain.ready||s.terrain.activeChunks!==49)throw Error('Invalid GEO-001 setup');
  // Measure real loaded geometry before changing the visual presentation.
  const mesh=await page.evaluate(()=>window.AFTERFALL_DIAGNOSTICS.runMeshTest());
  fs.writeFileSync(path.join(out,'geometry-report.json'),JSON.stringify(mesh,null,2));
@@ -130,6 +130,22 @@ async function main(){
  fs.writeFileSync(path.join(out,'before-after.json'),JSON.stringify(report.comparison,null,2));
  if(!boundary.samples.length||!boundary.samples.every(p=>Number.isFinite(p.gap)))throw Error('Invalid water boundary coverage');
  report.comparison.previousC39={waterHits:1962,wideWaterHits:2064,triangles:15598,connectorTriangles:3785,maxDitchDepth:.1062,suspendedBankSamples:12,maxSuspendedBankHeight:.2815};
+ const regression=[];
+ for(const base of ['baseline-381','baseline-394'])for(const file of ['cross-sections.json','cross-sections-80m.json']){
+  const a=JSON.parse(fs.readFileSync(path.join(root,base,file))),b=JSON.parse(fs.readFileSync(path.join(out,file)));
+  const ap=a.profiles.flatMap(p=>p.points),bp=b.profiles.flatMap(p=>p.points);
+  if(ap.length!==bp.length)throw Error('Regression point count mismatch');
+  const result={base,file,points:ap.length,coordinateChanges:0,terrainChanges:0,lost:0,gained:0,maxWaterDelta:0};
+  for(let i=0;i<ap.length;i++){const p=ap[i],q=bp[i];if(p.x!==q.x||p.z!==q.z||p.offset!==q.offset)result.coordinateChanges++;
+   if(['T0','T1','T2','T3','T4'].some(k=>p[k]!==q[k])||JSON.stringify(p.stages)!==JSON.stringify(q.stages))result.terrainChanges++;
+   if(p.water.length&&!q.water.length)result.lost++;if(!p.water.length&&q.water.length)result.gained++;
+   if(p.water.length&&q.water.length)result.maxWaterDelta=Math.max(result.maxWaterDelta,Math.abs(p.water[0]-q.water[0]));
+  }regression.push(result);
+ }
+ report.pointwiseRegression=regression;
+ fs.writeFileSync(path.join(out,'pointwise-regression.json'),JSON.stringify(regression,null,2));
+ report.comparison.accepted=report.comparison.accepted&&regression.every(r=>!r.coordinateChanges&&!r.terrainChanges&&!r.lost)&&regression.filter(r=>r.base==='baseline-381').every(r=>r.maxWaterDelta===0);
+ fs.writeFileSync(path.join(out,'before-after.json'),JSON.stringify(report.comparison,null,2));
  // Hide all body-level UI except the renderer canvas, only in this browser.
  const hud=await page.addStyleTag({content:'body > :not(canvas:first-child) { visibility: hidden !important; } body > canvas:first-child { visibility: visible !important; }'});
  report.hud=await page.evaluate(()=>({rendererVisible:document.body.firstElementChild?.tagName==='CANVAS'&&getComputedStyle(document.body.firstElementChild).visibility==='visible',visibleOverlays:[...document.body.children].filter(e=>e!==document.body.firstElementChild&&!['SCRIPT','STYLE','LINK'].includes(e.tagName)&&getComputedStyle(e).visibility==='visible'&&getComputedStyle(e).display!=='none').length}));
