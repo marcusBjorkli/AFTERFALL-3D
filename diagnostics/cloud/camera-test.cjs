@@ -122,6 +122,8 @@ async function main(){
  const fixed=await page.evaluate(()=>window.AFTERFALL_DIAGNOSTICS.runFixedWaterProbes());
  fs.writeFileSync(path.join(out,'fixed-water-probes.json'),JSON.stringify(fixed,null,2));
  if(fixed.length!==6||fixed.some(p=>!p.loaded||!p.land.length))throw Error('Fixed probe coverage invalid');
+ const contour=await page.evaluate(()=>window.AFTERFALL_DIAGNOSTICS.runGlobalWaterContour());
+ fs.writeFileSync(path.join(out,'global-water-contour.json'),JSON.stringify(contour));
  const boundary=await page.evaluate(()=>window.AFTERFALL_DIAGNOSTICS.runWaterBoundaryTest());
  fs.writeFileSync(path.join(out,'water-boundaries.json'),JSON.stringify(boundary,null,2));
  report.waterBoundary={method:boundary.method,samples:boundary.samples.length,excluded:boundary.excluded,maxGap:boundary.maxGap,above5cm:boundary.above5cm,below5cm:boundary.below5cm,maxAbsoluteGap:boundary.maxAbsoluteGap,internal:boundary.internal,missingTerrain:boundary.missingTerrain};
