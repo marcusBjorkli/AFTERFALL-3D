@@ -6448,7 +6448,7 @@ function shoreMeshQa(){
    if(outlet&&outlet.distance>=ALPINE_SHORE_C.radius&&
      outlet.blend>.02&&outlet.offset<outlet.halfWidth){
     counters.alpineOutletSamples++;
-    if(!river.length&&!alpine.length)counters.alpineOutletWetGap++;
+    if(!river.length&&!alpine.length){counters.alpineOutletWetGap++;(counters.outletGapPoints||(counters.outletGapPoints=[])).push({x,z,terrain:hTerrain===null?null:hTerrain+PAD_H,offset:outlet.offset,halfWidth:outlet.halfWidth});}
     // Compare surface meshes to the shared transition profile, not
     // to the unmodified coarse runoff raster.
     const meshHeight=river.length?river[0]:(alpine.length?alpine[0]:null);
@@ -6513,7 +6513,7 @@ function shoreMeshQa(){
     const diff=Math.max(...lake.map(y=>Math.min(...river.map(v=>Math.abs(y-v)))));
     counters.riverLakeHeightDifferenceMax=Math.max(counters.riverLakeHeightDifferenceMax,diff);
    }
-   if(riverExpected&&!river.length&&!lake.length)counters.riverExpectedWithoutMesh++;
+   if(riverExpected&&!river.length&&!lake.length){counters.riverExpectedWithoutMesh++;(counters.missingRiverPoints||(counters.missingRiverPoints=[])).push({x,z,terrain:hTerrain===null?null:hTerrain+PAD_H,riverDistance:r?.distance??null,riverLevel:r?.water??null});}
    if(water!==null&&!wetExpected)counters.dryClassifiedWithWater++;
    if(water===null&&wetExpected)counters.classifiedWetWithoutWater++;
    if(rise!==null&&rise>.15)counters.aboveTerrain++;
