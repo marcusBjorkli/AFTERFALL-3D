@@ -7076,6 +7076,17 @@ function installDiagnosticsBridge(){
    }
    return {revision,seed:SEED,station:station.id,time:new Date().toISOString(),axis:{tx,tz,nx,nz},width,step:.1,spacing:2,definitions:{T0:'pre-incision hydrology source sampled on integer fan',T1:'post-incision normalized base',T2:'final hydrology correction including prior edits and anchors',T3:'actual ground function; edits precede T2, not a separate subsequent stage',T4:'actual loaded mesh raycast'},profiles};
   },
+  runFixedWaterProbes:()=>{
+   scene.updateMatrixWorld(true);
+   const ray=new THREE.Raycaster(),down=new THREE.Vector3(0,-1,0);
+   return [['R01',2725.93,2759.93],['R02',2733.93,2767.93],['R03',2741.93,2775.93],['R04',2749.93,2783.93],['U01',2717.93,2743.93],['U02',2717.93,2751.93]].map(([id,x,z])=>{
+    const c=terrainChunks.get(Math.floor(x/CHUNK)+','+Math.floor(z/CHUNK)),r=riverSample(x,z),q=alpineOutletProfile(x,z);
+    ray.set(new THREE.Vector3(x-PAD_X,1000,z-PAD_Z),down);
+    const hits=o=>o?.isMesh?ray.intersectObject(o,false).map(h=>h.point.y+PAD_H):[];
+    const land=hits(c?.land),river=hits(c?.water),alpine=hits(c?.alpineWater),lake=(c?.stillWater||[]).flatMap(hits);
+    return {id,x,z,loaded:!!c,lod:c?.lod,land,river,alpine,lake,ground:ground(x,z)+PAD_H,rawRiver:r?.water??null,riverDistance:r?.distance??null,riverWidth:r?.width??null,alpineSource:r?.segment?.alpineSource??null,outlet:q?{id:q.id,distance:q.distance,offset:q.offset,halfWidth:q.halfWidth,stage:alpineJunctionStage(q)}:null};
+   });
+  },
   runWaterBoundaryTest:()=>{
    scene.updateMatrixWorld(true);
    const edges=new Map(),ray=new THREE.Raycaster(),down=new THREE.Vector3(0,-1,0);
@@ -7106,7 +7117,7 @@ function installDiagnosticsBridge(){
     const left=waterAt(m.x+nx*.015,m.z+nz*.015),right=waterAt(m.x-nx*.015,m.z-nz*.015);
     if(left&&right){internal++;continue;}
     if(!left&&!right){excluded++;continue;}
-    for(const t of [.2,.5,.8]){
+    for(const t of Array.from({length:Math.max(3,Math.ceil(len/.05)+1)},(_,i)=>i/(Math.max(3,Math.ceil(len/.05)+1)-1))){
      const p=e.a.clone().lerp(e.b,t);
      ray.set(new THREE.Vector3(p.x,1000,p.z),down);
      const hit=ray.intersectObject(e.c.land,false)[0];if(!hit){missingTerrain++;continue;}
