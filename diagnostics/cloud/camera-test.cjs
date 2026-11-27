@@ -31,7 +31,7 @@ async function main(){
  return {revision:a.getVersion(),seed:a.getSeed(),position:a.getPlayerPosition(),terrain:await a.waitForTerrain(),presets:a.getCameraPresets()};
  });
  const s=report.setup;
- if(s.revision!=='f.4.6.2C.3.9C.5.1'||s.seed!==206414||Math.hypot(s.position.x-2725.93,s.position.z-2751.93)>.001||!s.terrain.ready||s.terrain.activeChunks!==49)throw Error('Invalid GEO-001 setup');
+ if(s.revision!=='f.4.6.2C.3.9C.6'||s.seed!==206414||Math.hypot(s.position.x-2725.93,s.position.z-2751.93)>.001||!s.terrain.ready||s.terrain.activeChunks!==49)throw Error('Invalid GEO-001 setup');
  // Measure real loaded geometry before changing the visual presentation.
  const mesh=await page.evaluate(()=>window.AFTERFALL_DIAGNOSTICS.runMeshTest());
  fs.writeFileSync(path.join(out,'geometry-report.json'),JSON.stringify(mesh,null,2));
