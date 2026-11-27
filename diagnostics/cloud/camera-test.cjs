@@ -31,7 +31,7 @@ async function main(){
  return {revision:a.getVersion(),seed:a.getSeed(),position:a.getPlayerPosition(),terrain:await a.waitForTerrain(),presets:a.getCameraPresets()};
  });
  const s=report.setup;
- if(s.revision!=='f.4.6.2C.3.8'||s.seed!==206414||Math.hypot(s.position.x-2725.93,s.position.z-2751.93)>.001||!s.terrain.ready||s.terrain.activeChunks!==49)throw Error('Invalid GEO-001 setup');
+ if(s.revision!=='f.4.6.2C.3.8.1'||s.seed!==206414||Math.hypot(s.position.x-2725.93,s.position.z-2751.93)>.001||!s.terrain.ready||s.terrain.activeChunks!==49)throw Error('Invalid GEO-001 setup');
  // Measure real loaded geometry before changing the visual presentation.
  const mesh=await page.evaluate(()=>window.AFTERFALL_DIAGNOSTICS.runMeshTest());
  fs.writeFileSync(path.join(out,'geometry-report.json'),JSON.stringify(mesh,null,2));
@@ -86,6 +86,35 @@ async function main(){
  report.comparison=comparison;
  report.crossSections={valid:profiles.profiles.length===21&&summary.every(p=>p.validPoints===401),profiles:summary.length,points:summary.reduce((n,p)=>n+p.validPoints,0)};
  if(!report.crossSections.valid)throw Error('Incomplete cross-section coverage');
+ const wide=await page.evaluate(()=>window.AFTERFALL_DIAGNOSTICS.runCrossSections(80));
+ fs.writeFileSync(path.join(out,'cross-sections-80m.json'),JSON.stringify(wide,null,2));
+ const wideSummary=wide.profiles.map((p,i)=>{
+  const pts=p.points, narrow=profiles.profiles[i].points;
+  const valid=pts.length===801&&pts.every(q=>q.loaded&&['T0','T1','T2','T3','T4'].every(k=>Number.isFinite(q[k]))&&Array.isArray(q.water)&&q.water.every(Number.isFinite));
+  const overlap=narrow.every((q,j)=>{const w=pts[j+200];return w&&Math.hypot(q.x-w.x,q.z-w.z)<1e-8&&Math.abs(q.T4-w.T4)<1e-6&&JSON.stringify(q.water)===JSON.stringify(w.water);});
+  let maxArtificialDepth=0,offset=null;
+  for(let j=1;j<pts.length-1;j++){
+   const q=pts[j];if(q.water.length||q.T4>pts[j-1].T4||q.T4>pts[j+1].T4)continue;
+   const l=pts.slice(Math.max(0,j-50),j).filter(v=>!v.water.length),r=pts.slice(j+1,j+51).filter(v=>!v.water.length);
+   if(!l.length||!r.length)continue;
+   const depth=k=>Math.max(0,Math.min(Math.max(...l.map(v=>k(v))),Math.max(...r.map(v=>k(v))))-k(q));
+   const artificial=Math.max(0,depth(v=>v.T4)-depth(v=>v.stages.alpineShore));
+   if(artificial>maxArtificialDepth){maxArtificialDepth=artificial;offset=q.offset;}
+  }
+  const vals=pts.flatMap(q=>[q.T4,q.stages.alpineShore,...q.water]),lo=Math.min(...vals)-.1,hi=Math.max(...vals)+.1;
+  const X=q=>60+(q.offset+40)*11,Y=h=>390-(h-lo)/(hi-lo)*340;
+  const line=(fn,color)=>'<polyline fill="none" stroke="'+color+'" points="'+pts.map(q=>X(q)+','+Y(fn(q))).join(' ')+'"/>';
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="450"><rect width="1000" height="450" fill="white"/><g font-family="sans-serif" font-size="13"><text x="60" y="25">'+p.id+' | 80m | pre-outlet gray, mesh black, water blue</text>'+line(q=>q.stages.alpineShore,'#999')+line(q=>q.T4,'#222')+pts.flatMap(q=>q.water.map(h=>'<circle cx="'+X(q)+'" cy="'+Y(h)+'" r="1.5" fill="#1685c2"/>')).join('')+'<text x="60" y="420">-40m</text><text x="900" y="420">+40m</text><text x="5" y="50">'+hi.toFixed(2)+'</text><text x="5" y="390">'+lo.toFixed(2)+'</text></g></svg>';
+  fs.writeFileSync(path.join(out,p.id+'-80m.svg'),svg);
+  return {id:p.id,valid,overlap,maxArtificialDepth,offset,waterHits:pts.filter(q=>q.water.length).length};
+ });
+ const waterHits=profiles.profiles.flatMap(p=>p.points).filter(q=>q.water.length).length;
+ report.wideProfiles={valid:wide.profiles.length===21&&wideSummary.every(p=>p.valid&&p.overlap),points:wide.profiles.reduce((n,p)=>n+p.points.length,0),maxArtificialDepth:Math.max(...wideSummary.map(p=>p.maxArtificialDepth)),profiles:wideSummary};
+ report.waterComparison={referenceC37:2108,referenceC38:1988,current:waterHits,deltaFromC38:waterHits-1988};
+ report.comparison.previousC38={maxDitchDepth:.4149,maxSuspendedBankHeight:.2815,suspendedBankSamples:12,riverExpectedWithoutMesh:4,alpineOutletWetGap:2};
+ report.comparison.accepted=report.comparison.accepted&&report.wideProfiles.valid&&report.wideProfiles.maxArtificialDepth<=.05;
+ fs.writeFileSync(path.join(out,'before-after.json'),JSON.stringify({...report.comparison,wideProfiles:report.wideProfiles,waterComparison:report.waterComparison},null,2));
+ if(!report.wideProfiles.valid)throw Error('Incomplete wide profile coverage or inconsistent overlap');
  // Hide all body-level UI except the renderer canvas, only in this browser.
  const hud=await page.addStyleTag({content:'body > :not(canvas:first-child) { visibility: hidden !important; } body > canvas:first-child { visibility: visible !important; }'});
  report.hud=await page.evaluate(()=>({rendererVisible:document.body.firstElementChild?.tagName==='CANVAS'&&getComputedStyle(document.body.firstElementChild).visibility==='visible',visibleOverlays:[...document.body.children].filter(e=>e!==document.body.firstElementChild&&!['SCRIPT','STYLE','LINK'].includes(e.tagName)&&getComputedStyle(e).visibility==='visible'&&getComputedStyle(e).display!=='none').length}));
@@ -102,7 +131,7 @@ async function main(){
  await hud.evaluate(e=>e.remove());
  report.restoration=await page.evaluate(()=>{const a=window.AFTERFALL_DIAGNOSTICS;a.clearDiagnosticCamera();return {cleared:a.getDiagnosticCamera()===null,position:a.getPlayerPosition()};});
  report.uniqueImages=new Set(report.cameras.map(c=>c.sha256)).size;
- report.passed=report.crossSections.valid&&report.geometry.valid&&report.httpStatus===200&&report.cameras.length===6&&report.cameras.every(c=>c.passed)&&report.uniqueImages===6&&report.restoration.cleared&&Math.hypot(report.restoration.position.x-2725.93,report.restoration.position.z-2751.93)<=.001&&report.errors.length===0;
+ report.passed=report.wideProfiles.valid&&report.crossSections.valid&&report.geometry.valid&&report.httpStatus===200&&report.cameras.length===6&&report.cameras.every(c=>c.passed)&&report.uniqueImages===6&&report.restoration.cleared&&Math.hypot(report.restoration.position.x-2725.93,report.restoration.position.z-2751.93)<=.001&&report.errors.length===0;
  }catch(e){report.failure=String(e);if(page)await page.screenshot({path:path.join(out,'failure.png'),timeout:10000}).catch(()=>{});}
  finally{
  report.passed=report.passed&&report.errors.length===0;
