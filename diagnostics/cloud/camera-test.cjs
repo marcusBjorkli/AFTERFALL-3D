@@ -31,7 +31,7 @@ async function main(){
  return {revision:a.getVersion(),seed:a.getSeed(),position:a.getPlayerPosition(),terrain:await a.waitForTerrain(),presets:a.getCameraPresets()};
  });
  const s=report.setup;
- if(s.revision!=='f.4.6.2C.3.7'||s.seed!==206414||Math.hypot(s.position.x-2725.93,s.position.z-2751.93)>.001||!s.terrain.ready||s.terrain.activeChunks!==49)throw Error('Invalid GEO-001 setup');
+ if(s.revision!=='f.4.6.2C.3.8'||s.seed!==206414||Math.hypot(s.position.x-2725.93,s.position.z-2751.93)>.001||!s.terrain.ready||s.terrain.activeChunks!==49)throw Error('Invalid GEO-001 setup');
  // Measure real loaded geometry before changing the visual presentation.
  const mesh=await page.evaluate(()=>window.AFTERFALL_DIAGNOSTICS.runMeshTest());
  fs.writeFileSync(path.join(out,'geometry-report.json'),JSON.stringify(mesh,null,2));
@@ -78,6 +78,12 @@ async function main(){
   fs.writeFileSync(path.join(out,p.id+'.svg'),svg);
  }
  fs.writeFileSync(path.join(out,'profile-summary.json'),JSON.stringify({definitions:profiles.definitions,method:'ditch candidate: dry local minimum bracketed by dry maxima within 5 m each side; correction span: outermost samples exceeding 5 cm correction, may include gaps',profiles:summary},null,2));
+ const baseline={revision:'f.4.6.2C.3.7',runId:46057327201,points:8421,maxDitchDepth:.7727987781652246,maxCorrectionSpan:15.4,suspendedBankSamples:14,maxSuspendedBankHeight:.3256,riverExpectedWithoutMesh:4,alpineOutletWetGap:2};
+ const after={maxDitchDepth:Math.max(0,...summary.map(p=>p.ditchCandidate?.depth||0)),maxCorrectionSpan:Math.max(...summary.map(p=>p.correctionSpanAbove5cm)),suspendedBankSamples:fine.suspendedBankSamples,maxSuspendedBankHeight:fine.maxSuspendedBankHeight,riverExpectedWithoutMesh:c.riverExpectedWithoutMesh,alpineOutletWetGap:c.alpineOutletWetGap};
+ const delta=Object.fromEntries(Object.keys(after).map(k=>[k,after[k]-baseline[k]]));
+ const comparison={baseline,after,delta,targets:{maxDitchDepth:.05,maxSuspendedBankHeight:.05,suspendedBankSamples:0,riverExpectedWithoutMesh:0,alpineOutletWetGap:0},accepted:after.maxDitchDepth<=.05&&after.maxSuspendedBankHeight<=.05&&after.suspendedBankSamples===0&&after.riverExpectedWithoutMesh===0&&after.alpineOutletWetGap===0&&fine.terrainIntrusion===0&&fine.lakeRiverOverlaps===0};
+ fs.writeFileSync(path.join(out,'before-after.json'),JSON.stringify(comparison,null,2));
+ report.comparison=comparison;
  report.crossSections={valid:profiles.profiles.length===21&&summary.every(p=>p.validPoints===401),profiles:summary.length,points:summary.reduce((n,p)=>n+p.validPoints,0)};
  if(!report.crossSections.valid)throw Error('Incomplete cross-section coverage');
  // Hide all body-level UI except the renderer canvas, only in this browser.
