@@ -31,7 +31,7 @@ async function main(){
  return {revision:a.getVersion(),seed:a.getSeed(),position:a.getPlayerPosition(),terrain:await a.waitForTerrain(),presets:a.getCameraPresets()};
  });
  const s=report.setup;
- if(s.revision!=='f.4.6.2C.3.9'||s.seed!==206414||Math.hypot(s.position.x-2725.93,s.position.z-2751.93)>.001||!s.terrain.ready||s.terrain.activeChunks!==49)throw Error('Invalid GEO-001 setup');
+ if(s.revision!=='f.4.6.2C.3.9C'||s.seed!==206414||Math.hypot(s.position.x-2725.93,s.position.z-2751.93)>.001||!s.terrain.ready||s.terrain.activeChunks!==49)throw Error('Invalid GEO-001 setup');
  // Measure real loaded geometry before changing the visual presentation.
  const mesh=await page.evaluate(()=>window.AFTERFALL_DIAGNOSTICS.runMeshTest());
  fs.writeFileSync(path.join(out,'geometry-report.json'),JSON.stringify(mesh,null,2));
@@ -118,6 +118,11 @@ async function main(){
  report.comparison.accepted=report.comparison.accepted&&report.wideProfiles.valid&&report.wideProfiles.maxArtificialDepth<=.05;
  fs.writeFileSync(path.join(out,'before-after.json'),JSON.stringify({...report.comparison,wideProfiles:report.wideProfiles,waterComparison:report.waterComparison},null,2));
  if(!report.wideProfiles.valid)throw Error('Incomplete wide profile coverage or inconsistent overlap');
+ const boundary=await page.evaluate(()=>window.AFTERFALL_DIAGNOSTICS.runWaterBoundaryTest());
+ fs.writeFileSync(path.join(out,'water-boundaries.json'),JSON.stringify(boundary,null,2));
+ report.waterBoundary={method:boundary.method,samples:boundary.samples.length,excluded:boundary.excluded,maxGap:boundary.maxGap,above5cm:boundary.above5cm};
+ if(!boundary.samples.length||!boundary.samples.every(p=>Number.isFinite(p.gap)))throw Error('Invalid water boundary coverage');
+ report.comparison.previousC39={waterHits:1962,wideWaterHits:2064,triangles:15598,connectorTriangles:3785,maxDitchDepth:.1062,suspendedBankSamples:12,maxSuspendedBankHeight:.2815};
  // Hide all body-level UI except the renderer canvas, only in this browser.
  const hud=await page.addStyleTag({content:'body > :not(canvas:first-child) { visibility: hidden !important; } body > canvas:first-child { visibility: visible !important; }'});
  report.hud=await page.evaluate(()=>({rendererVisible:document.body.firstElementChild?.tagName==='CANVAS'&&getComputedStyle(document.body.firstElementChild).visibility==='visible',visibleOverlays:[...document.body.children].filter(e=>e!==document.body.firstElementChild&&!['SCRIPT','STYLE','LINK'].includes(e.tagName)&&getComputedStyle(e).visibility==='visible'&&getComputedStyle(e).display!=='none').length}));
