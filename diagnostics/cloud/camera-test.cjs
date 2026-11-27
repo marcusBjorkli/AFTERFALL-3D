@@ -5,7 +5,7 @@ const http=require('node:http');
 const path=require('node:path');
 const root=process.cwd(), out=path.join(root,'diagnostic-output');
 fs.mkdirSync(out,{recursive:true});
-const report={bridgeVersion:'DB 0.3M.3',testId:'CAM-001',timestamp:new Date().toISOString(),commit:process.env.GITHUB_SHA||null,passed:false,cameras:[],errors:[]};
+const report={bridgeVersion:'DB 0.3.1',testId:'CAM-001',timestamp:new Date().toISOString(),commit:process.env.GITHUB_SHA||null,passed:false,cameras:[],errors:[]};
 const server=http.createServer((req,res)=>{
  const p=path.resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://localhost').pathname));
  if(!p.startsWith(root+path.sep)){res.writeHead(403).end();return;}
@@ -38,11 +38,48 @@ async function main(){
  const c=mesh.counters||{}, fine=mesh.fineAlpineJunction||{};
  const required=['dryClassifiedWithWater','classifiedWetWithoutWater','multipleWaterTypes','terrainRayMiss','alpineMissing','alpineFalseWet','alpineOutletWetGap','riverExpectedWithoutMesh','riverBankBelowWater'];
  const valid=mesh.valid===true&&mesh.revision===s.revision&&Math.hypot(mesh.center.x-2725.93,mesh.center.z-2751.93)<=.001&&mesh.radius===96&&mesh.step===8&&c.samplePoints===441&&c.loaded===441&&c.unloaded===0&&mesh.preflight?.playerChunkFound===true&&required.every(k=>Number.isFinite(c[k]))&&Number.isFinite(fine.suspendedBankSamples)&&Number.isFinite(fine.maxSuspendedBankHeight);
+ const edge=mesh.shorelineEdgeControl||{};
+ const fineValid=fine.valid===true&&fine.alpineId===6&&fine.samples===101&&fine.loaded===101&&fine.unloaded===0&&edge.valid===true&&edge.probes===48&&edge.unloaded===0;
  const findings=Object.fromEntries(required.map(k=>[k,c[k]]));
  findings.suspendedBankSamples=fine.suspendedBankSamples;
  findings.maxSuspendedBankHeight=fine.maxSuspendedBankHeight;
- report.geometry={testId:'MESH-001',valid,findings,geometryClean:valid&&Object.values(findings).every(v=>v===0),file:'geometry-report.json'};
- if(!valid)throw Error('Invalid or incomplete geometry report');
+ for(const k of ['missingWater','terrainIntrusion','heightMismatch','multipleRiverStages','lakeRiverOverlaps'])findings['fine_'+k]=fine[k];
+ for(const k of ['wetInsideMissing','waterOutsideBank','maxWaterAboveDryBank'])findings['edge_'+k]=edge[k];
+ report.geometry={testId:'MESH-001',valid:valid&&fineValid&&Object.values(findings).every(Number.isFinite),findings,geometryClean:valid&&fineValid&&Object.values(findings).every(v=>v===0),file:'geometry-report.json'};
+ if(!report.geometry.valid)throw Error('Invalid or incomplete geometry report');
+ const profiles=await page.evaluate(()=>window.AFTERFALL_DIAGNOSTICS.runCrossSections());
+ fs.writeFileSync(path.join(out,'cross-sections.json'),JSON.stringify(profiles,null,2));
+ const summary=[];
+ for(const p of profiles.profiles){
+  const pts=p.points, validPoints=pts.filter(q=>q.loaded&&['T0','T1','T2','T3','T4'].every(k=>Number.isFinite(q[k]))&&Array.isArray(q.water)&&q.water.every(Number.isFinite));
+  const maxSlope=validPoints.length===401?Math.max(...pts.slice(1).map((q,i)=>Math.abs(q.T4-pts[i].T4)/.1)):null;
+  // Candidate ditch: local minimum bracketed by higher dry mesh on both sides within 5m.
+  let ditch=null;
+  for(let i=1;i<pts.length-1;i++){
+   const q=pts[i];if(!Number.isFinite(q.T4)||q.water.length||q.T4>pts[i-1].T4||q.T4>pts[i+1].T4)continue;
+   const left=pts.slice(Math.max(0,i-50),i).filter(v=>!v.water.length&&Number.isFinite(v.T4));
+   const right=pts.slice(i+1,i+51).filter(v=>!v.water.length&&Number.isFinite(v.T4));
+   if(!left.length||!right.length)continue;
+   const l=left.reduce((a,b)=>a.T4>b.T4?a:b),r=right.reduce((a,b)=>a.T4>b.T4?a:b);
+   const depth=Math.min(l.T4,r.T4)-q.T4;
+   if(depth>0&&(!ditch||depth>ditch.depth))ditch={offset:q.offset,depth,width:r.offset-l.offset,left:l.offset,right:r.offset};
+  }
+  const corrected=pts.filter(q=>Math.abs(q.T2-q.stages.legacy)>.05);
+  const transitionWidth=corrected.length?corrected.at(-1).offset-corrected[0].offset:0;
+  summary.push({id:p.id,along:p.along,validPoints:validPoints.length,maxSlope,ditchCandidate:ditch,correctionSpanAbove5cm:transitionWidth,maxModelMeshDelta:validPoints.length?Math.max(...validPoints.map(q=>Math.abs(q.T3-q.T4))):null});
+  const vals=validPoints.flatMap(q=>[q.T0,q.T1,q.T2,q.T3,q.T4,...q.water]);
+  if(!vals.length)continue;
+  const lo=Math.min(...vals)-.1,hi=Math.max(...vals)+.1,X=q=>60+(q.offset+20)*22,Y=h=>390-(h-lo)/(hi-lo)*340;
+  const colors={T0:'#999999',T1:'#a16a35',T2:'#27854d',T3:'#7754a6',T4:'#202020'};
+  const paths=Object.keys(colors).map(k=>'<polyline fill="none" stroke="'+colors[k]+'" stroke-width="1.5" points="'+validPoints.map(q=>X(q)+','+Y(q[k])).join(' ')+'"/>').join('');
+  const water=validPoints.flatMap(q=>q.water.map(h=>'<circle cx="'+X(q)+'" cy="'+Y(h)+'" r="1.5" fill="#1685c2"/>')).join('');
+  const legend=Object.keys(colors).map((k,i)=>'<text x="'+(60+i*105)+'" y="420" fill="'+colors[k]+'">'+k+'</text>').join('');
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="450" viewBox="0 0 1000 450"><rect width="1000" height="450" fill="white"/><g font-family="sans-serif" font-size="13"><text x="60" y="25">'+p.id+' | GEO-001 | along '+p.along+' m</text><path d="M60 50 V390 H940" fill="none" stroke="#888"/><text x="5" y="55">'+hi.toFixed(2)+' m</text><text x="5" y="390">'+lo.toFixed(2)+' m</text><text x="60" y="405">-20 m</text><text x="910" y="405">20 m</text>'+paths+water+legend+'<text x="650" y="420" fill="#1685c2">Water mesh</text></g></svg>';
+  fs.writeFileSync(path.join(out,p.id+'.svg'),svg);
+ }
+ fs.writeFileSync(path.join(out,'profile-summary.json'),JSON.stringify({definitions:profiles.definitions,method:'ditch candidate: dry local minimum bracketed by dry maxima within 5 m each side; correction span: outermost samples exceeding 5 cm correction, may include gaps',profiles:summary},null,2));
+ report.crossSections={valid:profiles.profiles.length===21&&summary.every(p=>p.validPoints===401),profiles:summary.length,points:summary.reduce((n,p)=>n+p.validPoints,0)};
+ if(!report.crossSections.valid)throw Error('Incomplete cross-section coverage');
  // Hide all body-level UI except the renderer canvas, only in this browser.
  const hud=await page.addStyleTag({content:'body > :not(canvas:first-child) { visibility: hidden !important; } body > canvas:first-child { visibility: visible !important; }'});
  report.hud=await page.evaluate(()=>({rendererVisible:document.body.firstElementChild?.tagName==='CANVAS'&&getComputedStyle(document.body.firstElementChild).visibility==='visible',visibleOverlays:[...document.body.children].filter(e=>e!==document.body.firstElementChild&&!['SCRIPT','STYLE','LINK'].includes(e.tagName)&&getComputedStyle(e).visibility==='visible'&&getComputedStyle(e).display!=='none').length}));
@@ -59,7 +96,7 @@ async function main(){
  await hud.evaluate(e=>e.remove());
  report.restoration=await page.evaluate(()=>{const a=window.AFTERFALL_DIAGNOSTICS;a.clearDiagnosticCamera();return {cleared:a.getDiagnosticCamera()===null,position:a.getPlayerPosition()};});
  report.uniqueImages=new Set(report.cameras.map(c=>c.sha256)).size;
- report.passed=report.geometry.valid&&report.httpStatus===200&&report.cameras.length===6&&report.cameras.every(c=>c.passed)&&report.uniqueImages===6&&report.restoration.cleared&&Math.hypot(report.restoration.position.x-2725.93,report.restoration.position.z-2751.93)<=.001&&report.errors.length===0;
+ report.passed=report.crossSections.valid&&report.geometry.valid&&report.httpStatus===200&&report.cameras.length===6&&report.cameras.every(c=>c.passed)&&report.uniqueImages===6&&report.restoration.cleared&&Math.hypot(report.restoration.position.x-2725.93,report.restoration.position.z-2751.93)<=.001&&report.errors.length===0;
  }catch(e){report.failure=String(e);if(page)await page.screenshot({path:path.join(out,'failure.png'),timeout:10000}).catch(()=>{});}
  finally{
  report.passed=report.passed&&report.errors.length===0;
