@@ -6816,6 +6816,52 @@ function installDiagnosticsBridge(){
    return {x,z,body:body?{kind:body.kind,id:body.id??null,level:body.level}:null,
     river:river?{distance:river.distance,width:river.width,level:river.water}:null};
   },
+  runCrossSections:()=>{
+   if(Math.hypot(p.x-station.x,p.z-station.z)>.001||!terrainReady().ready)throw Error('GEO-001 required');
+   const nearest=riverSample(station.x,station.z)?.segment;
+   if(!nearest)throw Error('No reference river segment');
+   const dx=nearest.b.x-nearest.a.x,dz=nearest.b.z-nearest.a.z,len=Math.hypot(dx,dz);
+   if(len<.001)throw Error('Degenerate reference segment');
+   const tx=dx/len,tz=dz/len,nx=-tz,nz=tx;
+   const ray=new THREE.Raycaster(),origin=new THREE.Vector3(),dirs=[new THREE.Vector3(0,-1,0),new THREE.Vector3(0,1,0)];
+   scene.updateMatrixWorld(true);
+   const heights=(meshes,x,z)=>{
+    const values=[];
+    for(const dir of dirs){
+     origin.set(x-PAD_X,dir.y<0?1000:-1000,z-PAD_Z);ray.set(origin,dir);ray.near=0;ray.far=2000;
+     for(const hit of ray.intersectObjects(meshes.filter(Boolean),true)){
+      const h=hit.point.y+PAD_H;if(Number.isFinite(h)&&!values.some(v=>Math.abs(v-h)<.008))values.push(h);
+     }
+    }
+    return values.sort((a,b)=>b-a);
+   };
+   // Actual engine order: edits and legacy anchors precede hydrological corrections.
+   const cache=new Map();
+   const stages=(x,z)=>{
+    const key=x+','+z;if(cache.has(key))return cache.get(key);
+    const t0=hydrologySourceElevation(x,z)-PAD_H,t1=originalGround(x,z);
+    const raw=t1+(earthEdits.get(earthKey(x,z))||0)*.01;
+    const base=legacyTerrainHeight(x,z,raw),lake=base+shorelineBAdjustment(x,z,base),
+     river=lake+riverBankTerrainCorrection(x,z,lake),shore=river+alpineShoreTerrainCorrection(x,z,river),
+     outlet=shore+alpineOutletTerrainCorrection(x,z,shore),final=outlet+shoreRaiseCandidate(x,z,outlet);
+    const v=[t0,t1,raw,base,lake,river,shore,outlet,final];cache.set(key,v);return v;
+   };
+   const sample=(x,z)=>{
+    const ix=Math.floor(x),iz=Math.floor(z),u=x-ix,v=z-iz;
+    const corners=[stages(ix,iz),stages(ix,iz+1),stages(ix+1,iz+1),stages(ix+1,iz)];
+    const h=corners[0].map((_,i)=>fanHeight(...corners.map(c=>c[i]),u,v)+PAD_H);
+    const chunk=terrainChunks.get(chunkKey(Math.floor(x/CHUNK),Math.floor(z/CHUNK)));
+    const land=chunk?heights([chunk.land],x,z):[],water=chunk?heights([chunk.water,...(chunk.stillWater||[]),...(chunk.alpineWater||[])],x,z):[];
+    return {x,z,T0:h[0],T1:h[1],T2:h[8],T3:ground(x,z)+PAD_H,T4:land[0]??null,water,stages:{edited:h[2],legacy:h[3],lake:h[4],river:h[5],alpineShore:h[6],outlet:h[7]},loaded:!!chunk};
+   };
+   const profiles=[];
+   for(let i=-10;i<=10;i++){
+    const x=station.x+i*2*tx,z=station.z+i*2*tz,points=[];
+    for(let j=-200;j<=200;j++)points.push({offset:j/10,...sample(x+j/10*nx,z+j/10*nz)});
+    profiles.push({id:'P'+String(i+11).padStart(2,'0'),along:i*2,center:{x,z},points});
+   }
+   return {revision,seed:SEED,station:station.id,time:new Date().toISOString(),axis:{tx,tz,nx,nz},width:40,step:.1,spacing:2,definitions:{T0:'pre-incision hydrology source sampled on integer fan',T1:'post-incision normalized base',T2:'final hydrology correction including prior edits and anchors',T3:'actual ground function; edits precede T2, not a separate subsequent stage',T4:'actual loaded mesh raycast'},profiles};
+  },
   runMeshTest:()=>{
    if(!terrainReady().ready)throw new Error('Player terrain chunk not ready');
    return copy(shoreMeshQa());
