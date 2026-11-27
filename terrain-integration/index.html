@@ -7148,8 +7148,35 @@ function installDiagnosticsBridge(){
     ray.set(new THREE.Vector3(x-PAD_X,1000,z-PAD_Z),down);
     const hits=o=>o?.isMesh?ray.intersectObject(o,false).map(h=>h.point.y+PAD_H):[];
     const land=hits(c?.land),river=hits(c?.water),alpine=hits(c?.alpineWater),lake=(c?.stillWater||[]).flatMap(hits);
-    return {id,x,z,loaded:!!c,lod:c?.lod,land,river,alpine,lake,ground:ground(x,z)+PAD_H,rawRiver:r?.water??null,riverDistance:r?.distance??null,riverWidth:r?.width??null,alpineSource:r?.segment?.alpineSource??null,outlet:q?{id:q.id,distance:q.distance,offset:q.offset,halfWidth:q.halfWidth,stage:alpineJunctionStage(q)}:null};
+    const finalFaces=[];
+    for(const [chunk,cc] of terrainChunks)for(const [type,mesh] of [['river',cc.water],['alpine',cc.alpineWater],...(cc.stillWater||[]).map(m=>['still',m])]){
+     if(!mesh?.isMesh)continue;
+     for(const h of ray.intersectObject(mesh,false))finalFaces.push({chunk,type,faceIndex:h.faceIndex,indices:h.face?[h.face.a,h.face.b,h.face.c]:null,height:h.point.y+PAD_H});
+    }
+    return {id,x,z,finalFaces,loaded:!!c,lod:c?.lod,land,river,alpine,lake,ground:ground(x,z)+PAD_H,rawRiver:r?.water??null,riverDistance:r?.distance??null,riverWidth:r?.width??null,alpineSource:r?.segment?.alpineSource??null,outlet:q?{id:q.id,distance:q.distance,offset:q.offset,halfWidth:q.halfWidth,stage:alpineJunctionStage(q)}:null};
    });
+  },
+  runGlobalWaterContour:()=>{
+   scene.updateMatrixWorld(true);
+   const vertices=new Map(),edges=new Map(),adj=new Map();
+   const key=p=>[p.x,p.y,p.z].map(v=>Math.round(v*100000)).join(',');
+   for(const [chunk,c] of terrainChunks){
+    for(const mesh of [c.water,c.alpineWater,...(c.stillWater||[])]){
+     const g=mesh?.geometry;if(!g?.index)continue;
+     const p=g.attributes.position,idx=g.index.array;
+     for(let i=0;i<idx.length;i+=3)for(let j=0;j<3;j++){
+      const a=new THREE.Vector3().fromBufferAttribute(p,idx[i+j]).applyMatrix4(mesh.matrixWorld),b=new THREE.Vector3().fromBufferAttribute(p,idx[i+(j+1)%3]).applyMatrix4(mesh.matrixWorld);
+      const u=key(a),v=key(b);if(u===v)continue;
+      vertices.set(u,[a.x+PAD_X,a.y+PAD_H,a.z+PAD_Z]);vertices.set(v,[b.x+PAD_X,b.y+PAD_H,b.z+PAD_Z]);
+      const k=u<v?u+'|'+v:v+'|'+u,e=edges.get(k)||{u,v,count:0,chunks:[]};e.count++;if(!e.chunks.includes(chunk))e.chunks.push(chunk);edges.set(k,e);
+     }
+    }
+   }
+   const boundary=[...edges.values()].filter(e=>e.count===1);
+   for(const e of boundary)for(const [u,v] of [[e.u,e.v],[e.v,e.u]]){if(!adj.has(u))adj.set(u,[]);adj.get(u).push(v);}
+   const seen=new Set(),components=[];
+   for(const u of adj.keys()){if(seen.has(u))continue;const stack=[u],nodes=[];seen.add(u);while(stack.length){const v=stack.pop();nodes.push(v);for(const w of adj.get(v))if(!seen.has(w)){seen.add(w);stack.push(w);}}components.push({nodes,closed:nodes.every(v=>adj.get(v).length===2),branchVertices:nodes.filter(v=>adj.get(v).length>2).length});}
+   return {method:'loaded world-space indexed edge graph; 10 micrometre quantization',vertices:Object.fromEntries(vertices),boundary,components,seamEdges:[...edges.values()].filter(e=>e.chunks.length>1).length,nonManifold:[...edges.values()].filter(e=>e.count>2).length};
   },
   runWaterBoundaryTest:()=>{
    scene.updateMatrixWorld(true);
