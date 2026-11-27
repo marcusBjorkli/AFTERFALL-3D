@@ -3673,7 +3673,7 @@ function buildChunkRivers(cx,cz,lod){
  for(const e of referenceConnectorEdges.values()){
   if(e.count!==1)continue;
   const {a,b,c}=e,dx=b.x-a.x,dz=b.z-a.z,len=Math.hypot(dx,dz);
-  if(len<.05)continue;
+  if(len<.005)continue;
   const mx=(a.x+b.x)/2,mz=(a.z+b.z)/2,q=alpineOutletProfile(mx,mz);
   if(!q||q.distance<ALPINE_SHORE_C.radius+2||q.distance>ALPINE_SHORE_C.radius+ALPINE_JUNCTION_C.reach-ALPINE_JUNCTION_C.tailMatch)continue;
   if(Math.abs(dx*q.nx+dz*q.nz)/len>.55)continue;
@@ -3770,7 +3770,17 @@ function buildChunkRivers(cx,cz,lod){
   let nx=-dz/len,nz=dx/len;if((c.x-mx)*nx+(c.z-mz)*nz>0){nx=-nx;nz=-nz;}
   if((mx-q.cx)*nx+(mz-q.cz)*nz<=0)continue;
   const pl=plane({v:[a,b,c]});if(!pl)continue;
-  const extend=p=>({x:p.x+nx,y:p.y+pl.gx*nx+pl.gz*nz,z:p.z+nz});
+  // Extend only to the first dry crossing on the immutable incident plane.
+  // A shared strip width covers both endpoints and the midpoint; exact
+  // terrain-fan clipping then determines the actual shoreline.
+  const at=(p,d)=>({x:p.x+nx*d,y:p.y+(pl.gx*nx+pl.gz*nz)*d,z:p.z+nz*d});
+  const limit=Math.min(4,nx>0?(x1-Math.max(a.x,b.x)-1e-5)/nx:nx<0?(x0-Math.min(a.x,b.x)+1e-5)/nx:Infinity,nz>0?(z1-Math.max(a.z,b.z)-1e-5)/nz:nz<0?(z0-Math.min(a.z,b.z)+1e-5)/nz:Infinity);
+  if(limit<=0)continue;
+  const mid={x:mx,z:mz,y:(a.y+b.y)/2};
+  const reach=p=>{let d=0;while(d<limit){d=Math.min(limit,d+.0625);const v=at(p,d);if(v.y<=renderedLand(v.x,v.z))return d;}return limit;};
+  const width=Math.max(reach(a),reach(b),reach(mid));
+  qa.adaptiveStrips=(qa.adaptiveStrips||0)+1;qa.maxStripWidth=Math.max(qa.maxStripWidth||0,width);
+  const extend=p=>at(p,width);
   const aa=extend(a),bb=extend(b);
   if([a,b,aa,bb].some(v=>v.x<=x0||v.x>=x1||v.z<=z0||v.z>=z1))continue;
   for(const t of [[a,aa,bb],[a,bb,b]])for(const poly of intersect(t)){
