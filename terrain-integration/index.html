@@ -3812,8 +3812,13 @@ function buildChunkRivers(cx,cz,lod){
    if(hi-lo>1e-7){const m=(lo+hi)/2,du=project(u),dv=project(v);if(Math.abs(dv-du)>1e-8&&Math.abs(p.y+(q.y-p.y)*m/l-u.y-(v.y-u.y)*(m-du)/(dv-du))<1e-5)return true;}
   }return false;
  };
+ // Exact candidate deduplication, independent of winding and vertex order.
+ const candidateKeys=new Set();
  const pending=[];
  for(const c of candidates){
+  const key=c.tri.map(v=>[v.x,v.y,v.z].join(',')).sort().join('|');
+  if(candidateKeys.has(key)){qa.duplicateCandidates=(qa.duplicateCandidates||0)+1;continue;}
+  candidateKeys.add(key);
   let pieces=[c.tri];
   for(const o of occupied){
    if(!pieces.length)break;
