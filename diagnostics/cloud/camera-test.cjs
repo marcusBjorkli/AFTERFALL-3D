@@ -122,6 +122,9 @@ async function main(){
  const fixed=await page.evaluate(()=>window.AFTERFALL_DIAGNOSTICS.runFixedWaterProbes());
  fs.writeFileSync(path.join(out,'fixed-water-probes.json'),JSON.stringify(fixed,null,2));
  if(fixed.length!==6||fixed.some(p=>!p.loaded||!p.land.length))throw Error('Fixed probe coverage invalid');
+ const geo2=await page.evaluate(async()=>{const a=window.AFTERFALL_DIAGNOSTICS; a.setPlayerPosition(2723,2729);const terrain=await a.waitForTerrain();const mesh=a.runMeshTest();const boundary=a.runWaterBoundaryTest();a.setPlayerPosition(2725.93,2751.93);await a.waitForTerrain();return {terrain,mesh,boundary};});
+ fs.writeFileSync(path.join(out,'geo-002.json'),JSON.stringify(geo2));
+ if(!geo2.terrain.ready||!geo2.boundary.samples.length)throw Error('GEO-002 coverage invalid');
  const contour=await page.evaluate(()=>window.AFTERFALL_DIAGNOSTICS.runGlobalWaterContour());
  fs.writeFileSync(path.join(out,'global-water-contour.json'),JSON.stringify(contour));
  const boundary=await page.evaluate(()=>window.AFTERFALL_DIAGNOSTICS.runWaterBoundaryTest());
