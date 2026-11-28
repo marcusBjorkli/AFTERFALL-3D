@@ -3989,7 +3989,7 @@ function buildChunkRivers(cx,cz,lod){
    }if(changed)break;
   }
  }
- mapped.splice(0,mapped.length,...faces.flat());
+ mapped.length=0;for(const f of faces)mapped.push(...f);
  const conform=riverGeometryStats.conformingTopology||(riverGeometryStats.conformingTopology={splits:0,merges:0,finalTriangles:0});
  conform.splits+=splits;conform.merges+=merges;conform.finalTriangles+=faces.length;
  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(welded,3));geo.setIndex(mapped);geo.computeVertexNormals();
@@ -7183,7 +7183,19 @@ function installDiagnosticsBridge(){
    for(const e of boundary)for(const [u,v] of [[e.u,e.v],[e.v,e.u]]){if(!adj.has(u))adj.set(u,[]);adj.get(u).push(v);}
    const seen=new Set(),components=[];
    for(const u of adj.keys()){if(seen.has(u))continue;const stack=[u],nodes=[];seen.add(u);while(stack.length){const v=stack.pop();nodes.push(v);for(const w of adj.get(v))if(!seen.has(w)){seen.add(w);stack.push(w);}}components.push({nodes,closed:nodes.every(v=>adj.get(v).length===2),branchVertices:nodes.filter(v=>adj.get(v).length>2).length});}
-   return {method:'loaded world-space indexed edge graph; 10 micrometre quantization',vertices:Object.fromEntries(vertices),boundary,components,seamEdges:[...edges.values()].filter(e=>e.chunks.length>1).length,nonManifold:[...edges.values()].filter(e=>e.count>2).length};
+   const loops=[];
+   for(const c of components.filter(c=>c.closed)){
+    const start=c.nodes[0],ordered=[start];let prev=start,cur=adj.get(start)[0];
+    while(cur!==start&&ordered.length<=c.nodes.length){ordered.push(cur);const next=adj.get(cur).find(v=>v!==prev);prev=cur;cur=next;}
+    if(cur!==start||ordered.length!==c.nodes.length)continue;
+    const points=ordered.map(k=>vertices.get(k)),o=points[0];
+    const area=points.reduce((sum,p,i)=>{const q=points[(i+1)%points.length];return sum+(p[0]-o[0])*(q[2]-o[2])-(q[0]-o[0])*(p[2]-o[2]);},0)/2;
+    loops.push({nodes:ordered,area,minHeight:Math.min(...points.map(p=>p[1])),maxHeight:Math.max(...points.map(p=>p[1])),parent:null});
+   }
+   const contains=(loop,p)=>{let inside=false;const a=loop.nodes.map(k=>vertices.get(k));for(let i=0,j=a.length-1;i<a.length;j=i++){const u=a[i],v=a[j];if((u[2]>p[2])!==(v[2]>p[2])&&p[0]<(v[0]-u[0])*(p[2]-u[2])/(v[2]-u[2])+u[0])inside=!inside;}return inside;};
+   for(let i=0;i<loops.length;i++){const l=loops[i],p=vertices.get(l.nodes[0]);let best=Infinity;for(let j=0;j<loops.length;j++){const q=loops[j],area=Math.abs(q.area);if(i===j||area<=Math.abs(l.area)||area>=best||Math.abs(q.minHeight-l.minHeight)>1e-5||Math.abs(q.maxHeight-l.maxHeight)>1e-5)continue;if(contains(q,p)){l.parent=j;best=area;}}}
+   for(const l of loops){let depth=0,p=l.parent;while(p!==null){depth++;p=loops[p].parent;}l.depth=depth;l.holeCandidate=depth%2===1;}
+   return {loops,unresolvedComponents:components.filter(c=>!c.closed).length,method:'loaded world-space indexed edge graph; 10 micrometre quantization',vertices:Object.fromEntries(vertices),boundary,components,seamEdges:[...edges.values()].filter(e=>e.chunks.length>1).length,nonManifold:[...edges.values()].filter(e=>e.count>2).length};
   },
   runWaterBoundaryTest:()=>{
    scene.updateMatrixWorld(true);
