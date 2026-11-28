@@ -3813,15 +3813,23 @@ function buildChunkRivers(cx,cz,lod){
   }return false;
  };
  // Exact candidate deduplication, independent of winding and vertex order.
+ // Spatial broad phase: skip subtraction against disjoint bounding boxes.
+ const boundsOf=p=>[Math.min(...p.map(v=>v.x)),Math.min(...p.map(v=>v.z)),Math.max(...p.map(v=>v.x)),Math.max(...p.map(v=>v.z))];
+ const boundsOverlap=(a,b)=>a[0]<b[2]&&a[2]>b[0]&&a[1]<b[3]&&a[3]>b[1];
+ const occupiedBounds=occupied.map(boundsOf);
  const candidateKeys=new Set();
+ qa.duplicateCandidates=qa.duplicateCandidates||0;
  const pending=[];
  for(const c of candidates){
   const key=c.tri.map(v=>[v.x,v.y,v.z].join(',')).sort().join('|');
   if(candidateKeys.has(key)){qa.duplicateCandidates=(qa.duplicateCandidates||0)+1;continue;}
   candidateKeys.add(key);
   let pieces=[c.tri];
-  for(const o of occupied){
+  const cb=boundsOf(c.tri);
+  for(let oi=0;oi<occupied.length;oi++){
    if(!pieces.length)break;
+   if(!boundsOverlap(cb,occupiedBounds[oi]))continue;
+   const o=occupied[oi];
    pieces=pieces.flatMap(p=>p.slice(1,-1).some((v,i)=>overlaps([p[0],v,p[i+2]],o))?subtract(p,o):[p]);
   }
   for(const p of pieces){const q=clean(p);if(q.length>=3&&Math.abs(riverCross(q[0],q[1],q[2]))>1e-9)pending.push(q);}
@@ -4007,7 +4015,7 @@ function buildChunkRivers(cx,cz,lod){
   if(Math.abs(det)<1e-12){visited.add(seed);replacement.push(faces[seed]);continue;}
   const gx=((b[1]-a[1])*(c[2]-a[2])-(c[1]-a[1])*(b[2]-a[2]))/det;
   const gz=((b[0]-a[0])*(c[1]-a[1])-(c[0]-a[0])*(b[1]-a[1]))/det;
-  const same=f=>f.every(i=>{const p=pos(i);return Math.abs(p[1]-a[1]-gx*(p[0]-a[0])-gz*(p[2]-a[2]))<=1e-10;});
+  const same=f=>f.every(i=>{const p=pos(i);return Math.abs(p[1]-a[1]-gx*(p[0]-a[0])-gz*(p[2]-a[2]))<=2e-6;});
   const group=[seed];visited.add(seed);
   for(let j=0;j<group.length;j++)for(const n of neighbors[group[j]])if(!visited.has(n)&&same(faces[n])){visited.add(n);group.push(n);}
   const original=group.map(i=>faces[i]);regionQA.regions++;
@@ -4022,6 +4030,9 @@ function buildChunkRivers(cx,cz,lod){
   if(!valid||!loops.length||loops.slice(1).some(l=>area(l)*area(loops[0])>=0)){replacement.push(...original);continue;}
   const ids=loops.flat(),vectors=l=>l.map(i=>{const p=pos(i);return new THREE.Vector2(p[0]-a[0],p[2]-a[2]);});
   const tris=THREE.ShapeUtils.triangulateShape(vectors(loops[0]),loops.slice(1).map(vectors)).map(t=>t.map(i=>ids[i]));
+  // Preserve the original vertices and reject any replacement whose plane
+  // departs from the seed reference plane by more than two micrometres.
+  if(tris.some(f=>!same(f))){replacement.push(...original);continue;}
   const before=original.reduce((sum,f)=>sum+Math.abs(area(f)),0),after=tris.reduce((sum,f)=>sum+Math.abs(area(f)),0);
   const outEdges=new Map();for(const f of tris)for(let e=0;e<3;e++){const k=edgeKey(f[e],f[(e+1)%3]);outEdges.set(k,(outEdges.get(k)||0)+1);}
   if(tris.length>=original.length||Math.abs(before-after)>1e-9||[...counts].some(([k,n])=>n===1&&outEdges.get(k)!==1)||[...outEdges].some(([k,n])=>n>2||(n===1&&counts.get(k)!==1))){replacement.push(...original);continue;}
