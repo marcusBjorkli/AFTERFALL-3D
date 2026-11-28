@@ -4391,12 +4391,45 @@ function createTerrainChunk(cx,cz,lod){
 }
 function disposeChunk(c){harvestNodes.delete(chunkKey(c.cx,c.cz));for(const mesh of c.oreMeshes||[]){scene.remove(mesh)}for(const mesh of c.vegetation||[])scene.remove(mesh);scene.remove(c.land);c.land.geometry.dispose();if(c.water){for(const child of c.water.children||[])child.geometry?.dispose();scene.remove(c.water);c.water.geometry.dispose()}for(let m of c.stillWater||[]){scene.remove(m);m.geometry.dispose()}for(let m of c.alpineWater||[]){scene.remove(m);m.geometry.dispose()}}
 const CHUNK=64,ACTIVE_RADIUS=3;
-function updateChunks(force=false){let px=clamp(Math.floor(p.x/CHUNK),0,63),pz=clamp(Math.floor(p.z/CHUNK),0,63),desired=new Map();
+// Rebuild shared river seam registry after chunk/LOD changes. Only split
+// existing planar edges; never snap or move existing water vertices.
+let sharedRiverSeamStats={splits:0,edges:0};
+function conformSharedRiverSeams(){
+ const registry=new Map(),entries=[];
+ const key=(axis,v)=>axis+':'+v;
+ for(const c of terrainChunks.values()){
+  const mesh=c.water,g=mesh?.geometry,p=g?.getAttribute('position'),idx=g?.getIndex();
+  if(!p||!idx)continue;
+  const bounds=[['x',c.cx*CHUNK-PAD_X],['x',(c.cx+1)*CHUNK-PAD_X],['z',c.cz*CHUNK-PAD_Z],['z',(c.cz+1)*CHUNK-PAD_Z]];
+  const points=Array.from({length:p.count},(_,i)=>[p.getX(i),p.getY(i),p.getZ(i)]);
+  const faces=[];for(let i=0;i<idx.count;i+=3)faces.push([idx.getX(i),idx.getX(i+1),idx.getX(i+2)]);
+  const counts=new Map();for(const f of faces)for(let e=0;e<3;e++){const a=f[e],b=f[(e+1)%3],k=Math.min(a,b)+','+Math.max(a,b);counts.set(k,(counts.get(k)||0)+1);}
+  const seams=new Map();
+  for(const f of faces)for(let e=0;e<3;e++){const a=f[e],b=f[(e+1)%3],k=Math.min(a,b)+','+Math.max(a,b);if(counts.get(k)!==1)continue;
+   for(const [axis,v] of bounds){const j=axis==='x'?0:2;if(points[a][j]!==v||points[b][j]!==v)continue;const k2=key(axis,v);if(!registry.has(k2))registry.set(k2,[]);registry.get(k2).push({chunk:c,point:points[a]},{chunk:c,point:points[b]});seams.set(k,k2);}
+  }
+  entries.push({c,g,points,faces,seams});
+ }
+ let splits=0,edges=0;
+ for(const {c,g,points,faces,seams} of entries){
+  const out=[],lookup=new Map(points.map((p,i)=>[p.join(','),i]));let changed=false;
+  for(const f of faces){let work=[f];for(let e=0;e<3;e++){
+   const a=f[e],b=f[(e+1)%3],k=Math.min(a,b)+','+Math.max(a,b),line=seams.get(k);if(!line)continue;edges++;
+   const u=points[a],v=points[b],j=line.startsWith('x:')?2:0,den=v[j]-u[j];if(!den)continue;
+   const cuts=new Map();for(const item of registry.get(line)){if(item.chunk===c||Math.abs(item.chunk.cx-c.cx)+Math.abs(item.chunk.cz-c.cz)!==1)continue;const p=item.point,t=(p[j]-u[j])/den;if(t<=0||t>=1||Math.abs(p[1]-(u[1]+t*(v[1]-u[1])))>1e-10)continue;cuts.set(t,p);}
+   let start=a;for(const [t,p] of [...cuts].sort((a,b)=>a[0]-b[0])){const at=work.findIndex(f=>f.some((v,i)=>v===start&&f[(i+1)%3]===b));if(at<0)break;const tri=work[at],i=tri.indexOf(start),opp=tri[(i+2)%3];let n=lookup.get(p.join(','));if(n===undefined){n=points.length;points.push(p);lookup.set(p.join(','),n);}work.splice(at,1,[start,n,opp],[n,b,opp]);start=n;splits++;changed=true;}
+  }for(const t of work)out.push(...t);}
+  if(changed){g.setAttribute('position',new THREE.Float32BufferAttribute(points.flat(),3));g.setIndex(out);g.computeVertexNormals();g.computeBoundingBox();g.computeBoundingSphere();}
+ }
+ sharedRiverSeamStats={splits,edges};
+}
+function updateChunks(force=false){let px=clamp(Math.floor(p.x/CHUNK),0,63),pz=clamp(Math.floor(p.z/CHUNK),0,63),desired=new Map();let seamDirty=false;
  for(let dz=-ACTIVE_RADIUS;dz<=ACTIVE_RADIUS;dz++)for(let dx=-ACTIVE_RADIUS;dx<=ACTIVE_RADIUS;dx++){let cx=px+dx,cz=pz+dz;if(cx<0||cz<0||cx>63||cz>63)continue;let distance=Math.max(Math.abs(dx),Math.abs(dz)),lod=distance<=1?0:distance<=2?1:2;desired.set(chunkKey(cx,cz),{cx,cz,lod})}
- for(let [key,c] of terrainChunks)if(!desired.has(key)){disposeChunk(c);terrainChunks.delete(key)}
+ for(let [key,c] of terrainChunks)if(!desired.has(key)){seamDirty=true;disposeChunk(c);terrainChunks.delete(key)}
  // LOD-overganger oppdateres ved chunk-kryssing. Nabochunks har felles randhøyder;
  // ulike oppløsninger kan likevel gi mindre synlige skjøter i bratt terreng.
- for(let [key,want] of desired){let old=terrainChunks.get(key);if(old&&old.lod===want.lod)continue;if(old){disposeChunk(old);terrainChunks.delete(key)}terrainChunks.set(key,createTerrainChunk(want.cx,want.cz,want.lod))}
+ for(let [key,want] of desired){let old=terrainChunks.get(key);if(old&&old.lod===want.lod)continue;seamDirty=true;if(old){disposeChunk(old);terrainChunks.delete(key)}terrainChunks.set(key,createTerrainChunk(want.cx,want.cz,want.lod))}
+ if(seamDirty)conformSharedRiverSeams();
  if(diag.on){diagRefresh(false);diagUpdateIndicator();}
 }
 
@@ -7236,7 +7269,7 @@ function installDiagnosticsBridge(){
    const contains=(loop,p)=>{let inside=false;const a=loop.nodes.map(k=>vertices.get(k));for(let i=0,j=a.length-1;i<a.length;j=i++){const u=a[i],v=a[j];if((u[2]>p[2])!==(v[2]>p[2])&&p[0]<(v[0]-u[0])*(p[2]-u[2])/(v[2]-u[2])+u[0])inside=!inside;}return inside;};
    for(let i=0;i<loops.length;i++){const l=loops[i],p=vertices.get(l.nodes[0]);let best=Infinity;for(let j=0;j<loops.length;j++){const q=loops[j],area=Math.abs(q.area);if(i===j||area<=Math.abs(l.area)||area>=best||Math.abs(q.minHeight-l.minHeight)>1e-5||Math.abs(q.maxHeight-l.maxHeight)>1e-5)continue;if(contains(q,p)){l.parent=j;best=area;}}}
    for(const l of loops){let depth=0,p=l.parent;while(p!==null){depth++;p=loops[p].parent;}l.depth=depth;l.holeCandidate=depth%2===1;}
-   return {loops,unresolvedComponents:components.filter(c=>!c.closed).length,method:'loaded world-space indexed edge graph; 10 micrometre quantization',vertices:Object.fromEntries(vertices),boundary,components,seamEdges:[...edges.values()].filter(e=>e.chunks.length>1).length,nonManifold:[...edges.values()].filter(e=>e.count>2).length};
+   return {sharedRiverSeamStats,loops,unresolvedComponents:components.filter(c=>!c.closed).length,method:'loaded world-space indexed edge graph; 10 micrometre quantization',vertices:Object.fromEntries(vertices),boundary,components,seamEdges:[...edges.values()].filter(e=>e.chunks.length>1).length,nonManifold:[...edges.values()].filter(e=>e.count>2).length};
   },
   runWaterBoundaryTest:()=>{
    scene.updateMatrixWorld(true);
